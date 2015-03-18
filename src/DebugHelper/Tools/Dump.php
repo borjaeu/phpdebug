@@ -69,7 +69,7 @@ DEBUG;
             $debug_backtrace
                 .= <<<ROW
 	<tr class="showtrace_row">
-		<td><a href="corebrowser:{$item['file']}:{$item['line']}">$file</a></td>
+		<td><a href="codebrowser:{$item['file']}:{$item['line']}">$file</a></td>
 		<td>{$item['line']}</td>
 		<td>$function()</td>
 		<td><div class="params">$params</div>array($count) </td>

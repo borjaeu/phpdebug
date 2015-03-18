@@ -45,7 +45,7 @@ class Error
         $id = 'error_' . uniqid();
         echo <<<ERROR
 <div class="error_handler $class" id="$id">
-	<strong>Php $type</strong><b>$errstr</b> in <a href="corebrowser:$errfile:$errline"><b>$errfile</b> on line <b>$errline</b></a></span>
+    <strong>Php $type</strong><b>$errstr</b> in <a href="CodeBrowser:$errfile:$errline"><b>$errfile</b> on line <b>$errline</b></a></span>
 </div>
 ERROR;
         return true;

@@ -87,7 +87,7 @@ OUTPUT;
         file_put_contents( $this->trace_file . '.cvg', serialize( $coverage ) );
         $this->trace_file = '';
         if ($finish_execution) {
-            die( sprintf( "<pre><a href=\"corebrowser:%s:%d\">DIE</a></pre>", __FILE__, __LINE__ ) );
+            die( sprintf( "<pre><a href=\"codebrowser:%s:%d\">DIE</a></pre>", __FILE__, __LINE__ ) );
         }
     }
 

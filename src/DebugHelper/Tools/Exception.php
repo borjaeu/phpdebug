@@ -30,7 +30,7 @@ class Exception extends Abstracted
             $debug_backtrace
                 .= <<<ROW
 	<tr class="">
-		<td><a href="corebrowser:{$item['file']}:{$item['line']}">$file</a></td>
+		<td><a href="codebrowser:{$item['file']}:{$item['line']}">$file</a></td>
 		<td>{$item['line']}</td>
 		<td>$function()</td>
 	</tr>
@@ -41,7 +41,7 @@ ROW;
 
         echo <<<EXCEPTION
 $exception_name
-<a href="corebrowser:$file:$line">$file:$line</a>
+<a href="codebrowser:$file:$line">$file:$line</a>
 $debug_backtrace
 EXCEPTION;
 

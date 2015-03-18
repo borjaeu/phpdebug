@@ -39,7 +39,7 @@ class Abstracted
 			$file = basename( $item['file'] );
 
 			$link = <<<POS
-<a class="debug_caller" name="$id" href="corebrowser:{$item['file']}:{$item['line']}" title="in {$code['class']}::{$code['method']}()">$line<span class="line">$file:{$item['line']}</span></a>
+<a class="debug_caller" name="$id" href="codebrowser:{$item['file']}:{$item['line']}" title="in {$code['class']}::{$code['method']}()">$line<span class="line">$file:{$item['line']}</span></a>
 POS;
 		}
 		else
@@ -199,7 +199,7 @@ POS;
 			{
 				echo 'Unknown type';
 				var_dump( $data );
-				die(sprintf("<pre><a href=\"corebrowser:%s:%d\">DIE</a></pre>", __FILE__, __LINE__));
+				die(sprintf("<pre><a href=\"codebrowser:%s:%d\">DIE</a></pre>", __FILE__, __LINE__));
 			}
 		}
 
