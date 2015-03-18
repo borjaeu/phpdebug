@@ -30,7 +30,6 @@ Class DebugHelper
 
     protected static $methods
         = array(
-            'logUnique'          => 'DebugHelperLog::logUnique',
             'request'            => 'DebugHelperRequest::get',
             'getCleanRequestUri' => 'DebugHelperRequest::getCleanRequestUri',
             'logTrace'           => 'DebugHelperLog::showtrace',
@@ -75,9 +74,9 @@ Class DebugHelper
      *
      * @param mixed $data Information to be dumped to the browser.
      */
-    static public function dump( $data = '' )
+    static public function dump($data = '', $offset = 0, $raw = false)
     {
-        return self::getClass( '\DebugHelper\Tools\Dump' )->dump( $data );
+        return self::getClass( '\DebugHelper\Tools\Dump' )->dump($data, $offset, $raw);
     }
 
     /**

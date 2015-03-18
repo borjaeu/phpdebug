@@ -25,16 +25,11 @@ class Watcher extends Abstracted
             if ($ignore) {
                 return;
             }
-            $pos = $this->getCallerHtml( 1, false );
-            echo <<<ERROR
-<pre>
-Watch already started in $watching
-Could not be start at $pos
-</pre>
-ERROR;
+            $error = "Watch already started in $watching. Could not be start.";
+            \DebugHelper::dump($error, 2, true);
             exit;
         } else {
-            $watching = self::getCallerHtml( 1, false );
+            $watching = self::getCallerHtml(2, false);
         }
 
         ini_set( 'xdebug.collect_params', 3 ); // 0 None, 1, Simple, 3 Full
@@ -56,12 +51,8 @@ ERROR;
         \DebugHelper::log( "Watch started at $file:{$log_info['line']}", 'AUTO' );
 
         if (!$silent) {
-            $pos = $this->getCallerHtml( 4, false );
-            echo <<<OUTPUT
-Watch started at $pos
-<a href="http://base.bmorales.coredev/utils/phpdebug/index.php">Debugs</a>
-
-OUTPUT;
+            $info = "WATCH started. Stored in {$this->trace_file}";
+            \DebugHelper::dump($info, 2, true);
         }
         xdebug_start_trace( $this->trace_file );
         xdebug_start_code_coverage();

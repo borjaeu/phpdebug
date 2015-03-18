@@ -4,26 +4,28 @@ namespace DebugHelper\Tools;
 class Dump extends Abstracted
 {
     /**
-     * Displays the data passsed as information.
+     * Displays the data passed as information.
      *
      * @param mixed $data Information to be dumped to the browser.
      */
-    public function dump( $data = '' )
+    public function dump($data = '', $offset = 0, $raw = false)
     {
         static $start = false;
 
         if ($start === false) {
-            $start = microtime( true );
+            $start = microtime(true);
             $split = 0;
         } else {
-            $split = microtime( true ) - $start;
+            $split = microtime(true) - $start;
         }
-        $split = number_format( $split, 6 );
+        $split = number_format($split, 6);
 
-        \DebugHelper\Styles::showHeader( 'dump', 'objectToHtml' );
-        $pos = $this->getCallerHtml( 2 );
+        \DebugHelper\Styles::showHeader('dump', 'objectToHtml');
+        $pos = $this->getCallerHtml(2+$offset);
 
-        $data = $this->objectToHtml( $data );
+        if (!$raw) {
+            $data = $this->objectToHtml($data);
+        }
         $id = uniqid();
         echo <<<DEBUG
 <div id="$id" class="debug_dump">
@@ -41,31 +43,31 @@ DEBUG;
     /**
      * Shows the HTML trace.
      *
-     * @param boolean $finish       Finish the script execution.
+     * @param boolean $finish Finish the script execution.
      * @param boolean $return_trace Returns the trace instead of printing it.
      *
      * @return mixed
      */
-    public function showtrace( $finish = true, $return_trace = false )
+    public function showtrace($finish = true, $return_trace = false)
     {
         if (!$return_trace) {
-            \DebugHelper\Styles::showHeader( 'showtrace' );
-            \DebugHelper\Styles::showHeader( 'objectToHtml' );
+            \DebugHelper\Styles::showHeader('showtrace');
+            \DebugHelper\Styles::showHeader('objectToHtml');
         }
         $trace = xdebug_get_function_stack();
-        $trace = array_slice( $trace, 0, count( $trace ) - 1 );
+        $trace = array_slice($trace, 0, count($trace) - 1);
 
         $debug_backtrace = "<table id=\"showtrace\">\n";
         foreach ($trace as $item) {
-            $params = $this->objectToHtml( $item['params'], false );
-            if (isset( $item['function'] )) {
-                $function = isset( $item['class'] ) ? $item['class'] . '::' . $item['function'] : $item['function'];
+            $params = $this->objectToHtml($item['params'], false);
+            if (isset($item['function'])) {
+                $function = isset($item['class']) ? $item['class'] . '::' . $item['function'] : $item['function'];
             } else {
                 $function = 'inlcude: ' . $item['include_filename'];
             }
-            $file = $this->getShortenedPath( $item['file'], 4 );
+            $file = $this->getShortenedPath($item['file'], 4);
 
-            $count = count( $item['params'] );
+            $count = count($item['params']);
             $debug_backtrace
                 .= <<<ROW
 	<tr class="showtrace_row">
@@ -98,10 +100,10 @@ TRACE;
         }
     }
 
-    protected function getShortenedPath( $path, $length )
+    protected function getShortenedPath($path, $length)
     {
-        $steps = explode( '/', $path );
-        $path = array_slice( $steps, -$length );
-        return implode( '/', $path );
+        $steps = explode('/', $path);
+        $path = array_slice($steps, -$length);
+        return implode('/', $path);
     }
 }
