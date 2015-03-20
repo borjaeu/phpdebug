@@ -69,12 +69,12 @@ class Trace
         $margin = str_repeat('-', $depth);
 
         return <<<LINE
-<p>
+<p onclick="window.location.href='codebrowser:{$line_data['path']}'" title="{$line_data['path']}">
     <span class="time">{$line_data['time']}</span>
     <span class="memory">{$line_data['memory']}</span>
     $margin
     <span class="call">{$call}</span>
-    <span class="file"><a href="codebrowser:{$line_data['path']}">{$filename}</a></span>
+    <span class="file">{$filename}</span>
 </p>
 LINE;
     }
@@ -106,8 +106,8 @@ CALL;
 * { font-family:courier,monospace; font-size:13px; }
 html, body { height:100%; }
 p { margin:0; padding: 2px;}
-.file { float:right; border: 2px solid #FF9; background-color:#DDD; margin-top: -2px; width: 400px; text-align:right;s }
-    .file a { text-decoration:none; color:black; font-weight: bold; }
+    p:hover { background-color: #FF9 !important; cursor:pointer; }
+.file { float:right;  text-align:right; }
 p:nth-child(odd) { background-color: lightgray; }
 .function { font-weight:bold; color:#008800; }
 .class { color:#000088; }
