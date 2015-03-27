@@ -3,21 +3,22 @@ namespace DebugHelper;
 
 class Styles
 {
-	/**
-	 * Show the styles given if not shown before.
-	 *
-	 * @var string $key Identifier of the styles.
-	 * @return null
-	 */
-	static function showHeader()
-	{
-		static $shown_headers = array();
+    /**
+     * Show the styles given if not shown before.
+     */
+    public static function showHeader()
+    {
+        static $shown_headers = array();
 
-		$keys = func_get_args();
+        if (\DebugHelper::isCli()) {
+            $keys = array();
+        } else {
+            $keys = func_get_args();
+        }
 
-		$headers = array();
+        $headers = array();
 
-		$headers['error'] = <<<HEAD
+        $headers['error'] = <<<HEAD
 <style type="text/css">
 div.error_handler { margin:5px; padding: 8px 35px 8px 26px; }
 div.error_handler_notice {
@@ -33,7 +34,7 @@ div.error_handler_warning, div.error_handler_error {
 </style>
 HEAD;
 
-		$headers['dump'] = <<<HEAD
+        $headers['dump'] = <<<HEAD
 <style type="text/css">
 div.debug_dump { margin:1px; background:#FFFF99; overflow:hidden; font-family:arial; font-size:12px; font-weight:bold; border: 2px solid #DFDFDF; }
 div.debug_dump span.timer {
@@ -46,7 +47,7 @@ div.debug_dump div.data { padding:5px; }
 </style>
 HEAD;
 
-		$headers['objectToHtml'] = <<<HEAD
+        $headers['objectToHtml'] = <<<HEAD
 <style type="text/css">
 	ul.object_dump {
 		margin:0px;
@@ -109,7 +110,7 @@ HEAD;
 	</script>
 HEAD;
 
-		$headers['getCallers'] = <<<HEADER
+        $headers['getCallers'] = <<<HEADER
 <style type="text/css">
 a.debug_caller {
 	font-family:monospace;
@@ -124,7 +125,7 @@ span.dump:hover a.debug_caller { display:inline; }
 
 HEADER;
 
-		$headers['showtrace'] = <<<HEAD
+        $headers['showtrace'] = <<<HEAD
 	<style type="text/css">
 		#showtrace { border-collapse: collapse; }
 		#showtrace tr.showtrace_row { background-color:#DDD; font-family:arial; font-weight:bold; font-size:12px; border:2px solid #EEEEEE; }
@@ -144,7 +145,7 @@ HEADER;
 	</script>
 HEAD;
 
-		$headers['to_html'] = <<<HEAD
+        $headers['to_html'] = <<<HEAD
 	<style type="text/css">
 		.debug_output { display:inline; }
 		.debug_output ul { border-left: 1px solid red; padding: 0 0 0 20px; margin:0; list-style:none; }
@@ -161,7 +162,7 @@ HEAD;
 
 HEAD;
 
-		$headers['profileReport'] = <<<HEADER
+        $headers['profileReport'] = <<<HEADER
 <style>
 	pre.profile_report > div { }
 	pre.profile_report div.label { width:100%; color:black; font-size:12px; }
@@ -170,27 +171,20 @@ HEAD;
 </style>
 HEADER;
 
-		$headers['export'] = <<<HEADER
+        $headers['export'] = <<<HEADER
 <style>
 	pre.debug_export { background:#FFFF99;}
 </style>
 HEADER;
 
+        foreach ($keys as $key) {
+            if (!empty($shown_headers[$key])) {
+                return false;
+            }
+            $shown_headers[$key] = true;
 
-
-
-
-		foreach( $keys as $key )
-		{
-
-			if ( !empty( $shown_headers[$key] ) )
-			{
-				return false;
-			}
-			$shown_headers[$key] = true;
-
-			$header = preg_replace( '/\s+/', ' ', $headers[$key] );
-			echo $header;
-		}
-	}
+            $header = preg_replace('/\s+/', ' ', $headers[$key]);
+            echo $header . "\n";
+        }
+    }
 }

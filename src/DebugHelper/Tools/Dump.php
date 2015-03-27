@@ -1,107 +1,107 @@
 <?php
 namespace DebugHelper\Tools;
 
+use DebugHelper\Styles;
+
 class Dump extends Abstracted
 {
     /**
-     * Displays the data passsed as information.
+     * Displays the data passed as information.
      *
      * @param mixed $data Information to be dumped to the browser.
      */
-    public function dump( $data = '' )
+    public function dump($data = '')
     {
         static $start = false;
 
         if ($start === false) {
-            $start = microtime( true );
+            $start = microtime(true);
             $split = 0;
         } else {
-            $split = microtime( true ) - $start;
+            $split = microtime(true) - $start;
         }
-        $split = number_format( $split, 6 );
+        $split = number_format($split, 6);
 
-        \DebugHelper\Styles::showHeader( 'dump', 'objectToHtml' );
-        $pos = $this->getCallerHtml( 2 );
+        Styles::showHeader('dump', 'objectToHtml');
+        $pos = $this->getCallerDetails(2);
 
-        $data = $this->objectToHtml( $data );
+        $data = $this->objectToHtml($data);
         $id = uniqid();
-        echo <<<DEBUG
+        if (\DebugHelper::isCli()) {
+            echo "Dump var in $pos$data";
+        } else {
+            echo <<<DEBUG
+
 <div id="$id" class="debug_dump">
-	<div class="header">
-		<span class="timer">$split</span>
-		<span class="code">$pos</span>
-	</div>
-	<div class="data">{$data}</div>
+    <div class="header">
+        <span class="timer">$split</span>
+        <span class="code">$pos</span>
+     </div>
+     <div class="data">{$data}</div>
 </div>
 
 DEBUG;
+        }
         ob_flush();
     }
 
     /**
      * Shows the HTML trace.
      *
-     * @param boolean $finish       Finish the script execution.
+     * @param boolean $finish Finish the script execution.
      * @param boolean $return_trace Returns the trace instead of printing it.
      *
      * @return mixed
      */
-    public function showtrace( $finish = true, $return_trace = false )
+    public function showtrace($finish = true, $return_trace = false)
     {
-        if (!$return_trace) {
-            \DebugHelper\Styles::showHeader( 'showtrace' );
-            \DebugHelper\Styles::showHeader( 'objectToHtml' );
+        if (!($return_trace || \DebugHelper::isCli())) {
+            Styles::showHeader('showtrace');
+            Styles::showHeader('objectToHtml');
         }
         $trace = xdebug_get_function_stack();
-        $trace = array_slice( $trace, 0, count( $trace ) - 1 );
+        $trace = array_slice($trace, 0, count($trace) - 1);
 
-        $debug_backtrace = "<table id=\"showtrace\">\n";
+        $debug_backtrace = array();
         foreach ($trace as $item) {
-            $params = $this->objectToHtml( $item['params'], false );
-            if (isset( $item['function'] )) {
-                $function = isset( $item['class'] ) ? $item['class'] . '::' . $item['function'] : $item['function'];
+            $step = array();
+
+            if (isset($item['function'])) {
+                $step['function'] = isset($item['class'])
+                    ? $item['class'] . '::' . $item['function']
+                    : $item['function'];
             } else {
-                $function = 'inlcude: ' . $item['include_filename'];
+                $step['function'] = 'include: ' . $item['include_filename'];
             }
-            $file = $this->getShortenedPath( $item['file'], 4 );
-
-            $count = count( $item['params'] );
-            $debug_backtrace
-                .= <<<ROW
-	<tr class="showtrace_row">
-		<td><a href="codebrowser:{$item['file']}:{$item['line']}">$file</a></td>
-		<td>{$item['line']}</td>
-		<td>$function()</td>
-		<td><div class="params">$params</div>array($count) </td>
-	</tr>
-
-ROW;
+            $step['params'] = count($item['params']);
+            $step['file'] = $this->getShortenedPath($item['file'], 4);
+            $step['line'] = $item['line'];
+            $debug_backtrace[] = $step;
         }
-        $debug_backtrace .= "\n</table>\n";
+
+        $pos = $this->getCallerDetails(2);
+        if (\DebugHelper::isCli()) {
+            $debug_backtrace = "Showtrace in " . $pos . $this->array2Text($debug_backtrace);
+        } else {
+            $debug_backtrace = $this->array2Html($debug_backtrace, 'showtrace');
+            $debug_backtrace = "<pre>$pos$debug_backtrace</pre>";
+        }
 
         if ($return_trace) {
             return $debug_backtrace;
         }
 
-        $pos = '';
-        $debug_backtrace
-            = <<<TRACE
-	<pre>
-$pos
-$debug_backtrace
-	</pre>
-TRACE;
-
         echo $debug_backtrace;
         if ($finish) {
             die();
         }
+        return '';
     }
 
-    protected function getShortenedPath( $path, $length )
+    protected function getShortenedPath($path, $length)
     {
-        $steps = explode( '/', $path );
-        $path = array_slice( $steps, -$length );
-        return implode( '/', $path );
+        $steps = explode('/', $path);
+        $path = array_slice($steps, -$length);
+        return implode('/', $path);
     }
 }
