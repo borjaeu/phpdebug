@@ -13,12 +13,11 @@ class Error
      * @var integer $errline Line number source of the error.
      * @return boolean True to avoid the default error handler.
      */
-    static public function handler($errno, $errstr, $errfile, $errline)
+    public static function handler($errno, $errstr, $errfile, $errline)
     {
-        \DebugHelper\Styles::showHeader( 'error' );
+        \DebugHelper\Styles::showHeader('error');
         $class = 'error_handler_notice';
-        switch ( $errno )
-        {
+        switch ($errno) {
             case E_USER_ERROR:
                 $type = 'Error';
                 $class = 'error_handler_error';
@@ -29,12 +28,10 @@ class Error
                 break;
             case 8:
                 $trace = xdebug_get_function_stack();
-                if ( false !== strstr( $errfile, '/debug.ctrl.php' ) )
-                {
+                if (false !== strstr($errfile, '/debug.ctrl.php')) {
                     return true;
                 }
-                if ( false !== strstr( $errfile, '/templates_c/' ) )
-                {
+                if (false !== strstr($errfile, '/templates_c/')) {
                     return true;
                 }
                 $type = 'Notice';
@@ -43,11 +40,21 @@ class Error
                 $type = "Unknown ($errno)";
         }
         $id = 'error_' . uniqid();
-        echo <<<ERROR
+        if (\DebugHelper::isCli()) {
+            echo <<<ERROR
+------------------------
+Php $type $errstr
+    in $errfile:$errline
+------------------------
+
+ERROR;
+        } else {
+            echo <<<ERROR
 <div class="error_handler $class" id="$id">
     <strong>Php $type</strong><b>$errstr</b> in <a href="CodeBrowser:$errfile:$errline"><b>$errfile</b> on line <b>$errline</b></a></span>
 </div>
 ERROR;
+        }
         return true;
     }
 }

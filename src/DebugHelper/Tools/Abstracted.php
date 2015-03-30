@@ -2,6 +2,7 @@
 namespace DebugHelper\Tools;
 
 use DebugHelper\Styles;
+use ReflectionClass;
 
 class Abstracted
 {
@@ -34,11 +35,11 @@ class Abstracted
             // Get code line.
             $code = self::getCodeLineInfo($item['file'], $item['line']);
             $line = trim(str_replace("\t", '→|', $code['source']));
-            $file = basename($item['file']);
+            $file = $this->getShortenedPath($item['file'], 3);
 
             if (\DebugHelper::isCli()) {
                 $link = <<<POS
-caller: {$file}:{$item['line']}" in {$code['class']}::{$code['method']}() "$line" {$item['file']}:{$item['line']}
+caller: {$file}:{$item['line']} in {$code['class']}::{$code['method']}() "$line"
 
 POS;
 
@@ -150,21 +151,32 @@ POS;
      * @param object $data Data to convert to array
      * @return mixed
      */
-    protected function objectToArray($data)
+    protected function objectToArray($data, $level = 0)
     {
         static $id = 0;
 
         $debug = array('type' => 'array', 'value' => 'array');
         if (is_object($data)) {
-            $data = get_object_vars($data);
             $debug['value'] = get_class($data);
             $debug['type'] = 'object(' . count($data) . ')';
+            $reflection = new ReflectionClass($data);
+            $properties = $reflection->getProperties();
+            $properties_array = array();
+            foreach ($properties as $property) {
+                $property->setAccessible(true);
+                $properties_array[$property->getName()] = $property->getValue($data);
+            }
+            $data = $properties_array;
         }
         if (is_array($data)) {
             $debug['sub_items'] = array();
             $debug['type'] .= '(' . count($data) . ')';
-            foreach ($data as $sub_key => $sub_value) {
-                $debug['sub_items'][$sub_key] = $this->objectToArray($sub_value);
+            if ($level<3) {
+                foreach ($data as $sub_key => $sub_value) {
+                    $debug['sub_items'][$sub_key] = $this->objectToArray($sub_value, $level + 1);
+                }
+            } else {
+                $debug['value'] = $debug['type'];
             }
         } else {
             if (is_string($data)) {
@@ -272,7 +284,7 @@ HTML;
 
         $debug = '';
 
-        $indent = str_repeat('  ', $level);
+        $indent = str_repeat('|   ', $level);
         $extra = '';
         if (isset($data['sub_items'])) {
             if (is_array($data['sub_items']) && !empty($data['sub_items'])) {
@@ -281,7 +293,7 @@ HTML;
                     $extra .= $this->tree2Text($sub_value, $sub_key, $level + 1);
                 }
             } elseif (is_string($data['sub_items'])) {
-                $extra = $data['sub_items'];
+                $extra = '|--' . $data['sub_items'];
             }
             unset($data['sub_items']);
         }
@@ -298,7 +310,7 @@ HTML;
             $key .= ' -> ';
         }
         $debug .= <<<HTML
-$indent $key$content
+$indent|-- $key$content
 $extra
 HTML;
         return $debug;
@@ -343,5 +355,12 @@ HTML;
             $text_table .= "\n";
         }
         return $text_table;
+    }
+
+    protected function getShortenedPath($path, $length)
+    {
+        $steps = explode('/', $path);
+        $path = array_slice($steps, -$length);
+        return implode('/', $path);
     }
 }

@@ -28,7 +28,7 @@ class Dump extends Abstracted
         $data = $this->objectToHtml($data);
         $id = uniqid();
         if (\DebugHelper::isCli()) {
-            echo "Dump var in $pos$data";
+            echo "[Dump] var, $pos====================================\n$data====================================\n";
         } else {
             echo <<<DEBUG
 
@@ -42,7 +42,6 @@ class Dump extends Abstracted
 
 DEBUG;
         }
-        ob_flush();
     }
 
     /**
@@ -96,12 +95,5 @@ DEBUG;
             die();
         }
         return '';
-    }
-
-    protected function getShortenedPath($path, $length)
-    {
-        $steps = explode('/', $path);
-        $path = array_slice($steps, -$length);
-        return implode('/', $path);
     }
 }
