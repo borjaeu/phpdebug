@@ -154,9 +154,9 @@ class DebugHelper
         return self::getClass('\DebugHelper\Tools\Profile')->profile();
     }
 
-    public static function profileReport()
+    public static function profileReport($file = false)
     {
-        return self::getClass('\DebugHelper\Tools\Profile')->profileReport();
+        return self::getClass('\DebugHelper\Tools\Profile')->profileReport($file);
     }
 
     /**
@@ -240,7 +240,9 @@ class DebugHelper
 
     public static function getDebugDir()
     {
-        $debug_dir = isset(self::$options['phpdebug_dir']) ? self::$options['phpdebug_dir'] : sys_get_temp_dir() . '/phpdebug/';
+        $debug_dir = isset(self::$options['phpdebug_dir'])
+            ? self::$options['phpdebug_dir']
+            : __DIR__ . '/../temp/';
         if (!is_dir($debug_dir)) {
             mkdir($debug_dir);
         }

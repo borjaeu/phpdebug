@@ -13,14 +13,26 @@ class Trace
 
     public function loadHtml()
     {
+       // if (!is_file($this->file . '.out')) {
+            $processor  = new Processor();
+            $processor->process($this->file);
+      //  }
+        return;
         $fp = fopen($this->file, 'r');
         $this->min_length = 65000;
-        while(!feof($fp)) {
+        while (!feof($fp)) {
             $line = fgets($fp);
             $this->processLine($line);
         }
         return $this->buildHtml();
 
+    }
+
+    public function renderLoadsHtml()
+    {
+        $processor  = new Processor();
+        $data = $processor->process($this->file);
+        $this->renderPage($data);
     }
 
     /**
@@ -32,6 +44,8 @@ class Trace
      */
     public function setFile($file)
     {
+        $file = \DebugHelper::getDebugDir() . $file . '.xt';
+
         if (!is_file($file)) {
             throw new \Exception("Error Processing file $file");
         }
@@ -41,83 +55,70 @@ class Trace
         return $this;
     }
 
-    protected function processLine($line)
+
+    protected function printFiles(array $files, $depth = 0)
     {
-        if (preg_match('/(?P<time>\d+\.\d+)\s+(?P<memory>\d+)(?P<depth>\s+)->\s+(?P<call>.*)\s+(?P<path>[^\s+]+)$/', $line, $matches)) {
-            $matches = array_intersect_key($matches, array_flip(array_filter(array_keys($matches), 'is_string')));
-            $matches['depth'] = strlen($matches['depth']);
-            $this->min_length = min($this->min_length, $matches['depth']);
-            $this->lines[] = $matches;
+        $indent = str_repeat('  ', $depth);
+        echo $indent . '<ul>';
+
+        $item = <<<ITEM
+
+$indent  <li class="%s">
+$indent    <span>%06d&micro;s %s</span>
+$indent    <div class="bar" style="width:%d%%"></div>
+
+ITEM;
+        foreach ($files as $file) {
+            $has_children = count($file['children']);
+            printf(
+                $item,
+                $has_children ? 'parent' : 'leaf',
+                $file['time_children'],
+                $file['call'],
+                $file['relative'] * 100
+            );
+            if ($has_children) {
+                $this->printFiles($file['children'], $depth + 2);
+            }
+            echo $indent . '  </li>';
         }
+
+        echo $indent . '</ul>';
     }
 
-    protected function buildHtml()
+    protected function renderPage($files)
     {
-        $html = $this->getHeader();;
-        foreach($this->lines as $line_data) {
-            $html .= $this->buildLineHtml($line_data);
-        }
-        $html .= '</body></html>';
-        return $html;
-    }
-
-    protected function buildLineHtml($line_data)
-    {
-        $filename = $this->getFilename($line_data['path']);
-        $call = $this->processCall($line_data['call']);
-        $depth = $line_data['depth'] - $this->min_length;
-        $margin = str_repeat('-', $depth);
-
-        return <<<LINE
-<p onclick="window.location.href='codebrowser:{$line_data['path']}'" title="{$line_data['path']}">
-    <span class="time">{$line_data['time']}</span>
-    <span class="memory">{$line_data['memory']}</span>
-    $margin
-    <span class="call">{$call}</span>
-    <span class="file">{$filename}</span>
-</p>
-LINE;
-    }
-
-    protected function processCall($call)
-    {
-        preg_match('/^(?P<class>.*(?P<call>->|::))?(?P<function>\w+)\((?<params>.*)\)/', $call, $matches);
-        $matches = array_intersect_key($matches, array_flip(array_filter(array_keys($matches), 'is_string')));
-        return <<<CALL
-<span class="class">{$matches['class']}</span><span class="function">{$matches['function']}</span>(<span class="params">{$matches['params']}</span>)
-CALL;
-    }
-
-    protected function getFilename($path)
-    {
-        $path = explode('/', $path);
-        $path = array_slice($path, -$this->depth);
-        return implode('/', $path);
-    }
-
-    protected function getHeader()
-    {
-        $header = <<<HEADER
+        echo <<<HTML
 <!DOCTYPE HTML>
 <html>
 <head>
-<title>Trace file</title>
-<style>
-* { font-family:courier,monospace; font-size:13px; }
-html, body { height:100%; }
-p { margin:0; padding: 2px;}
-    p:hover { background-color: #FF9 !important; cursor:pointer; }
-.file { float:right;  text-align:right; }
-p:nth-child(odd) { background-color: lightgray; }
-.function { font-weight:bold; color:#008800; }
-.class { color:#000088; }
-.params{ color:#880088; }
-</style>
-<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+    <title>Report</title>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+    <script type="text/javascript">
+        $().ready(function(){
+            $('li.parent > span').on('click', function() {
+                console.log($(this).siblings('ul').slideToggle());
+            });
+        });
+    </script>
+    <style>
+        * { font-family:courier,monospace; font-size:11px; }
+        ul { list-style: none; padding-left 5px;}
+        li { border-left: 1px solid black; border-bottom: 1px solid black;}
+        li ul { display: none; }
+        li.parent > span { cursor: pointer; }
+        div.bar { border: 2px solid red;}
+    </style>
+
 </head>
 <body>
-HEADER;
-        return $header;
+HTML;
+        $this->printFiles($files['children']);
+
+        echo <<<HTML
+</body>
+</html>
+HTML;
     }
 
 }

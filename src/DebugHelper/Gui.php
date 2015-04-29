@@ -3,10 +3,15 @@ namespace DebugHelper;
 
 class Gui
 {
-    static public function getTrace($path)
+    public static function getTrace($path)
     {
         $trace = new \DebugHelper\Gui\Trace();
-        $trace->setFile($path);
-        echo $trace->loadHtml();
+        echo $trace->setFile($path)->loadHtml();
+    }
+
+    public static function renderLoadsHtml($path)
+    {
+        $trace = new \DebugHelper\Gui\Trace();
+        $trace->setFile($path)->renderLoadsHtml();
     }
 }

@@ -13,13 +13,19 @@ class Profile extends Abstracted
     protected $max_time = 0;
 
     /**
+     * Start position of the profiling
+     *
+     * @var string
+     */
+    protected $start_position;
+
+    /**
      * Begins the trace to watch where the code goes.
      */
     public function profile()
     {
         xhprof_enable();
-        $pos = $this->getCallerDetails(2, false);
-        echo $pos;
+        $this->start_position = $this->getCallerDetails(2, false);
     }
 
     /**
@@ -27,27 +33,33 @@ class Profile extends Abstracted
      *
      * @return string
      */
-    public function profileReport()
+    public function profileReport($file = false)
     {
         $pos = $this->getCallerDetails(2, false);
-
-        Styles::showHeader('profileReport');
 
         $xhprof_data = xhprof_disable();
         uasort($xhprof_data, array($this, 'compareItems'));
 
-        echo $pos . '<pre class="profile_report">';
+        $output = $this->start_position . $pos . '<pre class="profile_report">';
         foreach ($xhprof_data as $method => $stats) {
             $ratio = number_format(($stats['wt'] / $this->max_time) * 100, 2);
             if ($ratio < 1) {
                 continue;
             }
-            echo <<<ITEM
+            $output .= <<<ITEM
 <div><div class="label"><span>{$stats['wt']}</span>$method ({$stats['ct']})</div><div class="rate" style="width:{$ratio}%"></div></div>
 ITEM;
 
         }
-        echo '</pre>';
+        $output .= '</pre>';
+        if ($file) {
+            $output = Styles::getHeader('profileReport') . $output;
+            $filename = \DebugHelper::getDebugDir() . uniqid() . '.html';
+            file_put_contents($filename, $output);
+        } else {
+            Styles::showHeader('profileReport');
+            echo $output;
+        }
     }
 
     protected function compareItems($item_a, $item_b)

@@ -4,6 +4,31 @@ namespace DebugHelper;
 class Styles
 {
     /**
+     * Gets the styles given.
+     */
+    public static function getHeader()
+    {
+        if (\DebugHelper::isCli()) {
+            $keys = array();
+        } else {
+            $keys = func_get_args();
+        }
+
+        $headers = self::getAllHeaders();
+
+        $result = array();
+        foreach ($keys as $key) {
+            if (!empty($shown_headers[$key])) {
+                return;
+            }
+            $shown_headers[$key] = true;
+
+            $result[] = preg_replace('/\s+/', ' ', $headers[$key]);
+        }
+        return implode("\n", $result);
+    }
+
+    /**
      * Show the styles given if not shown before.
      */
     public static function showHeader()
@@ -16,6 +41,22 @@ class Styles
             $keys = func_get_args();
         }
 
+
+        $headers = self::getAllHeaders();
+
+        foreach ($keys as $key) {
+            if (!empty($shown_headers[$key])) {
+                return;
+            }
+            $shown_headers[$key] = true;
+
+            $header = preg_replace('/\s+/', ' ', $headers[$key]);
+            echo $header . "\n";
+        }
+    }
+
+    protected static function getAllHeaders()
+    {
         $headers = array();
 
         $headers['error'] = <<<HEAD
@@ -177,14 +218,6 @@ HEADER;
 </style>
 HEADER;
 
-        foreach ($keys as $key) {
-            if (!empty($shown_headers[$key])) {
-                return false;
-            }
-            $shown_headers[$key] = true;
-
-            $header = preg_replace('/\s+/', ' ', $headers[$key]);
-            echo $header . "\n";
-        }
+        return $headers;
     }
 }
