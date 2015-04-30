@@ -15,7 +15,6 @@ class Error
      */
     public static function handler($errno, $errstr, $errfile, $errline)
     {
-        \DebugHelper\Styles::showHeader('error');
         $class = 'error_handler_notice';
         switch ($errno) {
             case E_USER_ERROR:

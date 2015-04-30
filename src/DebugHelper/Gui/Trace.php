@@ -11,21 +11,6 @@ class Trace
 
     protected $min_length;
 
-    /**
-     * @return array
-     */
-    public function getFiles()
-    {
-        $path = \DebugHelper::getDebugDir();
-
-        $files = glob($path . '*.xt');
-        array_walk($files, function (&$item) {
-            preg_match('/\/(\w+)\.xt$/', $item, $matches);
-            $item = $matches[1];
-        });
-        return $files;
-    }
-
     public function renderLoadsHtml()
     {
         $processor  = new Processor();
