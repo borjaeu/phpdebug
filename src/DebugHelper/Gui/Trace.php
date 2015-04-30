@@ -11,21 +11,19 @@ class Trace
 
     protected $min_length;
 
-    public function loadHtml()
+    /**
+     * @return array
+     */
+    public function getFiles()
     {
-       // if (!is_file($this->file . '.out')) {
-            $processor  = new Processor();
-            $processor->process($this->file);
-      //  }
-        return;
-        $fp = fopen($this->file, 'r');
-        $this->min_length = 65000;
-        while (!feof($fp)) {
-            $line = fgets($fp);
-            $this->processLine($line);
-        }
-        return $this->buildHtml();
+        $path = \DebugHelper::getDebugDir();
 
+        $files = glob($path . '*.xt');
+        array_walk($files, function (&$item) {
+            preg_match('/\/(\w+)\.xt$/', $item, $matches);
+            $item = $matches[1];
+        });
+        return $files;
     }
 
     public function renderLoadsHtml()
@@ -55,7 +53,6 @@ class Trace
         return $this;
     }
 
-
     protected function printFiles(array $files, $depth = 0)
     {
         $indent = str_repeat('  ', $depth);
@@ -64,7 +61,7 @@ class Trace
         $item = <<<ITEM
 
 $indent  <li class="%s">
-$indent    <span>%06d&micro;s %s</span>
+$indent    <a href="codebrowser:%s" title="%s">%06d&micro;s</a><span> %s</span>
 $indent    <div class="bar" style="width:%d%%"></div>
 
 ITEM;
@@ -73,6 +70,8 @@ ITEM;
             printf(
                 $item,
                 $has_children ? 'parent' : 'leaf',
+                $file['path'],
+                $file['short_path'],
                 $file['time_children'],
                 $file['call'],
                 $file['relative'] * 100
@@ -107,6 +106,7 @@ ITEM;
         li { border-left: 1px solid black; border-bottom: 1px solid black;}
         li ul { display: none; }
         li.parent > span { cursor: pointer; }
+        li.parent > span:hover { background-color: greenyellow; }
         div.bar { border: 2px solid red;}
     </style>
 

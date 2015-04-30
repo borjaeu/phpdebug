@@ -8,53 +8,52 @@ class Log extends Abstracted
      *
      * @var string $data Data to be saved in the new created log.
      */
-    public function clearLog( $data = null )
+    public function clearLog($data = null)
     {
         $path = $this->getLogPath();
-        if (is_file( $path )) {
-            unlink( $path );
-            touch( $path );
+        if (is_file($path)) {
+            unlink($path);
+            touch($path);
         }
-        if (!empty( $data )) {
-            self::log( $data );
+        if (!empty($data)) {
+            self::log($data);
         }
     }
 
     /**
      * Save the data to a log file.
      *
-     * @param mixed  $data   Data to be written in the log.
+     * @param mixed $data Data to be written in the log.
      * @param string $header Identifier for the header of the log entry.
      */
-    public function log( $data, $header = 'LOG', $caller_depth = 1 )
+    public function log($data, $header = 'LOG', $caller_depth = 1)
     {
-        static $lastlog = false;
-        static $firstlog = false;
+        static $last_log = false;
+        static $first_log = false;
 
         // Get filename and last directory.
-        $pos = $this->getCallerInfo( false, $caller_depth );
-        $path = substr( $pos['file'], -32 );
+        $pos = $this->getCallerInfo(false, $caller_depth);
+        $path = substr($pos['file'], -32);
 
+        $ms = microtime(true);
+        $elapsed = date('Y/m/d H:i:s ') . ($ms - floor($ms));
 
-        $ms = microtime( true );
-        $elapsed = '';
-
-        if ($lastlog) {
-            $elapsed = ' +' . number_format( $ms - $lastlog, 3 );
+        if ($last_log) {
+            $elapsed = ' +' . number_format($ms - $last_log, 3);
         }
-        if ($firstlog) {
-            $elapsed .= ' +' . number_format( $ms - $firstlog, 3 );
+        if ($first_log) {
+            $elapsed .= ' +' . number_format($ms - $first_log, 3);
         } else {
-            $firstlog = $ms;
+            $first_log = $ms;
         }
-        $lastlog = $ms;
-        $ms = explode( '.', $ms );
-        $ms = isset( $ms[1] ) ? sprintf( '%03d', round( $ms[1] ) ) : 0;
+        $last_log = $ms;
+        $ms = explode('.', $ms);
+        $ms = isset($ms[1]) ? sprintf('%03d', round($ms[1])) : 0;
 
-        if (is_array( $data ) || is_object( $data )) {
-            $data = $this->toArray( $data );
-            $data = $this->getArrayDump( $data );
-        } elseif (empty( $data )) {
+        if (is_array($data) || is_object($data)) {
+            $data = $this->toArray($data);
+            $data = $this->getArrayDump($data);
+        } elseif (empty($data)) {
             $data = '';
         }
 
@@ -67,43 +66,44 @@ class Log extends Abstracted
         } else {
             $log = "\n{$pos} {$data}";
         }
-        error_log( $log, 3, $this->getLogPath() );
+        $path = $this->getLogPath();
+        error_log($log, 3, $path);
     }
 
     /**
      * Save the data to a log file.
      *
-     * @param mixed  $data   Data to be written in the log.
+     * @param mixed $data Data to be written in the log.
      * @param string $header Identifier for the header of the log entry.
      */
-    public function logUnique( $data, $extra = '', $caller_depth = 1 )
+    public function logUnique($data, $extra = '', $caller_depth = 1)
     {
         // Get filename and last directory.
-        $pos = $this->getCallerInfo( false, $caller_depth );
-        $path = explode( '/', $pos['file'] );
-        $path = array_splice( $path, -2 );
-        $path = implode( '/', $path );
+        $pos = $this->getCallerInfo(false, $caller_depth);
+        $path = explode('/', $pos['file']);
+        $path = array_splice($path, -2);
+        $path = implode('/', $path);
 
-        if (is_array( $data ) || is_object( $data )) {
-            $data = $this->toArray( $data );
-            $data = $this->getArrayDump( $data );
-        } elseif (empty( $data )) {
+        if (is_array($data) || is_object($data)) {
+            $data = $this->toArray($data);
+            $data = $this->getArrayDump($data);
+        } elseif (empty($data)) {
             $data = '';
         }
 
         // Build label.
         $log = "$path:{$pos['line']}\n\n$data";
 
-        $path = $this->getLogPath( true, $extra );
+        $path = $this->getLogPath(true, $extra);
 
-        error_log( $log, 3, $path );
-        self::log( basename( $path ), 'UNIQUE', $caller_depth + 1 );
+        error_log($log, 3, $path);
+        self::log(basename($path), 'UNIQUE', $caller_depth + 1);
     }
 
     /**
      * Shows the HTML trace.
      *
-     * @param boolean $finish       Finish the script execution.
+     * @param boolean $finish Finish the script execution.
      * @param boolean $return_trace Returns the trace instead of printing it.
      *
      * @return mixed
@@ -111,13 +111,13 @@ class Log extends Abstracted
     public function showtrace()
     {
         $trace = xdebug_get_function_stack();
-        $trace = array_slice( $trace, 0, count( $trace ) - 4 );
+        $trace = array_slice($trace, 0, count($trace) - 4);
 
         $debug_backtrace = '';
         foreach ($trace as $item) {
 
-            if (isset( $item['function'] )) {
-                $function = isset( $item['class'] ) ? $item['class'] . '::' . $item['function'] : $item['function'];
+            if (isset($item['function'])) {
+                $function = isset($item['class']) ? $item['class'] . '::' . $item['function'] : $item['function'];
             } else {
                 $function = 'inlcude: ' . $item['include_filename'];
             }
@@ -129,17 +129,17 @@ class Log extends Abstracted
 
 ROW;
         }
-        self::log( $debug_backtrace, 'TRACE', 5 );
+        self::log($debug_backtrace, 'TRACE', 5);
     }
 
     /**
      * @return string
      */
-    protected function getLogPath( $unique = false, $extra = '' )
+    protected function getLogPath($unique = false, $extra = '')
     {
         if ($unique) {
             return
-                \DebugHelper::getDebugDir() . date( 'Y_m_d_h_i_s' ) . preg_replace( '/\d+\./', '', microtime( true ) )
+                \DebugHelper::getDebugDir() . date('Y_m_d_h_i_s') . preg_replace('/\d+\./', '', microtime(true))
                 . '_' . $extra . '.txt';
         }
         return \DebugHelper::getDebugDir() . 'log.txt';
@@ -152,16 +152,16 @@ ROW;
      *
      * @return array
      */
-    protected function toArray( $data )
+    protected function toArray($data)
     {
         $result = array();
-        if (is_object( $data )) {
-            $data = get_object_vars( $data );
+        if (is_object($data)) {
+            $data = get_object_vars($data);
 
         }
-        if (is_array( $data )) {
+        if (is_array($data)) {
             foreach ($data as $key => $value) {
-                $result[$key] = $this->toArray( $value );
+                $result[$key] = $this->toArray($value);
             }
         } else {
             $result = $data;
@@ -176,9 +176,9 @@ ROW;
      *
      * @return string
      */
-    protected function getArrayDump( $array )
+    protected function getArrayDump($array)
     {
-        $data = print_r( $array, true );
+        $data = print_r($array, true);
         $data = preg_replace(
             array(
                 "/\n\n/",

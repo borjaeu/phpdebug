@@ -76,6 +76,8 @@ class Processor
                     'array'         => false,
                     'time_children' => $this->lines[$i]['time_children'],
                     'time_call'     => $this->lines[$i]['time_call'],
+                    'path'          => $this->lines[$i]['path'],
+                    'short_path'    => $this->lines[$i]['short_path'],
                     'relative'      => 0,
                     'children'      => array()
                 );
@@ -121,6 +123,8 @@ class Processor
                 'time_call'         => 0,
                 'ignored_children'  => 0,
                 'depth'             => $line_info['depth'],
+                'path'              => $line_info['path'],
+                'short_path'        => $this->getFilename($line_info['path']),
                 'time'              => $time,
                 'call'              => $line_info['call']
             );
