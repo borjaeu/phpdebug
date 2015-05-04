@@ -1,10 +1,6 @@
-<!DOCTYPE HTML>
-<html>
-<head>
-    <title>Script title</title>
-    <style>
-        body, html { height: 100%;margin:0; padding:0;  }
-        * { font-family:courier,monospace; font-size: 13px; }
+{% extends 'base.html.twig' %}
+{% block title %}Debug - Code Trace{% endblock %}
+{% block style %}
 
         div.column { width: 50%; float: left; }
         div.inner { overflow: auto;  border: 2px solid black; }
@@ -18,10 +14,8 @@
         .covered { background-color: lightgreen; }
 
         a { color: #000000; text-decoration: none; }
-    </style>
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
-</head>
-<body>
+{% endblock %}
+{% block body %}
 <div class="column">
     <div class="inner">
 {% for line_no, line in trace_lines %}
@@ -46,5 +40,4 @@
 {% endfor %}
     </div>
 </div>
-</body>
-</html>
+{% endblock %}

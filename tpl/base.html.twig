@@ -1,0 +1,23 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>{% block title %}Debug{% endblock %}</title>
+    <style>
+        body, html { height: 100%;margin:0; padding:0; }
+        * { font-family:courier, monospace; font-size: 13px; }
+
+        header { height: 14px; background-color: yellow; }
+        {% block style %}
+        {% endblock %}
+    </style>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+    <script type="text/javascript">
+        {% block javascript %}{% endblock %}
+    </script>
+</head>
+<body>
+<header><a href="?">Home</a></header>
+{% block body %}
+{% endblock %}
+</body>
+</html>

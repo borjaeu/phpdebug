@@ -91,7 +91,7 @@ class Processor
             }
         }
         foreach ($result as &$item) {
-            $item['relative'] = $max_time_children == 0 ? 0 : ($item['time_children'] / $max_time_children);
+            $item['relative'] = $max_time_children == 0 ? 0 : (int)(($item['time_children'] / $max_time_children)*100);
         }
         return $result;
     }

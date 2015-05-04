@@ -1,28 +1,22 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-    <title>Script title</title>
-    <style>
-        * { font-family:courier,monospace; }
+{% extends 'base.html.twig' %}
+{% block title %}Debug - Code Trace{% endblock %}
+{% block style %}
         ul { list-style: none; padding: 0; }
         a { text-decoration: none; color: black; float: left; display: block; margin-right: 10px; }
         a:hover { text-decoration: underline; }
         li span { width: 100px; }
         .even { background-color:#DEDEDE; }
         .odd { background-color:#FFFFFF; }
-    </style>
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
-</head>
-<body>
+{% endblock %}
+{% block body %}
     <table>
-
 {% for file in files %}
         <tr>
             <td>{{ file.name }}</td>
             <td><a href="?trace={{ file.id }}">Trace</a></td>
             <td><a href="?code={{ file.id }}">Code</a></td>
+            <td><a href="?delete={{ file.id }}">Delete</a></td>
         </tr>
 {% endfor %}
     </table>
-</body>
-</html>
+{% endblock %}
