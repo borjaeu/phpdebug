@@ -32,13 +32,20 @@ class Gui
         $path = \DebugHelper::getDebugDir();
 
         $files = glob($path . '*.xt');
-        array_walk($files, function (&$item) {
-            preg_match('/(?P<id>(\d{4})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d{2}))\.xt$/', $item, $match);
-            $item = array(
-                'id' => $match['id'],
-                'name' => "{$match[4]}/{$match[3]}/{$match[2]} {$match[5]}:{$match[6]}:{$match[7]}",
-                'path' => $item
-            );
+        array_walk($files, function (&$item) use ($path) {
+            if (preg_match('/(?P<id>(\d{4})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d{2}))\.xt$/', $item, $match)) {
+                $info = json_decode(file_get_contents($path . $match['id'] . '.svr'), true);
+                $item = array(
+                    'id' => $match['id'],
+                    'name' => "{$match[4]}/{$match[3]}/{$match[2]} {$match[5]}:{$match[6]}:{$match[7]}",
+                    'path' => $item,
+                    'host' => isset($info['SERVER_NAME']) ? $info['SERVER_NAME'] : '',
+                    'method' => isset($info['REQUEST_METHOD']) ? $info['REQUEST_METHOD'] : '',
+                    'uri' => isset($info['REQUEST_URI']) ? $info['REQUEST_URI'] : '',
+                    'size' => floor(filesize($item) / 1024),
+                    'agent' => isset($info['HTTP_USER_AGENT']) ? $info['HTTP_USER_AGENT'] : '',
+                );
+            }
         });
         return $files;
     }

@@ -50,7 +50,7 @@ ERROR;
             return;
         }
 
-        file_put_contents(self::$trace_file . '.svr', print_r($_SERVER, true));
+        file_put_contents(self::$trace_file . '.svr', json_encode($_SERVER, JSON_PRETTY_PRINT));
 
         // Info about the data.
         $log_info = $this->getCallerInfo(false, 4);
@@ -84,9 +84,9 @@ OUTPUT;
         }
         xdebug_stop_trace();
 
-        $coverage = $this->getCodeCoverage(self::$trace_file . '.raw');
+        $coverage = $this->getCodeCoverage();
 
-        file_put_contents(self::$trace_file . '.cvg', serialize($coverage));
+        file_put_contents(self::$trace_file . '.cvg', json_encode($coverage));
         self::$trace_file = '';
         if ($finish_execution) {
             die(sprintf("<pre><a href=\"codebrowser:%s:%d\">DIE</a></pre>", __FILE__, __LINE__));
@@ -103,66 +103,14 @@ OUTPUT;
 
     /**
      * Gets code coverage from the xdebug.
-     *
-     * @param boolean $rawfile If set, determines a file to copy the raw contents for the coverage.
      */
-    protected function getCodeCoverage($rawfile = false)
+    protected function getCodeCoverage()
     {
         $code_coverage = xdebug_get_code_coverage();
-
-        if (false !== $rawfile) {
-            file_put_contents($rawfile, print_r($code_coverage, true));
-        }
-
         $result = array();
         foreach ($code_coverage as $file => $lines) {
-            if ($file === __FILE__) {
-                continue;
-            }
-            if (isset($file) && is_file($file)) {
-                // Get code line.
-                $fp = fopen($file, 'r');
-                $i = 0;
-                $class = '';
-                $function = '';
-                $valid_function = false;
-                while (!feof($fp)) {
-                    $i++;
-                    $line = fgets($fp);
-                    if (preg_match('/^\s*(abstract)?\s*[Cc]lass\s+([^\s]*)/', $line, $matches)) {
-                        // Get current class.
-                        $class = $matches[2];
-                    } elseif (preg_match('/^\s*(.*)function\s+([^\(]*)\((.*)\)/', $line, $matches)) {
-                        // Save previous method if valid.
-                        if ($valid_function) {
-                            $result[$function] = $data;
-                        }
-
-                        // Get current method.
-                        $function = "{$class}::{$matches[2]}";
-                        $valid_function = false;
-                        $data = array(
-                            'file' => $file,
-                            'lines' => array()
-                        );
-                    }
-
-                    $data['lines'][$i] = array(
-                        'code' => $line,
-                        'covered' => isset($lines[$i])
-                    );
-                    if (isset($lines[$i])) {
-                        $valid_function = true;
-                    }
-                }
-                // Save previous method if valid.
-                if ($valid_function) {
-                    $result[$function] = $data;
-                }
-            }
+            $result[$file] = $lines;
         }
         return $result;
     }
-
-
 }

@@ -3,10 +3,11 @@
 {% macro showChildren(files) %}
 <ul>
 {% for file in files %}
-    <li class="{% if file.children|length > 0 %}parent{% else %}leaf{% endif %}">
-        <a href="codebrowser:{{ file.path }}" title="{{ file.short_path }}">{{ file.time_children }}&micro;s</a><span> {{ file.call }}</span>
+    <li class="{% if file.count_children %}parent{% else %}leaf{% endif %}">
+        <a href="codebrowser:{{ file.path }}" title="{{ file.short_path }}">{{ "%06d"|format(file.time_children) }}&micro;s</a>
+        [{{ file.count_children }}] <span>{{ file.call }}</span>
             <div class="bar" style="width:{{ file.relative }}%"></div>
-{% if file.children|length > 0 %}
+{% if file.count_children %}
 {{ _self.showChildren(file.children) }}
 {% endif %}
         </li>
@@ -19,7 +20,9 @@
     ul { list-style: none; padding-left 5px;}
     li { border-left: 1px solid black; border-bottom: 1px solid black;}
     li ul { display: none; }
-    li.parent > span { cursor: pointer; }
+    li.leaf { background-color: #FFFFD4; }
+    li.parent { background-color: #E2FEE2; }
+    li.parent > span { cursor: pointer; font-weight:bold; }
     li.parent > span:hover { background-color: greenyellow; }
     div.bar { border: 2px solid red;}
 {% endblock %}

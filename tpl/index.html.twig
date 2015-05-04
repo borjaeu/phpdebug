@@ -7,16 +7,36 @@
         li span { width: 100px; }
         .even { background-color:#DEDEDE; }
         .odd { background-color:#FFFFFF; }
+        table { border-collapse: collapse; }
+        table td { border: 1px solid gray; padding: 2px; }
 {% endblock %}
 {% block body %}
     <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Size</th>
+                <th>Method</th>
+                <th>Host</th>
+                <th>Uri</th>
+                <th>Agent</th>
+                <th colspan="3">Actions</th>
+            </tr>
+        </thead>
 {% for file in files %}
+    {% if file.name %}
         <tr>
             <td>{{ file.name }}</td>
+            <td>{{ file.size }}Kb</td>
+            <td>{{ file.method }}</td>
+            <td>{{ file.host }}</td>
+            <td>{{ file.uri }}</td>
+            <td>{{ file.agent }}</td>
             <td><a href="?trace={{ file.id }}">Trace</a></td>
             <td><a href="?code={{ file.id }}">Code</a></td>
             <td><a href="?delete={{ file.id }}">Delete</a></td>
         </tr>
+    {% endif %}
 {% endfor %}
     </table>
 {% endblock %}

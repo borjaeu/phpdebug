@@ -72,14 +72,15 @@ class Processor
             if ($this->lines[$i]['depth'] == $depth) {
                 $children = $this->getChildren($i+1, $depth + 1);
                 $element = array(
-                    'call'          => $this->lines[$i]['call'],
-                    'array'         => false,
-                    'time_children' => $this->lines[$i]['time_children'],
-                    'time_call'     => $this->lines[$i]['time_call'],
-                    'path'          => $this->lines[$i]['path'],
-                    'short_path'    => $this->lines[$i]['short_path'],
-                    'relative'      => 0,
-                    'children'      => array()
+                    'call'           => $this->lines[$i]['call'],
+                    'array'          => false,
+                    'time_children'  => $this->lines[$i]['time_children'],
+                    'count_children' => $this->lines[$i]['count_children'],
+                    'time_call'      => $this->lines[$i]['time_call'],
+                    'path'           => $this->lines[$i]['path'],
+                    'short_path'     => $this->lines[$i]['short_path'],
+                    'relative'       => 0,
+                    'children'       => array()
                 );
                 if ($children) {
                     $element['children'] = $children;
@@ -120,6 +121,7 @@ class Processor
             $this->lines[$count] = array(
                 'count'             => $count,
                 'time_children'     => 0,
+                'count_children'    => 0,
                 'time_call'         => 0,
                 'ignored_children'  => 0,
                 'depth'             => $line_info['depth'],
@@ -156,6 +158,7 @@ class Processor
         for ($i = $count; $i > 0; $i--) {
             if ($this->lines[$i]['depth'] < $depth) {
                 $this->lines[$i]['time_children'] += $elapsed;
+                $this->lines[$i]['count_children']++;
                 $depth = $this->lines[$i]['depth'];
                 if ($depth == 0) {
                     break;

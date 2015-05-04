@@ -39,19 +39,7 @@ class Coverage
 
     protected function loadCoverage()
     {
-        $coverage = array();
-        $raw = unserialize(file_get_contents($this->coverage_file));
-        foreach ($raw as $method => $details) {
-            if (!isset($coverage[$details['file']])) {
-                $coverage[$details['file']] = array();
-            }
-            foreach ($details['lines'] as $line_no => $info) {
-                if ($info['covered']) {
-                    $coverage[$details['file']][$line_no] = true;
-                }
-            }
-        }
-        return $coverage;
+        return json_decode(file_get_contents($this->coverage_file), true);
     }
 
     protected function renderCode($target_line_no)
