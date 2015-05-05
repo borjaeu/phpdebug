@@ -40,9 +40,11 @@ class Processor
         $this->min_depth = 65000;
         $this->shorter_path = 65000;
         $count = 320000000;
+        $line_no = 0;
         while (!feof($file_in) && $count-- > 0) {
             $line = fgets($file_in);
-            $this->preProcessInputLine($line);
+            $line_no++;
+            $this->preProcessInputLine($line, $line_no);
         }
         fclose($file_in);
 
@@ -74,6 +76,7 @@ class Processor
                 $element = array(
                     'call'           => $this->lines[$i]['call'],
                     'array'          => false,
+                    'line_no'        => $this->lines[$i]['line_no'],
                     'time_children'  => $this->lines[$i]['time_children'],
                     'count_children' => $this->lines[$i]['count_children'],
                     'time_call'      => $this->lines[$i]['time_call'],
@@ -97,7 +100,7 @@ class Processor
         return $result;
     }
 
-    protected function preProcessInputLine($line)
+    protected function preProcessInputLine($line, $line_no)
     {
         static $count = 0;
 
@@ -120,6 +123,7 @@ class Processor
             $count++;
             $this->lines[$count] = array(
                 'count'             => $count,
+                'line_no'           => $line_no,
                 'time_children'     => 0,
                 'count_children'    => 0,
                 'time_call'         => 0,

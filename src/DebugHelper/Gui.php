@@ -23,6 +23,7 @@ class Gui
     {
         $files = self::getFiles();
         $template = new Gui\Template();
+        $template->assign('root_dir', \DebugHelper::getDebugDir());
         $template->assign('files', $files);
         echo $template->fetch('index');
     }
@@ -33,12 +34,15 @@ class Gui
 
         $files = glob($path . '*.xt');
         array_walk($files, function (&$item) use ($path) {
-            if (preg_match('/(?P<id>(\d{4})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d{2}))\.xt$/', $item, $match)) {
+            if (preg_match('/(?P<id>(\d{4})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d+))\.xt$/', $item, $match)) {
                 $info = json_decode(file_get_contents($path . $match['id'] . '.svr'), true);
+                $post = json_decode(file_get_contents($path . $match['id'] . '.post'), true);
+
                 $item = array(
                     'id' => $match['id'],
-                    'name' => "{$match[4]}/{$match[3]}/{$match[2]} {$match[5]}:{$match[6]}:{$match[7]}",
+                    'name' => "{$match[4]}/{$match[3]}/{$match[2]} {$match[5]}:{$match[6]}:{$match[7]} {$match[8]}",
                     'path' => $item,
+                    'post' => count($post),
                     'host' => isset($info['SERVER_NAME']) ? $info['SERVER_NAME'] : '',
                     'method' => isset($info['REQUEST_METHOD']) ? $info['REQUEST_METHOD'] : '',
                     'uri' => isset($info['REQUEST_URI']) ? $info['REQUEST_URI'] : '',

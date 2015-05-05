@@ -1,14 +1,15 @@
 {% extends 'base.html.twig' %}
 
-{% macro showChildren(files) %}
+{% macro showChildren(files, id) %}
 <ul>
 {% for file in files %}
     <li class="{% if file.count_children %}parent{% else %}leaf{% endif %}">
-        <a href="codebrowser:{{ file.path }}" title="{{ file.short_path }}">{{ "%06d"|format(file.time_children) }}&micro;s</a>
+        <a href="codebrowser:{{ file.path }}" title="{{ file.short_path }}">{{ "%08d"|format(file.time_children) }}&micro;s</a>
+        <a href="?code={{ id }}&line={{ file.line_no }}" target="_blank">{{ file.line_no }}</a>
         [{{ file.count_children }}] <span>{{ file.call }}</span>
             <div class="bar" style="width:{{ file.relative }}%"></div>
 {% if file.count_children %}
-{{ _self.showChildren(file.children) }}
+{{ _self.showChildren(file.children, id) }}
 {% endif %}
         </li>
 {% endfor %}
@@ -37,5 +38,5 @@
 {% endblock %}
 
 {% block body %}
-{{ _self.showChildren(files.children) }}
+{{ _self.showChildren(files.children, id) }}
 {% endblock %}

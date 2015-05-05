@@ -43,7 +43,8 @@ ERROR;
         ini_set('xdebug.collect_return', 0); // 0 None, 1, Yes
         ini_set('xdebug.var_display_max_depth', 2);
         ini_set('xdebug.var_display_max_data', 128);
-        $trace_key = $trace_file ? $trace_file : date('Y_m_d_h_i_s');
+        preg_match('/0\.(?P<decimal>\d+)/', microtime(), $matches);
+        $trace_key = $trace_file ? $trace_file : date('Y_m_d_h_i_s_') . $matches['decimal'];
 
         self::$trace_file = \DebugHelper::getDebugDir() . $trace_key;
         if ($trace_file && is_file(self::$trace_file)) {
@@ -51,9 +52,10 @@ ERROR;
         }
 
         file_put_contents(self::$trace_file . '.svr', json_encode($_SERVER, JSON_PRETTY_PRINT));
+        file_put_contents(self::$trace_file . '.post', json_encode($_POST, JSON_PRETTY_PRINT));
 
         // Info about the data.
-        $log_info = $this->getCallerInfo(false, 4);
+        $log_info = $this->getCallerInfo(false, 2);
         $file = strlen($log_info['file']) > 36 ? '...' . substr($log_info['file'], -35) : $log_info['file'];
         \DebugHelper::log("Watch started at $file:{$log_info['line']}", 'AUTO');
 

@@ -7,7 +7,7 @@
         li span { width: 100px; }
         .even { background-color:#DEDEDE; }
         .odd { background-color:#FFFFFF; }
-        table { border-collapse: collapse; }
+        table { border-collapse: collapse; width: 98%; margin: 1%; }
         table td { border: 1px solid gray; padding: 2px; }
 {% endblock %}
 {% block body %}
@@ -17,10 +17,11 @@
                 <th>ID</th>
                 <th>Size</th>
                 <th>Method</th>
+                <th>Post</th>
                 <th>Host</th>
                 <th>Uri</th>
-                <th>Agent</th>
-                <th colspan="3">Actions</th>
+                <th>User Agent</th>
+                <th>Actions</th>
             </tr>
         </thead>
 {% for file in files %}
@@ -28,13 +29,22 @@
         <tr>
             <td>{{ file.name }}</td>
             <td>{{ file.size }}Kb</td>
-            <td>{{ file.method }}</td>
+            <td>
+                {% if file.post %}
+                <a href="codebrowser:{{ root_dir }}{{ file.id }}.post">{{ file.method }}({{ file.post }})</a>
+                {% else %}
+                    {{ file.method }}
+                {% endif %}
+            </td>
+            <td>{{ file.post }}</td>
             <td>{{ file.host }}</td>
             <td>{{ file.uri }}</td>
             <td>{{ file.agent }}</td>
-            <td><a href="?trace={{ file.id }}">Trace</a></td>
-            <td><a href="?code={{ file.id }}">Code</a></td>
-            <td><a href="?delete={{ file.id }}">Delete</a></td>
+            <td>
+                <a href="?trace={{ file.id }}">Trace</a>
+                <a href="?code={{ file.id }}">Code</a>
+                <a href="?delete={{ file.id }}">Delete</a>
+            </td>
         </tr>
     {% endif %}
 {% endfor %}
