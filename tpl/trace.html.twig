@@ -1,12 +1,14 @@
-{% extends 'base.html.twig' %}
+{% extends 'bootstrap.html.twig' %}
 
 {% macro showChildren(files, id) %}
 <ul>
 {% for file in files %}
     <li class="{% if file.count_children %}parent{% else %}leaf{% endif %}">
         <a href="codebrowser:{{ file.path }}" title="{{ file.short_path }}">{{ "%08d"|format(file.time_children) }}&micro;s</a>
-        <a href="?code={{ id }}&line={{ file.line_no }}" target="_blank">{{ file.line_no }}</a>
-        [{{ file.count_children }}] <span>{{ file.call }}</span>
+        <a href="?code={{ id }}&line={{ file.line_no }}" target="_blank" title="View trace line {{ file.line_no }}"><span class="glyphicon glyphicon-sunglasses"></span></a>
+        <span class="glyphicon {% if file.count_children %}glyphicon-plus{% else %}glyphicon-minus{% endif %}"></span>
+        [{{ file.count_children }}]
+        <span>{{ file.call }}</span>
             <div class="bar" style="width:{{ file.relative }}%"></div>
 {% if file.count_children %}
 {{ _self.showChildren(file.children, id) }}

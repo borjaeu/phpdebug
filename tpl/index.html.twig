@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+{% extends 'bootstrap.html.twig' %}
 {% block title %}Debug - Code Trace{% endblock %}
 {% block style %}
         ul { list-style: none; padding: 0; }
@@ -7,11 +7,16 @@
         li span { width: 100px; }
         .even { background-color:#DEDEDE; }
         .odd { background-color:#FFFFFF; }
-        table { border-collapse: collapse; width: 98%; margin: 1%; }
-        table td { border: 1px solid gray; padding: 2px; }
+{% endblock %}
+{% block javascript %}
+    function deleteTrace(sTraceId) {
+        $.get('?delete=' + sTraceId, function(oData) {
+            $('#' + sTraceId).fadeOut();
+        });
+    }
 {% endblock %}
 {% block body %}
-    <table>
+    <table class="table">
         <thead>
             <tr>
                 <th>ID</th>
@@ -20,33 +25,27 @@
                 <th>Post</th>
                 <th>Host</th>
                 <th>Uri</th>
-                <th>User Agent</th>
-                <th>Actions</th>
             </tr>
         </thead>
 {% for file in files %}
-    {% if file.name %}
-        <tr>
-            <td>{{ file.name }}</td>
-            <td>{{ file.size }}Kb</td>
+{% if file.name %}
+        <tr id="{{ file.id }}">
             <td>
-                {% if file.post %}
-                <a href="codebrowser:{{ root_dir }}{{ file.id }}.post">{{ file.method }}({{ file.post }})</a>
-                {% else %}
-                    {{ file.method }}
-                {% endif %}
+                <a href="codebrowser:{{ root_dir }}{{ file.id }}.svr" title="Open info file"><span class="glyphicon glyphicon-edit"></span></a>
+                <a href="?trace={{ file.id }}" title="Grouped code"><span class="glyphicon glyphicon-scale"></span></a>
+                <a href="?code={{ file.id }}" title="See code"><span class="glyphicon glyphicon-sunglasses"></span></a>
+                <a href="?delete={{ file.id }}" onclick="deleteTrace('{{ file.id }}'); return false;" title="delete file"><span class="glyphicon glyphicon-remove"></span></a>
+                {{ file.name }}
             </td>
-            <td>{{ file.post }}</td>
+            <td>{{ file.size }}Kb</td>
+            <td>{{ file.info.server.REQUEST_METHOD }}</td>
+            <td>{{ file.info.post | length }}</td>
             <td>{{ file.host }}</td>
-            <td>{{ file.uri }}</td>
-            <td>{{ file.agent }}</td>
+            <td>{{ file.info.server.REQUEST_URI }}</td>
             <td>
-                <a href="?trace={{ file.id }}">Trace</a>
-                <a href="?code={{ file.id }}">Code</a>
-                <a href="?delete={{ file.id }}">Delete</a>
             </td>
         </tr>
-    {% endif %}
+{% endif %}
 {% endfor %}
     </table>
 {% endblock %}

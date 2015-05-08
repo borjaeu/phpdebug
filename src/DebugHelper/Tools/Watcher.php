@@ -51,8 +51,12 @@ ERROR;
             return;
         }
 
-        file_put_contents(self::$trace_file . '.svr', json_encode($_SERVER, JSON_PRETTY_PRINT));
-        file_put_contents(self::$trace_file . '.post', json_encode($_POST, JSON_PRETTY_PRINT));
+        file_put_contents(self::$trace_file . '.svr', json_encode(array(
+            'server' => $_SERVER,
+            'post' => $_POST,
+            'get' => $_GET,
+            'files' => $_FILES
+        ), JSON_PRETTY_PRINT));
 
         // Info about the data.
         $log_info = $this->getCallerInfo(false, 2);
