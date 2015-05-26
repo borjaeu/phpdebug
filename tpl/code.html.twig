@@ -1,21 +1,28 @@
 {% extends 'base.html.twig' %}
 {% block title %}Debug - Code Trace{% endblock %}
 {% block style %}
-
         div.column { width: 50%; float: left; }
         div.inner { overflow: auto;  border: 2px solid black; }
 
         .selected { background-color: lightgrey; }
 
-        pre.line { float: left; margin:0; }
+        pre.line { float: left; margin:0; width: 90%; overflow: hidden;}
         div.line { border-bottom: 1px solid lightblue; height: 15px; overflow: hidden; width: 5000px;}
             a.line_no { float: left; color:white; background-color: gray; font-weight: bold; padding: 1px; }
 
         .covered { background-color: lightgreen; }
-
         a { color: #000000; text-decoration: none; }
+
+        ul#navigation { height: 15px; margin: 0; padding: 0; }
+            ul#navigation li { display: inline; width: 30px; overflow: hidden; }
 {% endblock %}
 {% block body %}
+    <ul id="navigation">
+        {% for info in navigation.breadcrumbs %}
+            <li><a href="?code={{ id }}&line={{ info.line }}" title="{{ info.call }}()">{{ info.name }}()</a></li> &gt;
+        {% endfor %}
+        ... &gt; <li><a href="?code={{ id }}&line={{ navigation.next.line }}" title="{{ navigation.next.call }}()">{{ navigation.next.name }}()</a></li>
+    </ul>
 <div class="column">
     <div class="inner">
 {% for line_no, line in trace_lines %}
