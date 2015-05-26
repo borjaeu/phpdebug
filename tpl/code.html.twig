@@ -4,13 +4,13 @@
         div.column { width: 50%; float: left; }
         div.inner { overflow: auto;  border: 2px solid black; }
 
-        .selected { background-color: lightgrey; }
 
         pre.line { float: left; margin:0; width: 90%; overflow: hidden;}
         div.line { border-bottom: 1px solid lightblue; height: 15px; overflow: hidden; width: 5000px;}
             a.line_no { float: left; color:white; background-color: gray; font-weight: bold; padding: 1px; }
 
-        .covered { background-color: lightgreen; }
+        .covered { background-color: #D4FFD4; }
+        .selected pre { background-color: #7FFF2A; }
         a { color: #000000; text-decoration: none; }
 
         ul#navigation { height: 15px; margin: 0; padding: 0; }
@@ -30,7 +30,7 @@
             <a href="?code={{ id }}&line={{ line_no }}" class="line_no">
                 {{ "%03d" | format(line_no) }}
             </a>
-            <a href="?code={{ id }}&line={{ line_no }}">
+            <a href="?code={{ id }}&line={{ line_no }}" title="{{ line }}">
                 <pre class="line">{{ line }}</pre>
             </a>
         </div>
