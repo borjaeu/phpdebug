@@ -32,8 +32,9 @@
         <tr id="{{ file.id }}">
             <td>
                 <a href="codebrowser:{{ root_dir }}{{ file.id }}.svr" title="Open info file"><span class="glyphicon glyphicon-edit"></span></a>
-                <a href="?trace={{ file.id }}" title="Grouped code"><span class="glyphicon glyphicon-scale"></span></a>
-                <a href="?code={{ file.id }}" title="See code"><span class="glyphicon glyphicon-sunglasses"></span></a>
+                <a href="?stats={{ file.id }}" title="Grouped code with stats"><span class="glyphicon glyphicon-stats"></span></a>
+                <a href="?trace={{ file.id }}" title="See trace"><span class="glyphicon glyphicon-sunglasses"></span></a>
+                <a href="?coverage={{ file.id }}" title="Coverage"><span class="glyphicon glyphicon-book"></span></a>
                 <a href="?delete={{ file.id }}" onclick="deleteTrace('{{ file.id }}'); return false;" title="delete file"><span class="glyphicon glyphicon-remove"></span></a>
                 {{ file.name }}
             </td>

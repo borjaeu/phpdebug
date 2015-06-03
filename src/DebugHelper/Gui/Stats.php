@@ -1,7 +1,7 @@
 <?php
 namespace DebugHelper\Gui;
 
-class Trace
+class Stats
 {
     protected $file;
 
@@ -43,6 +43,6 @@ class Trace
         $template = new Template();
         $template->assign('id', $this->id);
         $template->assign('files', $files);
-        echo $template->fetch('trace');
+        echo $template->fetch('stats');
     }
 }

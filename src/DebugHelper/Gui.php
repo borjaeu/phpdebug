@@ -5,9 +5,9 @@ class Gui
 {
     public static function renderLoadsHtml()
     {
-        if (isset($_GET['trace'])) {
-            $trace = new \DebugHelper\Gui\Trace();
-            $trace->setFile($_GET['trace'])->renderLoadsHtml();
+        if (isset($_GET['stats'])) {
+            $trace = new \DebugHelper\Gui\Stats();
+            $trace->setFile($_GET['stats'])->renderLoadsHtml();
         } elseif (isset($_GET['code'])) {
             $coverage = new \DebugHelper\Gui\Coverage();
             $coverage->setFile($_GET['code'])->renderLoadsHtml();
