@@ -6,11 +6,14 @@ class Gui
     public static function renderLoadsHtml()
     {
         if (isset($_GET['stats'])) {
-            $trace = new \DebugHelper\Gui\Stats();
-            $trace->setFile($_GET['stats'])->renderLoadsHtml();
+            $stats = new \DebugHelper\Gui\Stats();
+            $stats->setFile($_GET['stats'])->renderLoadsHtml();
         } elseif (isset($_GET['trace'])) {
-            $coverage = new \DebugHelper\Gui\Trace();
-            $coverage->setFile($_GET['trace'])->renderLoadsHtml();
+            $trace = new \DebugHelper\Gui\Trace();
+            $trace->setFile($_GET['trace'])->renderLoadsHtml();
+        } elseif (isset($_GET['coverage'])) {
+            $coverage = new \DebugHelper\Gui\Coverage();
+            $coverage->setFile($_GET['coverage'])->renderLoadsHtml();
         } elseif (isset($_GET['delete'])) {
             self::delete($_GET['delete']);
             echo 'ok';
