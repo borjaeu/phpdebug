@@ -19,18 +19,18 @@
 {% block body %}
     <ul id="navigation">
         {% for info in navigation.breadcrumbs %}
-            <li><a href="?code={{ id }}&line={{ info.line }}" title="{{ info.call }}()">{{ info.name }}()</a></li> &gt;
+            <li><a href="?trace={{ id }}&line={{ info.line }}" title="{{ info.call }}()">{{ info.name }}()</a></li> &gt;
         {% endfor %}
-        ... &gt; <li><a href="?code={{ id }}&line={{ navigation.next.line }}" title="{{ navigation.next.call }}()">{{ navigation.next.name }}()</a></li>
+        ... &gt; <li><a href="?trace={{ id }}&line={{ navigation.next.line }}" title="{{ navigation.next.call }}()">{{ navigation.next.name }}()</a></li>
     </ul>
 <div class="column">
     <div class="inner">
 {% for line_no, line in trace_lines %}
         <div class="line{% if line_no == selected_trace %} selected{% endif %}">
-            <a href="?code={{ id }}&line={{ line_no }}" class="line_no">
+            <a href="?trace={{ id }}&line={{ line_no }}" class="line_no">
                 {{ "%03d" | format(line_no) }}
             </a>
-            <a href="?code={{ id }}&line={{ line_no }}" title="{{ line }}">
+            <a href="?trace={{ id }}&line={{ line_no }}" title="{{ line }}">
                 <pre class="line">{{ line }}</pre>
             </a>
         </div>

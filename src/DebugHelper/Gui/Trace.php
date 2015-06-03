@@ -1,7 +1,7 @@
 <?php
 namespace DebugHelper\Gui;
 
-class Coverage
+class Trace
 {
     protected $id;
     protected $coverage_file;
@@ -21,7 +21,7 @@ class Coverage
      * Sets the value of file.
      *
      * @param string $file The path of the file containing the debug.
-     * @return Coverage
+     * @return Trace
      * @throws \Exception If the file is not valid.
      */
     public function setFile($file)
@@ -61,7 +61,7 @@ class Coverage
         $template->assign('trace_lines', $trace_lines);
         $template->assign('navigation', $navigation);
         $template->assign('code_lines', $this->getCodeLines($trace_lines[$target_line_no]));
-        echo $template->fetch('code');
+        echo $template->fetch('trace');
     }
 
     /**
