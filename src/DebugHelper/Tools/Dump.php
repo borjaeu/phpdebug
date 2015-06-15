@@ -73,7 +73,7 @@ DEBUG;
                 $step['function'] = 'include: ' . $item['include_filename'];
             }
             $step['params'] = count($item['params']);
-            $step['file'] = $this->getShortenedPath($item['file'], 4);
+            $step['file'] = $item['file'];
             $step['line'] = $item['line'];
             $debug_backtrace[] = $step;
         }

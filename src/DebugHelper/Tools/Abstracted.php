@@ -257,7 +257,7 @@ POS;
         $debug .= <<<HTML
 $indent<li id="debug_node_$id" class="$status $class">
 $indent    <span class="row" $script>
-$indent        $key$content
+$indent        $key $content
 $indent    </span>
 $extra
 $indent</li>
@@ -318,13 +318,25 @@ HTML;
 
     protected function array2Html(array $rows, $id)
     {
-        $html_table = "<table id=\"$id\">\n";
+        $html_table = "<table id=\"$id\">\n\t<tr>\n";
+        foreach ($rows[0] as $field => $value) {
+            $html_table .= "\t\t<th>$field</th>\n";
+        }
+        $html_table .= "\t</tr>\n";
         foreach ($rows as $item) {
-            $html_table .= "<tr>";
+            $html_table .= "\t<tr>\n";
             foreach ($item as $field => $value) {
-                $html_table .= "<td class=\"$field\">$value</td>";
+                if ($field == 'file') {
+                    $file = $this->getShortenedPath($value, 4);
+                    if (isset($item['line'])) {
+                        $value = "<a href=\"codebrowser:$value:{$item['line']}\" title=\"$value\">$file</a>";
+                    } else {
+                        $value = "<a href=\"codebrowser:$value\" title=\"$value\">$file</a>";
+                    }
+                }
+                $html_table .= "\t\t<td class=\"$field\">$value</td>\n";
             }
-            $html_table .= "</tr>";
+            $html_table .= "\t</tr>\n";
         }
         $html_table .= "\n</table>\n";
         return $html_table;
