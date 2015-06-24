@@ -53,6 +53,8 @@ class Trace
     protected function renderCode($target_line_no)
     {
         $trace_lines = $this->getLines($this->trace_file, $target_line_no, 30);
+        preg_match('/\s+(?P<file>\/.*?:)(\d+)/', $trace_lines[$target_line_no], $matches);
+        $context = $this->getContext($this->trace_file, $target_line_no, $matches['file']);
         $navigation = $this->getTraceBreadCrumbs($this->trace_file, $target_line_no);
 
         $template = new Template();
@@ -60,6 +62,7 @@ class Trace
         $template->assign('selected_trace', $target_line_no);
         $template->assign('trace_lines', $trace_lines);
         $template->assign('navigation', $navigation);
+        $template->assign('context', $context);
         $template->assign('code_lines', $this->getCodeLines($trace_lines[$target_line_no]));
         echo $template->fetch('trace');
     }
@@ -190,5 +193,42 @@ class Trace
             'breadcrumbs'   => $history,
             'next'          => $next
         );
+    }
+
+    /**
+     * Get the trace context for the lines in the source.
+     *
+     * @param string $file The file to return the lines from.
+     * @param integer $target_line_no Number of the line to retrieve.
+     * @param string $source_file The file to return the lines from.
+     * @return array
+     */
+    protected function getContext($file, $target_line_no, $source_file)
+    {
+        if (!is_file($file)) {
+            return array();
+        }
+        $fp = fopen($file, 'r');
+        $line_no = 1;
+
+        $context = array();
+        while ($line_no <= $target_line_no) {
+            $line = fgets($fp);
+            if (strpos($line, $source_file)) {
+                preg_match('/(?P<file>\/.*?:)(?P<line>\d+)/', $line, $matches);
+                $context[$matches['line']] = $line_no;
+            }
+            $line_no++;
+        }
+        while (!feof($fp)) {
+            $line = fgets($fp);
+            if (strpos($line, $source_file)) {
+                preg_match('/(?P<file>\/.*?:)(?P<line>\d+)/', $line, $matches);
+                $context[$matches['line']] = $line_no;
+            }
+            $line_no++;
+        }
+        fclose($fp);
+        return $context;
     }
 }

@@ -3,13 +3,12 @@
 {% block style %}
         div.column { width: 50%; float: left; }
         div.inner { overflow: auto;  border: 2px solid black; }
-
-
         pre.line { float: left; margin:0; width: 90%; overflow: hidden;}
         div.line { border-bottom: 1px solid lightblue; height: 15px; overflow: hidden; width: 5000px;}
             a.line_no { float: left; color:white; background-color: gray; font-weight: bold; padding: 1px; }
 
         .covered { background-color: #D4FFD4; }
+        .follow { font-weight: bold; }
         .selected pre { background-color: #7FFF2A; }
         a { color: #000000; text-decoration: none; }
 
@@ -40,9 +39,15 @@
 <div class="column">
     <div class="inner">
 {% for line_no, line in code_lines %}
-        <div class="line{% if line_no == line.selected %} selected{% endif %}">
-            <a href="codebrowser:{{ line.path }}" class="line_no">{{ "%03d" | format(line_no) }}</a>
+        <div class="line{% if line_no == line.selected %} selected{% endif %}{% if context[line_no] %} follow{% endif %}">
+            <a href="codebrowser:{{ line.path }}" class="line_no">{{ "%03d" | format(line_no) }} </a>
+{% if context[line_no] %}
+            <a href="?trace={{ id }}&line={{ context[line_no] }}">
+                <pre class="line{% if line_no == line.covered %} covered{% endif %}">{{ line.code }}</pre>
+            </a>
+{% else %}
             <pre class="line{% if line_no == line.covered %} covered{% endif %}">{{ line.code }}</pre>
+{% endif %}
         </div>
 {% endfor %}
     </div>
