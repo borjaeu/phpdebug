@@ -1,0 +1,66 @@
+{% extends 'bootstrap.html.twig' %}
+{% set WIDTH = 4 %}
+
+{% block title %}Debug - Code Sequence{% endblock %}
+{% block style %}
+    <style>
+        div.column { float: left; margin: 0; }
+        div.namespace { height: 20px; padding: 2px; }
+        div.timebar { background-color: green; height: 16px; }
+        div.odd { background-color: #d1d1d1  }
+        div.step { background-color: red; width: {{ WIDTH }}px; float: left; height: 10px; margin-left: 3px; cursor: pointer; }
+        div.step:hover { background-color: blue; }
+        div.step_info { display: none; clear: both; }
+    </style>
+    {% block javascript %}
+<script type="text/javascript">
+    function show(id) {
+        $('.step_info').hide();
+        $('#step_' + id).show();
+    }
+</script>
+    {% endblock %}
+{% endblock %}
+{% block body %}
+    <h2>Sequence diagram</h2>
+    <div id="title" class="column">
+    {% for name, class in classes %}
+        <div class="namespace {{ cycle(['odd', 'even'], loop.index0) }}">{{ name }}</div>
+    {% endfor %}
+    </div>
+    <div id="lines" class="column">
+{% for name, class in classes %}
+        <div class="namespace {{ cycle(['odd', 'even'], loop.index0) }}" style="padding-left: {{ class.start*WIDTH }}px;">
+            <div class="timebar" style="width:{{ class.length*WIDTH }}px">
+{% for pos, step in class.steps  %}
+                    <div onmouseover="show({{ step.id }});" class="step" style="margin-left: {{ (step.margin)*WIDTH }}px;" title="{{ step.call }}"></div>
+{% endfor %}
+            </div>
+        </div>
+{% endfor %}
+    </div>
+
+{% for name, class in classes %}
+{% for pos, step in class.steps  %}
+    <div class="step_info panel panel-default" id="step_{{ step.id }}">
+        <div class="panel-heading">{{ step.namespace }}::{{ step.method }}()</div>
+        <div class="panel-body">
+            <pre>{{ step.call }}</pre>
+            <ul>
+                <li>
+                    <a href="codebrowser:{{ step.path }}" title="{{ step.short_path }}">
+                        {{ step.short_path }}
+                    </a>
+                </li>
+                <li>
+                    <a href="?trace={{ id }}&line={{ step.line_no }}" target="_blank" title="View trace line {{ step.line_no }}">
+                        <span class="glyphicon glyphicon-sunglasses"></span> go to trace line no {{ step.line_no }}
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+{% endfor %}
+{% endfor %}
+
+{% endblock %}

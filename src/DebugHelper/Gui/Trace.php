@@ -53,8 +53,10 @@ class Trace
     protected function renderCode($target_line_no)
     {
         $trace_lines = $this->getLines($this->trace_file, $target_line_no, 30);
-        preg_match('/\s+(?P<file>\/.*?:)(\d+)/', $trace_lines[$target_line_no], $matches);
-        $context = $this->getContext($this->trace_file, $target_line_no, $matches['file']);
+        $context = '';
+        if (preg_match('/\s+(?P<file>\/.*?:)(\d+)/', $trace_lines[$target_line_no], $matches)) {
+            $context = $this->getContext($this->trace_file, $target_line_no, $matches['file']);
+        }
         $navigation = $this->getTraceBreadCrumbs($this->trace_file, $target_line_no);
 
         $template = new Template();
@@ -63,6 +65,7 @@ class Trace
         $template->assign('trace_lines', $trace_lines);
         $template->assign('navigation', $navigation);
         $template->assign('context', $context);
+        $template->assign('section', 'trace');
         $template->assign('code_lines', $this->getCodeLines($trace_lines[$target_line_no]));
         echo $template->fetch('trace');
     }

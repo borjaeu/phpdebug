@@ -46,6 +46,7 @@ class Coverage
         $template->assign('id', $this->id);
         $template->assign('file', $file);
         $template->assign('lines', $lines);
+        $template->assign('section', 'coverage');
         $template->assign('coverage', $coverage);
         echo $template->fetch('coverage_code');
     }
@@ -55,6 +56,7 @@ class Coverage
         $template = new Template();
         $template->assign('id', $this->id);
         $template->assign('files', $files);
+        $template->assign('section', 'coverage');
         echo $template->fetch('coverage_index');
     }
 }

@@ -1,27 +1,27 @@
-{% extends 'base.html.twig' %}
+{% extends 'bootstrap.html.twig' %}
 {% block title %}Debug - Code Trace{% endblock %}
 {% block style %}
+    <style>
         div.column { width: 50%; float: left; }
         div.inner { overflow: auto;  border: 2px solid black; }
-        pre.line { float: left; margin:0; width: 90%; overflow: hidden;}
-        div.line { border-bottom: 1px solid lightblue; height: 15px; overflow: hidden; width: 5000px;}
+        pre.line { float: left; margin:0; width: 90%; overflow: hidden; padding: 0; border: none;}
+        div.line { border-bottom: 1px solid lightblue; height: 18px; overflow: hidden; width: 5000px;}
             a.line_no { float: left; color:white; background-color: gray; font-weight: bold; padding: 1px; }
 
         .covered { background-color: #D4FFD4; }
         .follow { font-weight: bold; }
         .selected pre { background-color: #7FFF2A; }
         a { color: #000000; text-decoration: none; }
-
-        ul#navigation { height: 15px; margin: 0; padding: 0; }
-            ul#navigation li { display: inline; width: 30px; overflow: hidden; }
+    </style>
 {% endblock %}
 {% block body %}
-    <ul id="navigation">
-        {% for info in navigation.breadcrumbs %}
-            <li><a href="?trace={{ id }}&line={{ info.line }}" title="{{ info.call }}()">{{ info.name }}()</a></li> &gt;
-        {% endfor %}
-        ... &gt; <li><a href="?trace={{ id }}&line={{ navigation.next.line }}" title="{{ navigation.next.call }}()">{{ navigation.next.name }}()</a></li>
-    </ul>
+    <ol class="breadcrumb">
+{% for info in navigation.breadcrumbs %}
+        <li><a href="?trace={{ id }}&line={{ info.line }}" title="{{ info.call }}()">{{ info.name }}()</a></li>
+    {% endfor %}
+        <li class="active">...</li>
+        <li><a href="?trace={{ id }}&line={{ navigation.next.line }}" title="{{ navigation.next.call }}()">{{ navigation.next.name }}()</a></li>
+    </ol>
 <div class="column">
     <div class="inner">
 {% for line_no, line in trace_lines %}

@@ -1,19 +1,23 @@
 {% extends 'bootstrap.html.twig' %}
 {% block title %}Debug - Code Trace{% endblock %}
 {% block style %}
+<style>
         ul { list-style: none; padding: 0; }
         a { text-decoration: none; color: black; float: left; display: block; margin-right: 10px; }
         a:hover { text-decoration: underline; }
         li span { width: 100px; }
         .even { background-color:#DEDEDE; }
         .odd { background-color:#FFFFFF; }
+</style>
 {% endblock %}
 {% block javascript %}
+<script type="text/javascript">
     function deleteTrace(sTraceId) {
         $.get('?delete=' + sTraceId, function(oData) {
             $('#' + sTraceId).fadeOut();
         });
     }
+</script>
 {% endblock %}
 {% block body %}
     <table class="table">
@@ -35,6 +39,7 @@
                 <a href="?stats={{ file.id }}" title="Grouped code with stats"><span class="glyphicon glyphicon-stats"></span></a>
                 <a href="?trace={{ file.id }}" title="See trace"><span class="glyphicon glyphicon-sunglasses"></span></a>
                 <a href="?coverage={{ file.id }}" title="Coverage"><span class="glyphicon glyphicon-book"></span></a>
+                <a href="?sequence={{ file.id }}" title="Sequence Diagram"><span class="glyphicon glyphicon-transfer"></span></a>
                 <a href="?delete={{ file.id }}" onclick="deleteTrace('{{ file.id }}'); return false;" title="delete file"><span class="glyphicon glyphicon-remove"></span></a>
                 {{ file.name }}
             </td>

@@ -12,7 +12,9 @@ class Stats
     public function renderLoadsHtml()
     {
         $processor  = new Processor();
-        $data = $processor->process($this->file);
+        $processor->process($this->file);
+
+        $data = $processor->getTree();
         $this->renderPage($data);
     }
 
@@ -43,6 +45,7 @@ class Stats
         $template = new Template();
         $template->assign('id', $this->id);
         $template->assign('files', $files);
+        $template->assign('section', 'stats');
         echo $template->fetch('stats');
     }
 }

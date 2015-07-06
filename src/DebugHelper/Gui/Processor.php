@@ -30,11 +30,23 @@ class Processor
      */
     public function process($file)
     {
-        $this->lines = array();
+        $this->file = $file;
         if (!is_file($file)) {
             throw new \Exception("Error Processing file $file");
         }
-        $this->file = $file;
+        if (is_file($this->file . '.json')) {
+            $this->lines = json_decode(file_get_contents($this->file . '.json'), true);
+        } else {
+            $this->generateFiles();
+        }
+    }
+
+    /**
+     * Sets the value of file.
+     */
+    protected function generateFiles()
+    {
+        $this->lines = array();
 
         $file_in = fopen($this->file, 'r');
         $this->min_depth = 65000;
@@ -48,21 +60,25 @@ class Processor
         }
         fclose($file_in);
 
-        $file_out = fopen($this->file . '.out', 'w');
-        foreach ($this->lines as $i => $line) {
-            $line = $this->postProcessInputLine($i, $line);
-            if ($line) {
-                fwrite($file_out, $line . "\n");
-            }
+        foreach ($this->lines as $i => & $line) {
+            $this->postProcessInputLine($i, $line);
         }
-        fclose($file_out);
+        file_put_contents($this->file . '.json', json_encode($this->lines, JSON_PRETTY_PRINT));
+    }
 
+    public function getTree()
+    {
         $children = $this->getChildren(1, 0);
 
         return array(
             'name' => 'root',
             'children' => $children
         );
+    }
+
+    public function getLines()
+    {
+        return $this->lines;
     }
 
     protected function getChildren($index, $depth)
@@ -104,6 +120,8 @@ class Processor
     {
         static $count = 0;
 
+//        if ($line_no > 4) return;
+
         $line_info =  $this->getLineInfo($line);
         if ($line_info) {
             if ($this->ignore_depth) {
@@ -115,11 +133,14 @@ class Processor
                 }
             }
             $time = (integer)($line_info['time'] * 1000000);
-            if (preg_match('/^(?P<namespace>.*)(::|->).*$/', $line_info['call'], $matches)) {
+            if (preg_match('/^(?P<namespace>[^\(]+)(::|->)(?P<method>[^\(]+).*$/', $line_info['call'], $matches)) {
                 if ($this->isIgnoredNamespace($matches['namespace'])) {
                     $this->ignore_depth = $line_info['depth'];
                 }
+            } else {
+                return;
             }
+
             $count++;
             $this->lines[$count] = array(
                 'count'             => $count,
@@ -132,6 +153,8 @@ class Processor
                 'path'              => $line_info['path'],
                 'short_path'        => $this->getFilename($line_info['path']),
                 'time'              => $time,
+                'namespace'         => $matches['namespace'],
+                'method'            => $matches['method'],
                 'call'              => $line_info['call']
             );
             $this->updateTimes($count-1, $this->lines[$count]['time']);
@@ -173,7 +196,7 @@ class Processor
 
     protected function postProcessInputLine($index, $line)
     {
-        $indent = str_repeat(' ', $line['depth'] - $this->min_depth);
+        $indent = str_repeat(' ', $line['depth']);
 
         $this->last_time = $line['time'];
         $this->lines[$index]['depth'] -= $this->min_depth;
@@ -192,7 +215,7 @@ class Processor
     {
         $reg_exp = '/(?P<time>\d+\.\d+)\s+(?P<memory>\d+)(?P<depth>\s+)->\s+(?P<call>.*)\s+(?P<path>[^\s+]+)$/';
         if (preg_match($reg_exp, $line, $matches)) {
-            $matches['depth'] = strlen($matches['depth']) / 2;
+            $matches['depth'] = ceil(strlen($matches['depth']) / 2);
             $matches['path_length'] = count(explode('/', $matches['path']));
             return $matches;
         } else {

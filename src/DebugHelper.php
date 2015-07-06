@@ -78,6 +78,8 @@ class DebugHelper
     public static function dump($data = '')
     {
         return self::getClass('\DebugHelper\Tools\Dump')->dump($data);
+
+
     }
 
     /**

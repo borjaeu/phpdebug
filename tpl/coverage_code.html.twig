@@ -1,12 +1,14 @@
-{% extends 'base.html.twig' %}
+{% extends 'bootstrap.html.twig' %}
 {% block title %}Debug - Code Trace{% endblock %}
 {% block style %}
-    pre.line { float: left; margin:0; width: 90%; overflow: hidden;}
-    div.line { border-bottom: 1px solid lightblue; height: 15px; overflow: hidden; width: 5000px;}
+<style>
+    pre.line { float: left; margin:0; width: 90%; overflow: hidden; padding: 0; border: none;}
+    div.line { border-bottom: 1px solid lightblue; height: 18px; overflow: hidden; width: 5000px;}
     a.line_no { float: left; color:white; background-color: gray; font-weight: bold; padding: 1px; }
 
     .covered { background-color: #D4FFD4; }
     a { color: #000000; text-decoration: none; }
+</style>
 {% endblock %}
 {% block body %}
 {% for line_no, line in lines %}
