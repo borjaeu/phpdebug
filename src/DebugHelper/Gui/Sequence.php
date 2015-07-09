@@ -23,7 +23,7 @@ class Sequence
         $template->assign('id', $this->id);
 
         $template->assign('classes', $classes);
-        $template->assign('steps', $steps);
+        $template->assign('steps', count($steps));
         $template->assign('section', 'sequence');
 
         echo $template->fetch('sequence');
@@ -31,12 +31,16 @@ class Sequence
 
     protected function getClasses(&$steps)
     {
+        $namespaces = array();
+
         $positions = array();
 
         $position = 0;
         $classes = array();
         foreach ($steps as $index => $step) {
-            $namespace = $step['namespace'];
+            $namespace = $this->getNamespace($step);
+
+//            $namespace = $step['namespace'];
             if (!isset($classes[$namespace])) {
                 $classes[$namespace] = array(
                     'pos' => ++$position,
@@ -57,6 +61,40 @@ class Sequence
             $classes[$namespace]['length'] = $index - $classes[$namespace]['start'] + 1;
         }
         return $classes;
+    }
+
+    protected function getNamespace(array $step)
+    {
+        static $namespaces = array();
+
+        $path = preg_replace('/:\d+$/', '', $step['path']);
+
+        if (!isset($namespaces[$path])) {
+            $namespace = '';
+            $class = false;
+            $tokens = token_get_all(file_get_contents($path));
+            for ($i = 0; $i<count($tokens); $i++) {
+                if ($tokens[$i][0] === T_NAMESPACE) {
+                    $namespace = '\\';
+                    for ($j = $i+2; $j < count($tokens); $j++) {
+                        if ($tokens[$j] == ';') {
+                            break;
+                        }
+                        $namespace .= $tokens[$j][1];
+                    }
+                }
+                if ($tokens[$i][0] === T_CLASS) {
+                    $class = $tokens[$i+2][1];
+                    break;
+                }
+            }
+            if ($class) {
+                $namespaces[$path] = $namespace . '\\' . $class;
+            } else {
+                $namespaces[$path] = basename($path);
+            }
+        }
+        return $namespaces[$path];
     }
 
     /**
