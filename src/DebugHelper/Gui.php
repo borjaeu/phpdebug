@@ -20,6 +20,9 @@ class Gui
         } elseif (isset($_GET['delete'])) {
             self::delete($_GET['delete']);
             echo 'ok';
+        } elseif (isset($_GET['rename'])) {
+            self::rename($_GET['rename'], $_GET['name']);
+            echo 'ok';
         } else {
             self::showIndex();
         }
@@ -40,19 +43,50 @@ class Gui
 
         $files = glob($path . '*.xt');
         array_walk($files, function (&$item) use ($path) {
-            if (preg_match('/(?P<id>(\d{4})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_(\d+))\.xt$/', $item, $match)) {
+            $time = self::getTraceTime($item);
+
+            if (preg_match('/(?P<id>.*)\.xt$/', basename($item), $match)) {
                 $info = json_decode(file_get_contents($path . $match['id'] . '.svr'), true);
 
                 $item = array(
                     'id' => $match['id'],
-                    'name' => "{$match[4]}/{$match[3]}/{$match[2]} {$match[5]}:{$match[6]}:{$match[7]} {$match[8]}",
+                    'name' => $match['id'],
+                    'time' => $time,
                     'path' => $item,
+                    'details' => self::getDetails($info),
                     'info' => $info,
                     'size' => floor(filesize($item) / 1024),
                 );
             }
         });
+        usort($files, function ($itemA, $itemB) {
+            if ($itemA['time'] == $itemB['time']) {
+                return 0;
+            }
+            return $itemA['time'] > $itemB['time'] ? -1 : 1;
+        });
         return $files;
+    }
+
+    protected static function getTraceTime($file)
+    {
+        $fp = fopen($file, 'r');
+        $line = fgets($fp);
+        fclose($fp);
+        $line = preg_replace('/\s*TRACE START\s*\[(.*)\]/', '$1', $line);
+        return $line;
+    }
+
+    protected static function getDetails($info)
+    {
+        $significantData = array('PHP_SELF', 'REMOTE_ADDR');
+        $details = '';
+        foreach ($significantData as $field) {
+            if (isset($info['server'][$field])) {
+                $details .= "$field: {$info['server'][$field]}\n";
+            }
+        }
+        return trim($details);
     }
 
     protected static function delete($id)
@@ -62,6 +96,17 @@ class Gui
         $files = glob($path . $id . '.*');
         array_walk($files, function ($item) {
             unlink($item);
+        });
+    }
+
+    protected static function rename($id, $name)
+    {
+        $path = \DebugHelper::getDebugDir();
+
+        $files = glob($path . $id . '.*');
+        array_walk($files, function ($item) use ($name) {
+            preg_match('/\.\w+$/', $item, $matches);
+            rename($item, dirname($item) . '/' . $name . $matches[0]);
         });
     }
 }

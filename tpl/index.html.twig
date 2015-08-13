@@ -8,6 +8,13 @@
         li span { width: 100px; }
         .even { background-color:#DEDEDE; }
         .odd { background-color:#FFFFFF; }
+        tr:hover pre.details { display: block; }
+        pre.details {
+            position: absolute;
+            z-index: 10;
+            margin: 20px;
+            display: none;
+        }
 </style>
 {% endblock %}
 {% block javascript %}
@@ -17,13 +24,21 @@
             $('#' + sTraceId).fadeOut();
         });
     }
+    function renameTrace(sTraceId) {
+        sNewName = prompt('New name', $('#' + sTraceId + ' .name').html());
+        $.get('?rename=' + sTraceId + '&name=' + sNewName, function(oData) {
+            $('#' + sTraceId + ' .name').html(sNewName);
+        });
+    }
 </script>
 {% endblock %}
 {% block body %}
-    <table class="table">
+    <table class="table table-hover">
         <thead>
             <tr>
-                <th>ID</th>
+                <th>Options</th>
+                <th>Date</th>
+                <th>Name</th>
                 <th>Size</th>
                 <th>Method</th>
                 <th>Post</th>
@@ -35,21 +50,22 @@
 {% if file.name %}
         <tr id="{{ file.id }}">
             <td>
-                <a href="codebrowser:{{ root_dir }}{{ file.id }}.svr" title="Open info file"><span class="glyphicon glyphicon-edit"></span></a>
+                <pre class="details">{{ file.details }}</pre>
+                <a href="codebrowser:{{ root_dir }}{{ file.id }}.svr" title="Open info file"><span class="glyphicon glyphicon-eye-open"></span></a>
                 <a href="?stats={{ file.id }}" title="Grouped code with stats"><span class="glyphicon glyphicon-stats"></span></a>
                 <a href="?trace={{ file.id }}" title="See trace"><span class="glyphicon glyphicon-sunglasses"></span></a>
                 <a href="?coverage={{ file.id }}" title="Coverage"><span class="glyphicon glyphicon-book"></span></a>
                 <a href="?sequence={{ file.id }}" title="Sequence Diagram"><span class="glyphicon glyphicon-transfer"></span></a>
                 <a href="?delete={{ file.id }}" onclick="deleteTrace('{{ file.id }}'); return false;" title="delete file"><span class="glyphicon glyphicon-remove"></span></a>
-                {{ file.name }}
+                <a href="?rename={{ file.id }}" onclick="renameTrace('{{ file.id }}'); return false;" title="rename file"><span class="glyphicon glyphicon-edit"></span></a>
             </td>
+            <td>{{ file.time }}</td>
+            <td class="name">{{ file.name }}</td>
             <td>{{ file.size }}Kb</td>
             <td>{{ file.info.server.REQUEST_METHOD }}</td>
             <td>{{ file.info.post | length }}</td>
             <td>{{ file.host }}</td>
             <td>{{ file.info.server.REQUEST_URI }}</td>
-            <td>
-            </td>
         </tr>
 {% endif %}
 {% endfor %}

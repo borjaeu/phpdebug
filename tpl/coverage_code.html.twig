@@ -12,6 +12,7 @@
 {% endblock %}
 {% block body %}
 {% for line_no, line in lines %}
+    {% set line_no = line_no + 1 %}
     <div class="line">
         <a href="codebrowser:{{ file }}:{{ line_no }}" class="line_no">{{ "%03d" | format(line_no) }}</a>
         <pre class="line{% if coverage[line_no] is defined %} covered{% endif %}">{{ line }}</pre>

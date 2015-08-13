@@ -7,14 +7,18 @@ class Sequence
 
     protected $id;
 
+    protected $classes;
+
+    protected $position;
+
     public function renderLoadsHtml()
     {
         $processor  = new Processor();
         $processor->process($this->file);
 
         $steps = $processor->getLines();
-        $classes = $this->getClasses($steps);
-        $this->renderPage($classes, $steps);
+        $this->loadClasses($steps);
+        $this->renderPage($this->classes, $steps);
     }
 
     protected function renderPage($classes, $steps)
@@ -29,38 +33,64 @@ class Sequence
         echo $template->fetch('sequence');
     }
 
-    protected function getClasses(&$steps)
+    protected function loadClasses(&$steps)
     {
-        $namespaces = array();
-
+        $this->classes = array();
         $positions = array();
 
-        $position = 0;
-        $classes = array();
+        $this->position = 0;
+
         foreach ($steps as $index => $step) {
-            $namespace = $this->getNamespace($step);
+            $namespace_out = $this->getNamespace($step);
+            $namespace_in = '\\' . $step['namespace'];
 
-//            $namespace = $step['namespace'];
-            if (!isset($classes[$namespace])) {
-                $classes[$namespace] = array(
-                    'pos' => ++$position,
-                    'start' => $index,
-                    'end' => $index + 1,
-                    'length' => 1,
-                    'steps' => array()
-                );
-            }
-            $classes[$namespace]['end'] = $index + 1;
-            $step['id'] = $index;
-            $step['position'] = $index - $classes[$namespace]['start'];
-            $last = isset($positions[$namespace]) ? $positions[$namespace] : $classes[$namespace]['start'] - 1;
+            $this->loadNamespace($namespace_out, $index);
+            $this->loadNamespace($namespace_in, $index);
+
+            $this->classes[$namespace_out]['end'] = $index + 1;
+            $this->classes[$namespace_in]['end'] = $index + 1;
+
+            $step = $this->getSimplifiedStep($step);
+
+            $step['index'] = $index;
+            $step['id'] = "{$index}_out";
+            $step['type'] = 'out';
+            $step['position'] = $index - $this->classes[$namespace_out]['start'];
+            $last = isset($positions[$namespace_out])
+                ? $positions[$namespace_out]
+                : $this->classes[$namespace_out]['start'] - 1;
             $step['margin'] = $index - $last - 1;
-            $positions[$namespace] = $index;
+            $positions[$namespace_out] = $index;
 
-            $classes[$namespace]['steps'][] = $step;
-            $classes[$namespace]['length'] = $index - $classes[$namespace]['start'] + 1;
+            $this->classes[$namespace_out]['steps'][] = $step;
+            $this->classes[$namespace_out]['length'] = $index - $this->classes[$namespace_out]['start'] + 1;
+
+            $step['id'] = "{$index}_in";
+            $step['type'] = 'in';
+            $step['position'] = $index - $this->classes[$namespace_in]['start'];
+            $last = isset($positions[$namespace_in])
+                ? $positions[$namespace_in]
+                : $this->classes[$namespace_in]['start'] - 1;
+            $step['margin'] = $index - $last - 1;
+            $positions[$namespace_in] = $index;
+
+            $this->classes[$namespace_in]['steps'][] = $step;
+            $this->classes[$namespace_in]['length'] = $index - $this->classes[$namespace_in]['start'] + 1;
         }
-        return $classes;
+    }
+
+
+    protected function loadNamespace($namespace, $index)
+    {
+        if (!isset($this->classes[$namespace])) {
+            $this->classes[$namespace] = array(
+                'pos'       => ++$this->position,
+                'start'     => $index,
+                'end'       => $index + 1,
+                'length'    => 1,
+                'steps'     => array()
+            );
+        }
     }
 
     protected function getNamespace(array $step)
@@ -113,6 +143,19 @@ class Sequence
             throw new \Exception("Error Processing file $file");
         }
         return $this;
+    }
+
+    protected function getSimplifiedStep($step)
+    {
+//        var_dump($step);
+//        exit;
+        return array(
+            'namespace' => $step['namespace'],
+            'method'    => $step['method'],
+            'call'      => $step['call'],
+            'path'      => $step['path'],
+            'line_no'   => $step['line_no'],
+        );
     }
 
     protected function getGenerateOutFile($file)

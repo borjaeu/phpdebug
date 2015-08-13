@@ -3,12 +3,19 @@ namespace DebugHelper;
 
 class Error
 {
+    const ALL_ERRORS = 'all_errors';
+
     protected static $ignored_errors = array();
 
     public static function ignoreErrors()
     {
         $errors = func_get_args();
         self::$ignored_errors = array_merge(self::$ignored_errors, $errors);
+    }
+
+    public static function setSilent()
+    {
+        self::$ignored_errors = self::ALL_ERRORS;
     }
 
     /**
@@ -23,6 +30,9 @@ class Error
      */
     public static function handler($code, $message, $file, $line)
     {
+        if (self::$ignored_errors == self::ALL_ERRORS) {
+            return true;
+        }
         $error_code = md5($code . $message . $file . $line);
         if (in_array($error_code, self::$ignored_errors)) {
             return true;
@@ -48,7 +58,7 @@ class Error
             echo <<<ERROR
 ------------------------
 Php $type $message
-    in $file:$line
+in $file:$line [$error_code]
 ------------------------
 
 ERROR;

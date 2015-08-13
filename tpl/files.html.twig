@@ -1,0 +1,48 @@
+{% extends 'bootstrap.html.twig' %}
+
+{% macro showChildren(files, id) %}
+<ul>
+{% for file in files %}
+    <li class="{% if file.count_children %}parent{% else %}leaf{% endif %}">
+        <a href="codebrowser:{{ file.path }}" title="{{ file.short_path }}">
+            <span class="glyphicon glyphicon-edit"></span>
+            {{ "%08d"|format(file.time_children) }}&micro;s
+        </a>
+        <a href="?code={{ id }}&line={{ file.line_no }}" target="_blank" title="View trace line {{ file.line_no }}"><span class="glyphicon glyphicon-sunglasses"></span></a>
+        <span class="glyphicon {% if file.count_children %}glyphicon-plus{% else %}glyphicon-minus{% endif %}"></span>
+        [{{ file.count_children }}]
+        <div class="title">{{ file.call }}</div>
+        <div class="bar" style="width:{{ file.relative }}%"></div>
+{% if file.count_children %}
+{{ _self.showChildren(file.children, id) }}
+{% endif %}
+        </li>
+{% endfor %}
+</ul>
+{% endmacro %}
+
+{% block title %}Debug - Trace{% endblock %}
+{% block style %}
+    ul { list-style: none; padding-left 5px;}
+    li { border-left: 1px solid black; border-bottom: 1px solid black;}
+    li ul { display: none; }
+    li.leaf { background-color: #FFFFD4; }
+    div.title { margin-left: 180px; margin-top: -20px; }
+    li.parent { background-color: #E2FEE2; }
+    li.parent > div.title { cursor: pointer; font-weight:bold; }
+    li.parent > div.title:hover { background-color: greenyellow; }
+    div.bar { border: 2px solid red;}
+{% endblock %}
+
+{% block javascript %}
+    $().ready(function(){
+        $('li.parent > div.title').on('click', function() {
+        console.log($(this).siblings('ul').slideToggle());
+        });
+    });
+
+{% endblock %}
+
+{% block body %}
+{{ _self.showChildren(files.children, id) }}
+{% endblock %}
