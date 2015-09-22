@@ -1,0 +1,10 @@
+#!/usr/bin/env php
+<?php
+require __DIR__ . '/../../autoload.php';
+
+$commandLine = new \DebugHelper\Cli();
+try {
+    $commandLine->execute($argv);
+} catch (\Exception $exception) {
+    echo $exception->getMessage() . "\n";
+}
