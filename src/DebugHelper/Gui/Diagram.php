@@ -1,7 +1,7 @@
 <?php
 namespace DebugHelper\Gui;
 
-class Sequence
+class Diagram
 {
     protected $file;
 
@@ -28,9 +28,9 @@ class Sequence
 
         $template->assign('classes', $classes);
         $template->assign('steps', count($steps));
-        $template->assign('section', 'sequence');
+        $template->assign('section', 'diagram');
 
-        echo $template->fetch('sequence');
+        echo $template->fetch('diagram');
     }
 
     protected function loadClasses(&$steps)
@@ -147,8 +147,6 @@ class Sequence
 
     protected function getSimplifiedStep($step)
     {
-//        var_dump($step);
-//        exit;
         return array(
             'namespace' => $step['namespace'],
             'method'    => $step['method'],
