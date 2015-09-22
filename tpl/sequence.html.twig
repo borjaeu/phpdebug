@@ -1,0 +1,16 @@
+{% extends 'bootstrap.html.twig' %}
+{% set WIDTH = 8 %}
+
+{% block title %}Debug - Code Sequence{% endblock %}
+{% block style %}
+{% endblock %}
+
+{% block javascript %}
+<script type="text/javascript">
+    var oSteps = {{  steps | raw }};
+    var oNamespaces = {{ namespaces | raw }};
+</script>
+{% endblock %}
+
+{% block body %}
+{% endblock %}
