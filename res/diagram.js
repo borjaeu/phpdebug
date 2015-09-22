@@ -8,7 +8,7 @@ $().ready(function(){
 
 var Diagram = function(nX, nY, oSteps, oNamespaces) {
     var nWidth, nHeight, oPaper,
-        SCALE_X = 40, SCALE_Y = 15, MARGIN_TOP = 200;
+        SCALE_X = 40, SCALE_Y = 25, MARGIN_TOP = 200;
 
     var getSize = function(oObject) {
         var nSize = 0, sKey;
@@ -46,8 +46,13 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
 
         for(sKey in oNamespaces) {
             nX = scaleX(oNamespaces[sKey]);
-            oPaper.line(nX, MARGIN_TOP, nX, nHeight, '#000');
-            oPaper.rotatedText(nX, MARGIN_TOP - 5, shortenNamespace(sKey));
+            oPaper.line(nX, MARGIN_TOP, nX, nHeight, '#000').attr({
+                'stroke-dasharray': '-',
+                'stroke-width': 1
+            });
+            oPaper.rotatedText(nX, MARGIN_TOP - 5, shortenNamespace(sKey)).attr({
+                'font-size': 14
+            });
         }
     };
 
@@ -69,12 +74,23 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
             nX0 = scaleX(oNamespaces[sSource]);
             nX1 = scaleX(oNamespaces[sTarget]);
 
-            nMiddle = Math.abs(nX0 - nX1);
+            nMiddle = Math.abs((nX0 + nX1)/2);
 
-            oPaper.arrow(nX0, scaleY(nTop), nX1, scaleY(nTop), '#F00').hover(function(sKey) {
-                return function() { console.log(sKey)}
+            oPaper.arrow(nX0, scaleY(nTop), nX1, scaleY(nTop), '#F00').attr({
+                'stroke-width': 2
             });
-            oPaper.text(nMiddle, scaleY(nTop) - 5, oSteps[sKey]['method'], '#F0F');
+            oPaper.text(nMiddle, scaleY(nTop) - 7, oSteps[sKey]['method'] + '()').attr({
+                'font-size': 14,
+                'cursor': 'pointer'
+            }).hover(function() {
+                this.attr({fill: '#F00'});
+            },function() {
+                this.attr({fill: '#000'});
+            }).click(function(sKey) {
+                return function() {
+                    console.log(oSteps[sKey]);
+                }
+            }(sKey));
             nTop++;
         }
     };
@@ -92,14 +108,14 @@ var Paper = function(nX, nY, nWidth, nHeight) {
     oPaper = Raphael(nX, nY, nWidth, nHeight);
     oPaper.rect(0, 0, nWidth, nHeight);
 
-    this.line = function(nX0, nY0, nX1, nY1, sColor) {
+    this.line = function(nX0, nY0, nX1, nY1) {
         var sPath = 'M' + nX0 + ' ' + nY0 + 'L' + nX1 + ' ' + nY1;
 
-        return oPaper.path(sPath).attr({stroke: sColor});
+        return oPaper.path(sPath);
     };
 
-    this.arrow = function(nX0, nY0, nX1, nY1, sColor) {
-        return this.line(nX0, nY0, nX1, nY1, sColor).attr({ 'arrow-end': 'classic-wide-long'});
+    this.arrow = function(nX0, nY0, nX1, nY1) {
+        return this.line(nX0, nY0, nX1, nY1).attr({'arrow-end': 'classic-wide-long'});
     };
 
     this.text = function(nX, nY, sText) {

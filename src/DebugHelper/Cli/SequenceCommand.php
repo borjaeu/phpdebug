@@ -150,8 +150,6 @@ class SequenceCommand extends Abstracted
             ], JSON_PRETTY_PRINT));
         }
         $this->writeLog($file);
-        $this->writeMap($file);
-
     }
 
     /**
