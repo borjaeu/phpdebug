@@ -6,11 +6,12 @@
 {% endblock %}
 
 {% block javascript %}
+<script type="text/javascript" src="{{ resource }}diagram.js"></script>
+<script type="text/javascript" src="{{ resource }}raphael-min.js"></script>
 <script type="text/javascript">
     var oSteps = {{  steps | raw }};
     var oNamespaces = {{ namespaces | raw }};
 </script>
 {% endblock %}
 
-{% block body %}
-{% endblock %}
+{% block body %}{% endblock %}
