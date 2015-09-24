@@ -4,7 +4,7 @@ $().ready(function(){
 
 var Diagram = function(nX, nY, oSteps, oNamespaces) {
     var nWidth, nHeight, oPaper,
-        SCALE_X = 40, SCALE_Y = 25, MARGIN_TOP = 200;
+        SCALE_X = 80, SCALE_Y = 25, MARGIN_TOP = 200;
 
     var getSize = function(oObject) {
         var nSize = 0, sKey;

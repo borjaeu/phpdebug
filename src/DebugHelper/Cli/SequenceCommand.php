@@ -86,13 +86,6 @@ class SequenceCommand extends Abstracted
     protected $history;
 
     /**
-     * Debug information
-     *
-     * @var bool
-     */
-    protected $debug;
-
-    /**
      * Namespaces ignored, all calls bellow this namespaces will be ignored
      *
      * @var array
@@ -101,11 +94,14 @@ class SequenceCommand extends Abstracted
         //        'Symfony\Component\HttpKernel\Kernel',
         'Symfony\Component\DependencyInjection\ContainerAware'              => self::IGNORE_CALL,
         'Composer\Autoload\ClassLoader'                                     => self::IGNORE_CALL,
+        'ReflectionObject'                                                  => self::IGNORE_CALL,
+        'ReflectionClass'                                                   => self::IGNORE_CALL,
 //        'Composer'                                                          => self::IGNORE_NAMESPACE,
         'Symfony\Component\HttpKernel\Bundle\Bundle'                        => self::IGNORE_CALL,
         'Symfony\Component\ExpressionLanguage\ExpressionFunction'           => self::IGNORE_CALL,
-        'Symfony\Component\HttpFoundation'                                  => self::IGNORE_CALL,
+//        'Symfony\Component\HttpFoundation'                                  => self::IGNORE_CALL,
         'Doctrine'                                                          => self::IGNORE_NAMESPACE,
+        'Symfony\Component\HttpFoundation\Request'                          => self::IGNORE_NAMESPACE,
         'Monolog'                                                           => self::IGNORE_NAMESPACE,
 //        'DebugHelper'                                                       => self::IGNORE_NAMESPACE,
         'QaamGo\RestApiBundle\Serializer\Entity'                            => self::IGNORE_NAMESPACE,
@@ -130,6 +126,20 @@ class SequenceCommand extends Abstracted
     protected $namespaces;
 
     /**
+     * Line to skip to
+     *
+     * @var int
+     */
+    protected $skipTo;
+
+    /**
+     * Level for the line to find if any
+     *
+     * @var int
+     */
+    protected $skipLineDepth;
+
+    /**
      * Execute the command line
      */
     public function run()
@@ -148,12 +158,16 @@ class SequenceCommand extends Abstracted
             'methods'   => 0,
             'applied'   => 0,
             'returns'   => 0,
-            'self'      => 0
+            'self'      => 0,
+            'range'     => 0
         ];
 
-        $this->debug = in_array('--debug', $this->arguments);
-        $this->generateFiles($file, in_array('--no-cache', $this->arguments));
-
+        $this->skipTo = false;
+        $this->skipLineDepth = false;
+        if (!empty($this->arguments['skip-to'])) {
+            $this->skipTo = $this->arguments['skip-to'];
+        }
+        $this->generateFiles($file, !empty($this->arguments['no-cache']));
         echo "Finished $file!!!\n";
     }
 
@@ -193,7 +207,7 @@ class SequenceCommand extends Abstracted
                 'namespaces' => $this->namespaces
             ], JSON_PRETTY_PRINT));
         }
-//        $this->writeLog($file);
+        $this->writeLog($file);
     }
 
     /**
@@ -207,12 +221,13 @@ class SequenceCommand extends Abstracted
 
         foreach ($this->steps as $step) {
             $indent = str_repeat(' ', $step['depth']);
-            $stepLog = <<<STEP
+            if ($step['type'] == self::STEP_CALL) {
+                $stepLog = <<<STEP
 $indent{$step['namespace']}->{$step['method']}  ({$step['source']})
 
 STEP;
-            fwrite($fileOut, $stepLog);
-
+                fwrite($fileOut, $stepLog);
+            }
         }
         fclose($fileOut);
     }
@@ -234,12 +249,55 @@ STEP;
             $this->debug('Invalid');
             $this->stats['invalid']++;
             return;
-        } elseif ($lineInfo['type'] === self::STEP_RETURN) {
+        }
+
+        if ($this->mustSkip($lineInfo)) {
+            $this->stats['range']++;
+            return;
+        }
+
+        if ($lineInfo['type'] === self::STEP_RETURN) {
             $this->stats['returns']++;
             $this->processReturn($lineInfo);
             return;
         } else {
             $this->processCall($lineInfo);
+        }
+    }
+
+    /**
+     * Parses the information
+     *
+     * @param array $lineInfo Line contents
+     * @return bool
+     */
+    protected function mustSkip($lineInfo)
+    {
+        if ($this->skipTo === false) {
+            return false;
+        }
+
+        $depth = $lineInfo['depth'];
+
+        if ($this->skipLineDepth !== false) {
+            if ($depth > $this->skipLineDepth) {
+                return false;
+            } elseif ($this->skipLineDepth != 65000) {
+                $this->foundClassDepth = 65000;
+                $this->debug('Ignored when not within the search class', $depth);
+                return true;
+            } else {
+                return true;
+            }
+        } else {
+            if ($this->stats['lines'] == $this->skipTo) {
+                $this->skipLineDepth = $depth;
+                $this->debug('Found  class in ' . $lineInfo['call'], $depth);
+                return false;
+            } else {
+                $this->debug('Ignored when no in line ' . $this->skipTo, $depth);
+                return true;
+            }
         }
     }
 
@@ -333,10 +391,6 @@ STEP;
         }
 
         if (!isset($this->history[$depth])) {
-//            var_dump($this->ignoreDepth);
-//            print_r($lineInfo);
-//            print_r($this->steps);
-//            print_r($this->stats);
             die(sprintf("<pre><a href=\"codebrowser:%s:%d\">DIE</a></pre>", __FILE__, __LINE__));
             exit;
         }
@@ -367,9 +421,13 @@ STEP;
      */
     protected function showOutput()
     {
+        if (!empty($this->arguments['debug'])) {
+            return;
+        }
         $output = <<<OUTPUT
       %5d steps
       %5d ignored (%06d applies)
+      %5d range
       %5d returns
       %5d self
       %5d error(s)
@@ -384,6 +442,7 @@ OUTPUT;
             $this->stats['steps'],
             $this->stats['ignored'],
             $this->stats['applied'],
+            $this->stats['range'],
             $this->stats['returns'],
             $this->stats['self'],
             $this->stats['invalid'],
@@ -471,7 +530,7 @@ OUTPUT;
      */
     protected function debug($message, $depth = 0)
     {
-        if ($this->debug) {
+        if (!empty($this->arguments['debug'])) {
             printf('%04d [%02d]: %s%s', $this->stats['lines'], $depth, $message, PHP_EOL);
         }
     }
