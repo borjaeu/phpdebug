@@ -32,7 +32,8 @@ class Sequence
      */
     public function renderLoadsHtml()
     {
-        $data = json_decode(file_get_contents($this->file), true);
+        $steps = json_decode(file_get_contents($this->file), true);
+        $namespaces = $this->loadNamespaces($steps);
 
         $template = new Template();
         $template->assign('id', $this->id);
@@ -40,10 +41,29 @@ class Sequence
         $template->assign('file', realpath($this->file));
         $template->assign('section', 'sequence');
         $template->assign('resource', $this->getResourcePath());
-        $template->assign('steps', json_encode($data['steps']));
-        $template->assign('namespaces', json_encode($data['namespaces']));
+        $template->assign('steps', json_encode($steps));
+        $template->assign('namespaces', json_encode($namespaces));
 
         echo $template->fetch('sequence');
+    }
+
+    /**
+     * Loads the namespaces from the steps
+     *
+     * @param array $steps
+     */
+    protected function loadNamespaces($steps)
+    {
+        $namespaces = ['root' => 0];
+        foreach ($steps as $step) {
+            if ($step['type'] == 1) {
+                $namespace = $step['namespace'];
+                if (!isset($namespaces[$namespace])) {
+                    $namespaces[$namespace] = count($namespaces);
+                }
+            }
+        }
+        return $namespaces;
     }
 
     /**

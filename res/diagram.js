@@ -144,7 +144,7 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
                 $('#call').html('');
                 $('#json').attr('href', 'codebrowser:' + sFile + '->' + sKey);
                 $('#source').attr('href', 'codebrowser:' + oSteps[sKey].path);
-                $('#debug').html(oSteps[sKey]['response']);
+                //$('#debug').html(oSteps[sKey]['response']);
             }
         }(sKey));
     };

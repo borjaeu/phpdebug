@@ -86,32 +86,6 @@ class SequenceCommand extends Abstracted
     protected $history;
 
     /**
-     * Namespaces ignored, all calls bellow this namespaces will be ignored
-     *
-     * @var array
-     */
-    protected $ignoredNamespaces = [
-        //        'Symfony\Component\HttpKernel\Kernel',
-        'Symfony\Component\DependencyInjection\ContainerAware'              => self::IGNORE_CALL,
-        'Composer\Autoload\ClassLoader'                                     => self::IGNORE_CALL,
-        'ReflectionObject'                                                  => self::IGNORE_CALL,
-        'ReflectionClass'                                                   => self::IGNORE_CALL,
-//        'Composer'                                                          => self::IGNORE_NAMESPACE,
-        'Symfony\Component\HttpKernel\Bundle\Bundle'                        => self::IGNORE_CALL,
-        'Symfony\Component\ExpressionLanguage\ExpressionFunction'           => self::IGNORE_CALL,
-//        'Symfony\Component\HttpFoundation'                                  => self::IGNORE_CALL,
-        'Doctrine'                                                          => self::IGNORE_NAMESPACE,
-        'Symfony\Component\HttpFoundation\Request'                          => self::IGNORE_NAMESPACE,
-        'Monolog'                                                           => self::IGNORE_NAMESPACE,
-//        'DebugHelper'                                                       => self::IGNORE_NAMESPACE,
-        'QaamGo\RestApiBundle\Serializer\Entity'                            => self::IGNORE_NAMESPACE,
-        'QaamGo\RestApiBundle\Api\Validation\Schema\Constraint'             => self::IGNORE_NAMESPACE,
-        'Symfony\Component\EventDispatcher\ContainerAwareEventDispatcher'   => self::IGNORE_NAMESPACE,
-        'Symfony\Component\DependencyInjection\Container'                   => self::IGNORE_NAMESPACE,
-        'Twig_Environment'                                                  => self::IGNORE_NAMESPACE
-    ];
-
-    /**
      * Source for the calls
      *
      * @var array
@@ -124,6 +98,34 @@ class SequenceCommand extends Abstracted
      * @var array
      */
     protected $namespaces;
+
+    /**
+     * Namespaces ignored, all calls bellow this namespaces will be ignored
+     *
+     * @var array
+     */
+    protected $ignoredNamespaces = [
+        'Symfony\Component\DependencyInjection\ContainerAware'              => self::IGNORE_CALL,
+        'Composer\Autoload\ClassLoader'                                     => self::IGNORE_CALL,
+        'ReflectionObject'                                                  => self::IGNORE_CALL,
+        'ReflectionClass'                                                   => self::IGNORE_CALL,
+        'Composer'                                                          => self::IGNORE_NAMESPACE,
+        'Symfony\Component\HttpKernel\Bundle\Bundle'                        => self::IGNORE_CALL,
+        'Symfony\Component\ExpressionLanguage\ExpressionFunction'           => self::IGNORE_CALL,
+        'Doctrine'                                                          => self::IGNORE_NAMESPACE,
+        'Symfony\Component\HttpFoundation\Request'                          => self::IGNORE_NAMESPACE,
+        'Monolog'                                                           => self::IGNORE_NAMESPACE,
+        'DebugHelper'                                                       => self::IGNORE_NAMESPACE,
+        'QaamGo\RestApiBundle\Serializer\Entity'                            => self::IGNORE_NAMESPACE,
+        'QaamGo\RestApiBundle\Api\Validation\Schema\Constraint'             => self::IGNORE_NAMESPACE,
+        'Symfony\Component\EventDispatcher\ContainerAwareEventDispatcher'   => self::IGNORE_NAMESPACE,
+        'Symfony\Component\DependencyInjection\Container'                   => self::IGNORE_NAMESPACE,
+        'Twig_Environment'                                                  => self::IGNORE_NAMESPACE,
+        'QaamGo\RestApiBundle\Api\Validation\RequestValidator'              => self::IGNORE_NAMESPACE,
+        'Qaamgo\OnlineConvertApiBundle\Api\Job\Find'                        => self::IGNORE_NAMESPACE,
+        'Symfony\Bundle\FrameworkBundle\Controller\Controller'              => self::IGNORE_NAMESPACE,
+        'Symfony\Component\HttpFoundation\JsonResponse'                     => self::IGNORE_NAMESPACE
+    ];
 
     /**
      * Line to skip to
@@ -199,13 +201,10 @@ class SequenceCommand extends Abstracted
                 $this->processInputLine($line);
             }
             fclose($fileIn);
-            print_r($this->namespaces);
-            print_r($this->ignoreCount);
+            echo 'Ignored classes';
+            print_r(ksort($this->ignoreCount));
 
-            file_put_contents($file . '.json', json_encode([
-                'steps'      => $this->steps,
-                'namespaces' => $this->namespaces
-            ], JSON_PRETTY_PRINT));
+            file_put_contents($file . '.json', json_encode($this->steps, JSON_PRETTY_PRINT));
         }
         $this->writeLog($file);
     }
@@ -222,10 +221,15 @@ class SequenceCommand extends Abstracted
         foreach ($this->steps as $step) {
             $indent = str_repeat(' ', $step['depth']);
             if ($step['type'] == self::STEP_CALL) {
-                $stepLog = <<<STEP
-$indent{$step['namespace']}->{$step['method']}  ({$step['source']})
+                $stepLog = sprintf('%06d %s%s->%s (%s)%s',
+                    $step['line_no'],
+                    $indent,
+                    $step['namespace'],
+                    $step['method'],
+                    $step['source'],
+                    PHP_EOL
+                );
 
-STEP;
                 fwrite($fileOut, $stepLog);
             }
         }
