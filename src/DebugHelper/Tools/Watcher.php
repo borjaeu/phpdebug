@@ -39,8 +39,8 @@ ERROR;
 
         ini_set('xdebug.profiler_enable', 1);
         ini_set('xdebug.profiler_output_dir', \DebugHelper::getDebugDir());
-        ini_set('xdebug.collect_params', 3); // 0 None, 1, Simple, 3 Full
-        ini_set('xdebug.collect_return', 0); // 0 None, 1, Yes
+        ini_set('xdebug.collect_params', 1); // 0 None, 1, Simple, 3 Full
+        ini_set('xdebug.collect_return', 1); // 0 None, 1, Yes
         ini_set('xdebug.var_display_max_depth', 2);
         ini_set('xdebug.var_display_max_data', 128);
         preg_match('/0\.(?P<decimal>\d+)/', microtime(), $matches);

@@ -34,6 +34,16 @@ class SequenceCommand extends Abstracted
     const IGNORE_CALL = 2;
 
     /**
+     * The history for the current depth is a method call
+     */
+    const HISTORY_METHOD = 'method';
+
+    /**
+     * The history for the current depth is a call to the same class
+     */
+    const HISTORY_AUTO_CALL= 'auto_call';
+
+    /**
      * Processed lines information
      *
      * @var array
@@ -67,6 +77,20 @@ class SequenceCommand extends Abstracted
      * @var array
      */
     protected $stats;
+
+    /**
+     * Breadcrumbs of calls by depth
+     *
+     * @var array
+     */
+    protected $history;
+
+    /**
+     * Debug information
+     *
+     * @var bool
+     */
+    protected $debug;
 
     /**
      * Namespaces ignored, all calls bellow this namespaces will be ignored
@@ -127,7 +151,8 @@ class SequenceCommand extends Abstracted
             'self'      => 0
         ];
 
-        $this->generateFiles($file, isset($this->arguments[3]) && $this->arguments[3] == '--no-cache');
+        $this->debug = in_array('--debug', $this->arguments);
+        $this->generateFiles($file, in_array('--no-cache', $this->arguments));
 
         echo "Finished $file!!!\n";
     }
@@ -149,10 +174,12 @@ class SequenceCommand extends Abstracted
             $this->steps = [];
             $this->source = [];
             $this->ignoreCount = [];
+            $this->history = [];
             $this->namespaces = ['root' => 0];
 
             $fileIn = fopen($file . '.xt', 'r');
             $maxLines = 1000000;
+//            $maxLines = 50;
             while (!feof($fileIn) && $maxLines-- > 0) {
                 $line = fgets($fileIn);
                 $this->stats['lines']++;
@@ -167,7 +194,7 @@ class SequenceCommand extends Abstracted
                 'namespaces' => $this->namespaces
             ], JSON_PRETTY_PRINT));
         }
-        $this->writeLog($file);
+//        $this->writeLog($file);
     }
 
     /**
@@ -198,31 +225,48 @@ STEP;
      */
     protected function processInputLine($line)
     {
-
         if ($this->stats['lines'] % 1000 == 0) {
             $this->showOutput();
         }
 
         $lineInfo = $this->getLineInfo($line);
+
         if ($lineInfo['type'] === self::STEP_UNKNOWN) {
+            $this->debug('Invalid');
             $this->stats['invalid']++;
             return;
         } elseif ($lineInfo['type'] === self::STEP_RETURN) {
             $this->stats['returns']++;
+            $this->processReturn($lineInfo);
             return;
+        } else {
+            $this->processCall($lineInfo);
         }
+    }
+
+    /**
+     * Parses the information
+     *
+     * @param array $lineInfo Line contents
+     */
+    protected function processCall($lineInfo)
+    {
+        $depth = $lineInfo['depth'];
         if ($this->ignoreDepth) {
-            if ($lineInfo['depth'] > $this->ignoreDepth) {
+            if ($depth > $this->ignoreDepth) {
+                $this->debug("Skipped. Ignored call > {$this->ignoreDepth}", $depth);
                 $this->ignoreCount[$this->ignoreNamespace]++;
                 $this->stats['ignored']++;
                 return;
             } else {
+                $this->debug("Disabling ignore in call", $depth);
                 $this->ignoreDepth = false;
             }
         }
         if (preg_match('/^(?P<namespace>[^\(]+)(::|->)(?P<method>[^\(]+).*$/', $lineInfo['call'], $matches)) {
             list($matchedEntry, $ignore) = $this->checkIgnoredNamespaces($matches['namespace']);
             if (self::IGNORE_NONE !== $ignore) {
+                $this->debug("Ignoring. Ignored below for $matchedEntry", $depth);
                 $this->ignoreNamespace = $matchedEntry;
                 if (!isset($this->ignoreCount[$matchedEntry])) {
                     $this->ignoreCount[$this->ignoreNamespace] = 0;
@@ -231,33 +275,92 @@ STEP;
                 $this->stats['applied']++;
                 if ($ignore === self::IGNORE_CALL) {
                     $this->ignoreCount[$this->ignoreNamespace]++;
+                    $this->ignoreDepth--;
+                    $this->debug("Skipped. Ignored call for current call", $depth);
                     return;
                 }
             }
         } else {
+            $this->history[$depth] = self::HISTORY_METHOD;
             $this->stats['methods']++;
+            $this->debug("Skipped. Method call", $depth);
             return;
         }
 
-        $depth = $lineInfo['depth'];
         $this->source[$depth + 1] = $matches['namespace'];
         $source = isset($this->source[$depth]) ? $this->source[$depth] : 'root';
         if ($source == $matches['namespace']) {
             $this->stats['self']++;
+            $this->debug("Skipped. Self call", $depth);
+            $this->history[$depth] = self::HISTORY_AUTO_CALL;
             return;
         }
 
         $this->stats['steps']++;
         $this->registerNamespace($matches['namespace']);
         $id = uniqid();
-        $this->steps[$id] = [
+        $step = [
             'line_no'           => $this->stats['lines'],
             'depth'             => $depth,
             'path'              => $lineInfo['path'],
             'source'            => $source,
             'namespace'         => $matches['namespace'],
-            'method'            => $matches['method']
+            'method'            => $matches['method'],
+            'type'              => self::STEP_CALL
         ];
+        $this->debug("Method call. {$matches['namespace']}->{$matches['method']}", $depth);
+        $this->steps[$id] = $step;
+        $this->history[$depth] = $step;
+    }
+
+    /**
+     * Parses the information
+     *
+     * @param array $lineInfo Line contents
+     */
+    protected function processReturn($lineInfo)
+    {
+        $depth = $lineInfo['depth'];
+        if ($this->ignoreDepth) {
+            if ($depth >= $this->ignoreDepth) {
+                $this->ignoreCount[$this->ignoreNamespace]++;
+                $this->debug("Skipped. Ignored return >= {$this->ignoreDepth}", $depth);
+                $this->stats['ignored']++;
+                return;
+            } else {
+                $this->debug("Disabling ignore in return", $depth);
+                $this->ignoreDepth = false;
+            }
+        }
+
+        if (!isset($this->history[$depth])) {
+//            var_dump($this->ignoreDepth);
+//            print_r($lineInfo);
+//            print_r($this->steps);
+//            print_r($this->stats);
+            die(sprintf("<pre><a href=\"codebrowser:%s:%d\">DIE</a></pre>", __FILE__, __LINE__));
+            exit;
+        }
+        if ($this->history[$depth] == self::HISTORY_METHOD) {
+            $this->debug("Skipped. Ignored return for method", $depth);
+            return;
+        } elseif ($this->history[$depth] == self::HISTORY_AUTO_CALL) {
+            $this->debug("Skipped. Ignored return for auto call", $depth);
+            return;
+        }
+
+        $this->stats['steps']++;
+        $id = uniqid();
+        $step = [
+            'line_no'           => $this->stats['lines'],
+            'depth'             => $depth,
+            'source'            => $this->history[$depth]['namespace'],
+            'namespace'         => $this->history[$depth]['source'],
+            'response'          => $lineInfo['response'],
+            'type'              => self::STEP_RETURN
+        ];
+        $this->debug("Return", $depth);
+        $this->steps[$id] = $step;
     }
 
     /**
@@ -341,6 +444,36 @@ OUTPUT;
             return $matches;
         } else {
             return ['type' => self::STEP_UNKNOWN];
+        }
+    }
+
+    /**
+     * Clean an array of numeric keys
+     *
+     * @param array $array Array to clean
+     * @return array
+     */
+    protected function cleanArray($array)
+    {
+        $cleanArray = [];
+        foreach ($array as $key => $value) {
+            if (!is_numeric($key)) {
+                $cleanArray[$key] = $value;
+            }
+        }
+        return $cleanArray;
+    }
+
+    /**
+     * Debugs information to the output
+     *
+     * @param string $message Information for debug
+     * @param int $depth Depth for the current message
+     */
+    protected function debug($message, $depth = 0)
+    {
+        if ($this->debug) {
+            printf('%04d [%02d]: %s%s', $this->stats['lines'], $depth, $message, PHP_EOL);
         }
     }
 }

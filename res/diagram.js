@@ -76,9 +76,14 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
             nX0 = scaleX(oNamespaces[sSource]);
             nX1 = scaleX(oNamespaces[sTarget]);
 
-            nMiddle = Math.abs((nX0 + nX1)/2);
+            if (oSteps[sKey]['type'] == 1) {
+                loadCall(nX0, nX1, scaleY(nTop), sKey);
+            } else {
+                loadResponse(nX0, nX1, scaleY(nTop), sKey);
+            }
 
-            oPaper.arrow(nX0, scaleY(nTop), nX1, scaleY(nTop), '#F00').attr({
+
+           /* oPaper.arrow(nX0, scaleY(nTop), nX1, scaleY(nTop), '#F00').attr({
                 'stroke-width': 2
             });
             oPaper.text(nMiddle, scaleY(nTop) - 7, oSteps[sKey]['method'] + '()').attr({
@@ -96,9 +101,52 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
                     $('#source').attr('href', 'codebrowser:' + oSteps[sKey].path);
                     $('#info').attr('href', oSteps[sKey].path);
                 }
-            }(sKey));
+            }(sKey));*/
             nTop++;
         }
+    };
+
+    var loadCall = function(nX0, nX1, nY, sKey) {
+        oPaper.arrow(nX0, nY, nX1, nY, '#F00').attr({
+            'stroke-width': 2
+        });
+        oPaper.text(Math.abs((nX0 + nX1)/2), nY - 7, oSteps[sKey]['method'] + '()').attr({
+            'font-size': 14,
+            'cursor': 'pointer'
+        }).hover(function() {
+            this.attr({fill: '#F00'});
+        },function() {
+            this.attr({fill: '#000'});
+        }).click(function(sKey) {
+            return function() {
+                $('#call').html(oSteps[sKey]['namespace'] + '::' + oSteps[sKey]['method'] + '()');
+                $('#json').attr('href', 'codebrowser:' + sFile + '->' + sKey);
+                $('#source').attr('href', 'codebrowser:' + oSteps[sKey].path);
+                $('#info').attr('href', oSteps[sKey].path);
+            }
+        }(sKey));
+    };
+
+    var loadResponse = function(nX0, nX1, nY, sKey) {
+        oPaper.arrow(nX0, nY, nX1, nY, '#F00').attr({
+            'stroke-width': 2,
+            'stroke-dasharray': '-'
+        });
+        oPaper.text(Math.abs((nX0 + nX1)/2), nY - 7, 'return').attr({
+            'font-size': 14,
+            'cursor': 'pointer'
+        }).hover(function() {
+            this.attr({fill: '#F00'});
+        },function() {
+            this.attr({fill: '#000'});
+        }).click(function(sKey) {
+            return function() {
+                $('#call').html('');
+                $('#json').attr('href', 'codebrowser:' + sFile + '->' + sKey);
+                $('#source').attr('href', 'codebrowser:' + oSteps[sKey].path);
+                $('#debug').html(oSteps[sKey]['response']);
+            }
+        }(sKey));
     };
 
     nHeight = getSize(oSteps) * SCALE_Y + MARGIN_TOP;
