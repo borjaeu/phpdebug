@@ -149,7 +149,7 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
         }(sKey));
     };
 
-    nHeight = getSize(oSteps) * SCALE_Y + MARGIN_TOP;
+    nHeight = (getSize(oSteps) + 1) * SCALE_Y + MARGIN_TOP;
     nWidth = getSize(oNamespaces) * SCALE_X + 40;
 
     oPaper = new Paper(nX, nY, nWidth, nHeight);

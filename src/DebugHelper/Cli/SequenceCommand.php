@@ -179,7 +179,6 @@ class SequenceCommand extends Abstracted
 
             $fileIn = fopen($file . '.xt', 'r');
             $maxLines = 1000000;
-//            $maxLines = 50;
             while (!feof($fileIn) && $maxLines-- > 0) {
                 $line = fgets($fileIn);
                 $this->stats['lines']++;
@@ -322,9 +321,9 @@ STEP;
     {
         $depth = $lineInfo['depth'];
         if ($this->ignoreDepth) {
-            if ($depth >= $this->ignoreDepth) {
+            if ($depth > $this->ignoreDepth) {
                 $this->ignoreCount[$this->ignoreNamespace]++;
-                $this->debug("Skipped. Ignored return >= {$this->ignoreDepth}", $depth);
+                $this->debug("Skipped. Ignored return > {$this->ignoreDepth}", $depth);
                 $this->stats['ignored']++;
                 return;
             } else {
