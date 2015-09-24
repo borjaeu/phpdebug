@@ -48,6 +48,20 @@ class SequenceCommand extends Abstracted
     protected $ignoreDepth;
 
     /**
+     * Name of the namespace being ignored
+     *
+     * @var string
+     */
+    protected $ignoreNamespace;
+
+    /**
+     * List of ignored namespaces applied and steps ignored by them
+     *
+     * @var array
+     */
+    protected $ignoreCount;
+
+    /**
      * Stats about the process for user feedback
      *
      * @var array
@@ -63,17 +77,18 @@ class SequenceCommand extends Abstracted
         //        'Symfony\Component\HttpKernel\Kernel',
         'Symfony\Component\DependencyInjection\ContainerAware'              => self::IGNORE_CALL,
         'Composer\Autoload\ClassLoader'                                     => self::IGNORE_CALL,
+//        'Composer'                                                          => self::IGNORE_NAMESPACE,
         'Symfony\Component\HttpKernel\Bundle\Bundle'                        => self::IGNORE_CALL,
         'Symfony\Component\ExpressionLanguage\ExpressionFunction'           => self::IGNORE_CALL,
         'Symfony\Component\HttpFoundation'                                  => self::IGNORE_CALL,
         'Doctrine'                                                          => self::IGNORE_NAMESPACE,
         'Monolog'                                                           => self::IGNORE_NAMESPACE,
-        'Composer'                                                          => self::IGNORE_NAMESPACE,
-        'DebugHelper'                                                       => self::IGNORE_NAMESPACE,
+//        'DebugHelper'                                                       => self::IGNORE_NAMESPACE,
         'QaamGo\RestApiBundle\Serializer\Entity'                            => self::IGNORE_NAMESPACE,
         'QaamGo\RestApiBundle\Api\Validation\Schema\Constraint'             => self::IGNORE_NAMESPACE,
         'Symfony\Component\EventDispatcher\ContainerAwareEventDispatcher'   => self::IGNORE_NAMESPACE,
         'Symfony\Component\DependencyInjection\Container'                   => self::IGNORE_NAMESPACE,
+        'Twig_Environment'                                                  => self::IGNORE_NAMESPACE
     ];
 
     /**
@@ -95,9 +110,9 @@ class SequenceCommand extends Abstracted
      */
     public function run()
     {
-        $file = \DebugHelper::getDebugDir() . $this->arguments[2] . '.xt';
+        $file = \DebugHelper::getDebugDir() . $this->arguments[2];
 
-        if (!is_file($file)) {
+        if (!is_file($file . '.xt')) {
             throw new \Exception("Error Processing file $file");
         }
 
@@ -112,19 +127,20 @@ class SequenceCommand extends Abstracted
             'self'      => 0
         ];
 
-        $this->generateFiles($file);
+        $this->generateFiles($file, isset($this->arguments[3]) && $this->arguments[3] == '--no-cache');
 
-        echo "$file\n";
+        echo "Finished $file!!!\n";
     }
 
     /**
      * Generates the output
      *
      * @param string $file File to process
+     * @param bool $ignoreCache Ignores the cache and regenerates the file
      */
-    protected function generateFiles($file)
+    protected function generateFiles($file, $ignoreCache = false)
     {
-        if (is_file($file . '.json')) {
+        if (!$ignoreCache && is_file($file . '.json')) {
             $data = json_decode(file_get_contents($file . '.json'), true);
 
             $this->lines = $data['steps'];
@@ -132,9 +148,10 @@ class SequenceCommand extends Abstracted
         } else {
             $this->lines = [];
             $this->source = [];
+            $this->ignoreCount = [];
             $this->namespaces = ['root' => 0];
 
-            $fileIn = fopen($file, 'r');
+            $fileIn = fopen($file . '.xt', 'r');
             $maxLines = 1000000;
             while (!feof($fileIn) && $maxLines-- > 0) {
                 $line = fgets($fileIn);
@@ -143,6 +160,7 @@ class SequenceCommand extends Abstracted
             }
             fclose($fileIn);
             print_r($this->namespaces);
+            print_r($this->ignoreCount);
 
             file_put_contents($file . '.json', json_encode([
                 'steps' => $this->lines,
@@ -195,6 +213,7 @@ STEP;
         }
         if ($this->ignoreDepth) {
             if ($lineInfo['depth'] > $this->ignoreDepth) {
+                $this->ignoreCount[$this->ignoreNamespace]++;
                 $this->stats['ignored']++;
                 return;
             } else {
@@ -202,10 +221,16 @@ STEP;
             }
         }
         if (preg_match('/^(?P<namespace>[^\(]+)(::|->)(?P<method>[^\(]+).*$/', $lineInfo['call'], $matches)) {
-            if (self::IGNORE_NONE !== $ignore = $this->isIgnoredNamespace($matches['namespace'], $matches['method'])) {
+            list($matchedEntry, $ignore) = $this->checkIgnoredNamespaces($matches['namespace']);
+            if (self::IGNORE_NONE !== $ignore) {
+                $this->ignoreNamespace = $matchedEntry;
+                if (!isset($this->ignoreCount[$matchedEntry])) {
+                    $this->ignoreCount[$this->ignoreNamespace] = 0;
+                }
                 $this->ignoreDepth = $lineInfo['depth'];
                 $this->stats['applied']++;
                 if ($ignore === self::IGNORE_CALL) {
+                    $this->ignoreCount[$this->ignoreNamespace]++;
                     return;
                 }
             }
@@ -282,18 +307,15 @@ OUTPUT;
      * @param string $namespace
      * @return bool
      */
-    protected function isIgnoredNamespace($namespace)
+    protected function checkIgnoredNamespaces($namespace)
     {
-//        if (in_array($namespace, $this->ignoredCalls)) {
-//            return self::IGNORE_CALL;
-//        }
         foreach ($this->ignoredNamespaces as $ignoredNamespace => $type) {
             if (substr($namespace, 0, strlen($ignoredNamespace)) == $ignoredNamespace) {
-                return $type;
+                return [$ignoredNamespace, $type];
             }
 
         }
-        return self::IGNORE_NONE;
+        return [null, self::IGNORE_NONE];
     }
 
     /**
