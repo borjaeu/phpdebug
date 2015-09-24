@@ -1,10 +1,6 @@
 $().ready(function(){
-    console.log(oSteps);
-    console.log(oNamespaces);
-
     var oDiagram = new Diagram(10, 60, oSteps, oNamespaces);
 });
-
 
 var Diagram = function(nX, nY, oSteps, oNamespaces) {
     var nWidth, nHeight, oPaper,
@@ -56,6 +52,12 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
         }
     };
 
+    /**
+     * Get smaller namespace size by keeping last 2 levels
+     *
+     * @param sNamespace
+     * @returns {string|*}
+     */
     var shortenNamespace = function(sNamespace) {
         var aChunks;
 
@@ -89,6 +91,10 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
             }).click(function(sKey) {
                 return function() {
                     console.log(oSteps[sKey]);
+                    $('#call').html(oSteps[sKey]['namespace'] + '::' + oSteps[sKey]['method'] + '()');
+                    $('#json').attr('href', 'codebrowser:' + sFile + '->' + sKey);
+                    $('#source').attr('href', 'codebrowser:' + oSteps[sKey].path);
+                    $('#info').attr('href', oSteps[sKey].path);
                 }
             }(sKey));
             nTop++;
@@ -96,7 +102,7 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
     };
 
     nHeight = getSize(oSteps) * SCALE_Y + MARGIN_TOP;
-    nWidth = getSize(oNamespaces) * SCALE_X;
+    nWidth = getSize(oNamespaces) * SCALE_X + 40;
 
     oPaper = new Paper(nX, nY, nWidth, nHeight);
 

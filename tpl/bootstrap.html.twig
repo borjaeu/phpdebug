@@ -4,18 +4,13 @@
     <title>{% block title %}Debug{% endblock %}</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
-    <style>
-        body {
-            padding-top: 50px;
-        }
-    </style>
     {% block style %}{% endblock %}
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 {% block javascript %}{% endblock %}
 </head>
 <body>
-<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+<div class="navbar navbar-inverse" role="navigation">
     <div class="container">
         <div class="navbar-header">
             <a class="navbar-brand" href="?">Debug index</a></a>

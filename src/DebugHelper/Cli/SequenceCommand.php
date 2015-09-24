@@ -38,7 +38,7 @@ class SequenceCommand extends Abstracted
      *
      * @var array
      */
-    protected $lines;
+    protected $steps;
 
     /**
      * Depth where all calls bellow are ignored
@@ -143,10 +143,10 @@ class SequenceCommand extends Abstracted
         if (!$ignoreCache && is_file($file . '.json')) {
             $data = json_decode(file_get_contents($file . '.json'), true);
 
-            $this->lines = $data['steps'];
+            $this->steps = $data['steps'];
             $this->namespaces = $data['namespaces'];
         } else {
-            $this->lines = [];
+            $this->steps = [];
             $this->source = [];
             $this->ignoreCount = [];
             $this->namespaces = ['root' => 0];
@@ -163,7 +163,7 @@ class SequenceCommand extends Abstracted
             print_r($this->ignoreCount);
 
             file_put_contents($file . '.json', json_encode([
-                'steps' => $this->lines,
+                'steps'      => $this->steps,
                 'namespaces' => $this->namespaces
             ], JSON_PRETTY_PRINT));
         }
@@ -179,13 +179,13 @@ class SequenceCommand extends Abstracted
     {
         $fileOut = fopen($file . '.log', 'w');
 
-        foreach ($this->lines as $line) {
-            $indent = str_repeat(' ', $line['depth']);
-            $step = <<<STEP
-$indent{$line['namespace']}->{$line['method']}  ({$line['source']})
+        foreach ($this->steps as $step) {
+            $indent = str_repeat(' ', $step['depth']);
+            $stepLog = <<<STEP
+$indent{$step['namespace']}->{$step['method']}  ({$step['source']})
 
 STEP;
-            fwrite($fileOut, $step);
+            fwrite($fileOut, $stepLog);
 
         }
         fclose($fileOut);
@@ -249,7 +249,8 @@ STEP;
 
         $this->stats['steps']++;
         $this->registerNamespace($matches['namespace']);
-        $this->lines[$this->stats['steps']] = [
+        $id = uniqid();
+        $this->steps[$id] = [
             'line_no'           => $this->stats['lines'],
             'depth'             => $depth,
             'path'              => $lineInfo['path'],

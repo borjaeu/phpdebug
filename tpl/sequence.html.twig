@@ -3,15 +3,31 @@
 
 {% block title %}Debug - Code Sequence{% endblock %}
 {% block style %}
+<style>
+    #main_panel {
+        z-index: 30;
+        position: absolute;
+        right: 20px;
+    }
+</style>
 {% endblock %}
 
 {% block javascript %}
 <script type="text/javascript" src="{{ resource }}diagram.js"></script>
 <script type="text/javascript" src="{{ resource }}raphael-min.js"></script>
 <script type="text/javascript">
+    var sFile = '{{ file }}';
     var oSteps = {{  steps | raw }};
     var oNamespaces = {{ namespaces | raw }};
 </script>
 {% endblock %}
 
-{% block body %}{% endblock %}
+{% block body %}
+    <div id="main_panel" class="panel panel-default">
+        <div class="panel-body">
+            <h3 id="call"></h3>
+            <p><a id="source">Open Source</a> / <a id="json" href="core">Open Json</a></p>
+            <pre id="debug"></pre>
+        </div>
+    </div>
+{% endblock %}

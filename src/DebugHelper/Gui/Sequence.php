@@ -17,7 +17,7 @@ class Sequence
     public function setFile($file)
     {
         $this->id = $file;
-        $this->file = \DebugHelper::getDebugDir() . $file . '.xt';
+        $this->file = \DebugHelper::getDebugDir() . $file . '.json';
 
         if (!is_file($this->file)) {
             throw new \Exception("Error Processing file $file");
@@ -32,14 +32,12 @@ class Sequence
      */
     public function renderLoadsHtml()
     {
-        if (!is_file($this->file . '.json')) {
-            throw new \Exception('Invalid file ' . $this->file . '.json');
-        }
-        $data = json_decode(file_get_contents($this->file . '.json'), true);
+        $data = json_decode(file_get_contents($this->file), true);
 
         $template = new Template();
         $template->assign('id', $this->id);
 
+        $template->assign('file', realpath($this->file));
         $template->assign('section', 'sequence');
         $template->assign('resource', $this->getResourcePath());
         $template->assign('steps', json_encode($data['steps']));
