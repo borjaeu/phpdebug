@@ -10,10 +10,15 @@ class ListCommand extends Abstracted
     {
         $files = $this->getFiles();
         foreach ($files as $info) {
-            echo "{$info['id']}    {$info['name']}     {$info['time']}    {$info['size']}\n";
+            printf('%30s %30s %21s %10s %s', $info['id'], $info['name'], $info['time'], $info['size'], PHP_EOL);
         }
     }
 
+    /**
+     * Gets the trace fiels from the temp directory
+     *
+     * @return array
+     */
     protected function getFiles()
     {
         $path = \DebugHelper::getDebugDir();
@@ -40,6 +45,12 @@ class ListCommand extends Abstracted
         return $files;
     }
 
+    /**
+     * Gets the trace time from the file contents
+     *
+     * @param string $file
+     * @return string
+     */
     protected function getTraceTime($file)
     {
         $fp = fopen($file, 'r');
