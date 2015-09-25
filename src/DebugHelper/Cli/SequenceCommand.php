@@ -98,13 +98,6 @@ class SequenceCommand extends Abstracted
     protected $source;
 
     /**
-     * Namespaces used in the current request
-     *
-     * @var array
-     */
-    protected $namespaces;
-
-    /**
      * Identifier for the last call made
      *
      * @var string
@@ -140,6 +133,8 @@ class SequenceCommand extends Abstracted
         'GuzzleHttp\Message\Response'                                       => self::IGNORE_NAMESPACE,
 //        'Qaamgo\OnlineConvertApiBundle\Api\Job\Find'                        => self::IGNORE_NAMESPACE,
         'Qaamgo\OnlineConvertApiBundle\Entity\JobRepository'                => self::IGNORE_NAMESPACE,
+        'Qaamgo\OnlineConvertApiBundle\Factory\Job'                         => self::IGNORE_NAMESPACE,
+        'Qaamgo\OnlineConvertApiBundle\Handler\OnlineConvertApi'            => self::IGNORE_NAMESPACE,
     ];
 
     /**
@@ -176,7 +171,6 @@ class SequenceCommand extends Abstracted
         if (!empty($this->arguments['skip-to'])) {
             $this->skipTo = $this->arguments['skip-to'];
         }
-        $this->generateFiles($file, !empty($this->arguments['no-cache']));
         $this->generateFiles(
             $file,
             empty($this->arguments['limit']) ? 1000000 : $this->arguments['limit'],
@@ -197,14 +191,12 @@ class SequenceCommand extends Abstracted
         if (!$ignoreCache && is_file($file . '.json')) {
             $data = json_decode(file_get_contents($file . '.json'), true);
 
-            $this->steps = $data['steps'];
-            $this->namespaces = $data['namespaces'];
+            $this->steps = $data;
         } else {
             $this->steps = [];
             $this->source = [];
             $this->ignoreCount = [];
             $this->history = [];
-            $this->namespaces = ['root' => 0];
 
             $fileIn = fopen($file . '.xt', 'r');
             while (!feof($fileIn) && $maxLines-- > 0) {
@@ -213,7 +205,7 @@ class SequenceCommand extends Abstracted
                 $this->processInputLine($line);
             }
             fclose($fileIn);
-            echo 'Ignored classes';
+            echo "Ignored classes\n";
             ksort($this->ignoreCount);
             \DebugHelper::dump($this->ignoreCount);
 
@@ -356,7 +348,6 @@ class SequenceCommand extends Abstracted
         $this->stats['steps']++;
         $id = uniqid();
 
-        $this->registerNamespace($matches['namespace']);
         $step = [
             'line_no'           => $this->stats['lines'],
             'depth'             => $depth,
@@ -468,18 +459,6 @@ OUTPUT;
             $this->stats['methods'],
             $this->stats['lines']
         );
-    }
-
-    /**
-     * Register used namespaces
-     *
-     * @param string $namespace Namespace
-     */
-    protected function registerNamespace($namespace)
-    {
-        if (!isset($this->namespaces[$namespace])) {
-            $this->namespaces[$namespace] = count($this->namespaces);
-        }
     }
 
     /**

@@ -117,7 +117,7 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
         oCanvas.arrow(oSteps[sKey].nX0, oSteps[sKey].nY, oSteps[sKey].nX1, oSteps[sKey].nY, '#F00').attr({
             'stroke-width': 2
         });
-        oCanvas.text(Math.abs((oSteps[sKey].nX0 + oSteps[sKey].nX1)/2), oSteps[sKey].nY - 7, oSteps[sKey]['method'] + '()').attr({
+        oCanvas.text(Math.abs((oSteps[sKey].nX0 + oSteps[sKey].nX1)/2), oSteps[sKey].nY - 7, oSteps[sKey]['method']).attr({
             'font-size': 12,
             'cursor': 'pointer'
         }).hover(function() {
@@ -145,7 +145,7 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
             'stroke-width': 2,
             'arrow-start': 'classic-wide-long'
         });
-        oCanvas.text(Math.abs((oSteps[sKey].nX0 + oSteps[sKey].nX1)/2), oSteps[sKey].nY - 7, oSteps[sKey]['method'] + '()').attr({
+        oCanvas.text(Math.abs((oSteps[sKey].nX0 + oSteps[sKey].nX1)/2), oSteps[sKey].nY - 7, oSteps[sKey]['method']).attr({
             'font-size': 12,
             'cursor': 'pointer'
         }).hover(function() {
@@ -173,7 +173,7 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
             'stroke-width': 2,
             'stroke-dasharray': '-'
         });
-        oCanvas.text(Math.abs((oSteps[sKey].nX0 + oSteps[sKey].nX1)/2), oSteps[sKey].nY - 7, 'return').attr({
+        oCanvas.text(Math.abs((oSteps[sKey].nX0 + oSteps[sKey].nX1)/2), oSteps[sKey].nY - 7, oSteps[sKey]['response']).attr({
             'font-size': 12,
             'cursor': 'pointer'
         }).hover(function() {
