@@ -94,7 +94,9 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
         for(var sKey in oSteps) {
             if (oSteps[sKey]['type'] == 1) {
                 renderItemCallArrow(sKey);
-            } else {
+            } else if (oSteps[sKey]['type'] == 3) {
+                renderItemCallAndResponseArrow(sKey);
+            } else if (oSteps[sKey]['type'] == 2) {
                 renderItemResponseArrow(sKey);
             }
         }
@@ -114,6 +116,34 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
     var renderItemCallArrow = function(sKey) {
         oCanvas.arrow(oSteps[sKey].nX0, oSteps[sKey].nY, oSteps[sKey].nX1, oSteps[sKey].nY, '#F00').attr({
             'stroke-width': 2
+        });
+        oCanvas.text(Math.abs((oSteps[sKey].nX0 + oSteps[sKey].nX1)/2), oSteps[sKey].nY - 7, oSteps[sKey]['method'] + '()').attr({
+            'font-size': 12,
+            'cursor': 'pointer'
+        }).hover(function() {
+            this.attr({fill: '#F00'});
+        },function() {
+            this.attr({fill: '#000'});
+        }).click(function(sKey) {
+            return function() {
+                $('#main_panel').removeClass('hidden');
+                $('#call').html(oSteps[sKey]['namespace'] + '::' + oSteps[sKey]['method'] + '()');
+                $('#json').attr('href', 'codebrowser:' + sFile + '->' + sKey);
+                $('#source').attr('href', 'codebrowser:' + oSteps[sKey].path);
+                $('#info').attr('href', oSteps[sKey].path);
+            }
+        }(sKey));
+    };
+
+    /**
+     * Load call arrows
+     *
+     * @param sKey
+     */
+    var renderItemCallAndResponseArrow = function(sKey) {
+        oCanvas.arrow(oSteps[sKey].nX0, oSteps[sKey].nY, oSteps[sKey].nX1, oSteps[sKey].nY, '#F00').attr({
+            'stroke-width': 2,
+            'arrow-start': 'classic-wide-long'
         });
         oCanvas.text(Math.abs((oSteps[sKey].nX0 + oSteps[sKey].nX1)/2), oSteps[sKey].nY - 7, oSteps[sKey]['method'] + '()').attr({
             'font-size': 12,
@@ -169,7 +199,7 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
             return;
         }
 
-        oPaper.rect(0, oSteps[sKey].nY - (SCALE_Y / 2), nWidth, SCALE_Y - 2).attr({
+        oPaper.rect(0, oSteps[sKey].nY - (SCALE_Y / 2) - 1, nWidth, SCALE_Y - 2).attr({
             'fill': '#00F',
             'stroke': '#FFF',
             'opacity':.3
@@ -187,10 +217,13 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
      * @param sKey
      */
     var renderItemResponseMethod = function(sKey) {
-        var sOrigin = oSteps[sKey].from, nY0;
-
-        nY0 = oHistory[sOrigin];
-        oCanvas.rect(oSteps[sKey].nX0 - 5, nY0 - 5, 10, oSteps[sKey].nY - nY0 + 10).attr({'fill': '#FFF'});
+        if (oSteps[sKey].type == 2) {
+            var sOrigin = oSteps[sKey].from, nY0;
+            nY0 = oHistory[sOrigin];
+            oCanvas.rect(oSteps[sKey].nX0 - 5, nY0 - 5, 10, oSteps[sKey].nY - nY0 + 10).attr({'fill': '#FFF'});
+        } else if (oSteps[sKey].type == 3) {
+            oCanvas.rect(oSteps[sKey].nX1 - 5, oSteps[sKey].nY - 10, 10, 20).attr({'fill': '#FFF'});
+        }
     };
 
     nHeight = (getSize(oSteps) + 1) * SCALE_Y + MARGIN_TOP;

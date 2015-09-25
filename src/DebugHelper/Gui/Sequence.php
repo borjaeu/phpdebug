@@ -56,7 +56,7 @@ class Sequence
     {
         $namespaces = ['root' => 0];
         foreach ($steps as $step) {
-            if ($step['type'] == 1) {
+            if ($step['type'] == 1 || $step['type'] == 3) {
                 $namespace = $step['namespace'];
                 if (!isset($namespaces[$namespace])) {
                     $namespaces[$namespace] = count($namespaces);

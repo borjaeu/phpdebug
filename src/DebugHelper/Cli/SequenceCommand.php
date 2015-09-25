@@ -14,6 +14,11 @@ class SequenceCommand extends Abstracted
     const STEP_RETURN = 2;
 
     /**
+     * Type call and return for a line
+     */
+    const STEP_CALL_RETURN = 3;
+
+    /**
      * Type unknown for a line
      */
     const STEP_UNKNOWN = 3;
@@ -98,6 +103,13 @@ class SequenceCommand extends Abstracted
      * @var array
      */
     protected $namespaces;
+
+    /**
+     * Identifier for the last call made
+     *
+     * @var string
+     */
+    protected $lastCall;
 
     /**
      * Namespaces ignored, all calls bellow this namespaces will be ignored
@@ -358,6 +370,7 @@ class SequenceCommand extends Abstracted
         $this->debug("Method call. {$matches['namespace']}->{$matches['method']}", $depth);
         $this->steps[$id] = $step;
         $this->history[$depth] = $id;
+        $this->lastCall = $id;
     }
 
     /**
@@ -398,21 +411,28 @@ class SequenceCommand extends Abstracted
             return;
         }
 
-        $this->stats['steps']++;
-        $id = uniqid();
-        $this->steps[$callerId]['end'] = $id;
-        $step = [
-            'line_no'           => $this->stats['lines'],
-            'depth'             => $depth,
-            'source'            => $this->steps[$callerId]['namespace'],
-            'namespace'         => $this->steps[$callerId]['source'],
-            'response'          => $lineInfo['response'],
-            'info'              => '',
-            'type'              => self::STEP_RETURN,
-            'from'              => $callerId
-        ];
-        $this->debug("Return", $depth);
-        $this->steps[$id] = $step;
+        if ($this->lastCall == $callerId) {
+            $this->steps[$callerId]['type'] = self::STEP_CALL_RETURN;
+            $this->steps[$callerId]['return_line_no'] = $this->stats['lines'];
+            $this->steps[$callerId]['response'] = $lineInfo['response'];
+            $this->debug("Return in the same thread", $depth);
+        } else {
+            $this->stats['steps']++;
+            $id = uniqid();
+            $this->steps[$callerId]['end'] = $id;
+            $step = [
+                'line_no'           => $this->stats['lines'],
+                'depth'             => $depth,
+                'source'            => $this->steps[$callerId]['namespace'],
+                'namespace'         => $this->steps[$callerId]['source'],
+                'response'          => $lineInfo['response'],
+                'info'              => '',
+                'type'              => self::STEP_RETURN,
+                'from'              => $callerId
+            ];
+            $this->debug("Return", $depth);
+            $this->steps[$id] = $step;
+        }
     }
 
     /**
