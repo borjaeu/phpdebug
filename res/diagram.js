@@ -37,7 +37,7 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
     /**
      * Loads the columns for the classes
      */
-    var loadClasses = function() {
+    var loadNamespacesColumns = function() {
         var sKey, nX;
 
         for(sKey in oNamespaces) {
@@ -67,30 +67,44 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
     };
 
     var loadSteps = function() {
-        var sKey, nX0, nX1, nTop = 1, nMiddle, sSource, sTarget;
+        var sKey, nTop = 1, sSource, sTarget;
 
         for(sKey in oSteps) {
-            nX = scaleX(oNamespaces[sKey]);
             sSource = oSteps[sKey]['source'];
             sTarget = oSteps[sKey]['namespace'];
-            nX0 = scaleX(oNamespaces[sSource]);
-            nX1 = scaleX(oNamespaces[sTarget]);
 
-            if (oSteps[sKey]['type'] == 1) {
-                loadCall(nX0, nX1, scaleY(nTop), sKey);
-            } else {
-                loadResponse(nX0, nX1, scaleY(nTop), sKey);
-            }
+            oSteps[sKey].nX0 = scaleX(oNamespaces[sSource]);
+            oSteps[sKey].nX1 = scaleX(oNamespaces[sTarget]);
+            oSteps[sKey].nY = scaleY(nTop);
+
+            oHistory[sKey] = oSteps[sKey].nY;
             nTop++;
         }
     };
 
-    var loadCall = function(nX0, nX1, nY, sKey) {
-        oHistory[sKey] = nY;
-        oCanvas.arrow(nX0, nY, nX1, nY, '#F00').attr({
+    var loadArrows = function() {
+        var sKey;
+
+        for(sKey in oSteps) {
+            if (oSteps[sKey]['type'] == 1) {
+                loadCallArrows(sKey);
+            } else {
+                loadResponseArrows(sKey);
+            }
+        }
+    };
+
+    /**
+     * Load call arrows
+     *
+     * @param sKey
+     */
+    var loadCallArrows = function(sKey) {
+
+        oCanvas.arrow(oSteps[sKey].nX0, oSteps[sKey].nY, oSteps[sKey].nX1, oSteps[sKey].nY, '#F00').attr({
             'stroke-width': 2
         });
-        oCanvas.text(Math.abs((nX0 + nX1)/2), nY - 7, oSteps[sKey]['method'] + '()').attr({
+        oCanvas.text(Math.abs((oSteps[sKey].nX0 + oSteps[sKey].nX1)/2), oSteps[sKey].nY - 7, oSteps[sKey]['method'] + '()').attr({
             'font-size': 14,
             'cursor': 'pointer'
         }).hover(function() {
@@ -108,17 +122,23 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
         }(sKey));
     };
 
-    var loadResponse = function(nX0, nX1, nY, sKey) {
+    var loadResponseArrows = function(sKey) {
         var sOrigin = oSteps[sKey].from;
 
         nY0 = oHistory[sOrigin];
-        oCanvas.rect(nX0 - 5, nY0 - 5, 10, nY - nY0 + 10);
+        oCanvas.rect(oSteps[sKey].nX0 - 5, nY0 - 5, 10, oSteps[sKey].nY - nY0 + 10).attr({
+                'fill': '#FFF'
+        });
 
-        oCanvas.arrow(nX0, nY, nX1, nY, '#F00').attr({
+        if (oSteps[sKey].info !== '') {
+            //loadInfo(oSteps[sKey].info, oSteps[sKey].nX0, oSteps[sKey].nX1, oSteps[sKey].nY, oSteps[sKey].nY0, sKey )
+        }
+
+        oCanvas.arrow(oSteps[sKey].nX0, oSteps[sKey].nY, oSteps[sKey].nX1, oSteps[sKey].nY, '#F00').attr({
             'stroke-width': 2,
             'stroke-dasharray': '-'
         });
-        oCanvas.text(Math.abs((nX0 + nX1)/2), nY - 7, 'return').attr({
+        oCanvas.text(Math.abs((oSteps[sKey].nX0 + oSteps[sKey].nX1)/2), oSteps[sKey].nY - 7, 'return').attr({
             'font-size': 14,
             'cursor': 'pointer'
         }).hover(function() {
@@ -136,13 +156,29 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
         }(sKey));
     };
 
+    var loadInfo = function(sInfo, nX0, nX1, nY0, nY1) {
+        if (nX0 > nX1) {
+            oPaper.text(nX0 + 10, (nY0 + nY1 ) / 2, sInfo).attr({
+                'text-anchor':'start',
+                'font-size': 14
+            });
+        } else {
+            oPaper.text(nX0 - 10, (nY0 + nY1 ) / 2, sInfo).attr({
+                'text-anchor':'end',
+                'font-size': 14
+            });
+        }
+        console.log(sInfo);
+    };
+
     nHeight = (getSize(oSteps) + 1) * SCALE_Y + MARGIN_TOP;
     nWidth = getSize(oNamespaces) * SCALE_X + 40;
 
     oCanvas = new Paper(nX, nY, nWidth, nHeight);
 
-    loadClasses();
     loadSteps();
+    loadNamespacesColumns();
+    loadArrows();
 };
 
 var Paper = function(nX, nY, nWidth, nHeight) {

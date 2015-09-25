@@ -352,6 +352,7 @@ class SequenceCommand extends Abstracted
             'source'            => $source,
             'namespace'         => $matches['namespace'],
             'method'            => $matches['method'],
+            'info'              => '',
             'type'              => self::STEP_CALL
         ];
         $this->debug("Method call. {$matches['namespace']}->{$matches['method']}", $depth);
@@ -406,6 +407,7 @@ class SequenceCommand extends Abstracted
             'source'            => $this->steps[$callerId]['namespace'],
             'namespace'         => $this->steps[$callerId]['source'],
             'response'          => $lineInfo['response'],
+            'info'              => '',
             'type'              => self::STEP_RETURN,
             'from'              => $callerId
         ];
