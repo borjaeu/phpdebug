@@ -37,7 +37,7 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
     /**
      * Loads the columns for the classes
      */
-    var loadNamespacesColumns = function() {
+    var renderNamespacesColumns = function() {
         var sKey, nX;
 
         for(sKey in oNamespaces) {
@@ -82,15 +82,27 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
         }
     };
 
-    var loadArrows = function() {
+    var renderMethods = function() {
         var sKey;
 
         for(sKey in oSteps) {
+            renderItemResponseMethod(sKey);
+        }
+    };
+
+    var renderArrows = function() {
+        for(var sKey in oSteps) {
             if (oSteps[sKey]['type'] == 1) {
-                loadCallArrows(sKey);
+                renderItemCallArrow(sKey);
             } else {
-                loadResponseArrows(sKey);
+                renderItemResponseArrow(sKey);
             }
+        }
+    };
+
+    var renderInfo = function() {
+        for(var sKey in oSteps) {
+            renderItemInfo(sKey);
         }
     };
 
@@ -99,13 +111,12 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
      *
      * @param sKey
      */
-    var loadCallArrows = function(sKey) {
-
+    var renderItemCallArrow = function(sKey) {
         oCanvas.arrow(oSteps[sKey].nX0, oSteps[sKey].nY, oSteps[sKey].nX1, oSteps[sKey].nY, '#F00').attr({
             'stroke-width': 2
         });
         oCanvas.text(Math.abs((oSteps[sKey].nX0 + oSteps[sKey].nX1)/2), oSteps[sKey].nY - 7, oSteps[sKey]['method'] + '()').attr({
-            'font-size': 14,
+            'font-size': 12,
             'cursor': 'pointer'
         }).hover(function() {
             this.attr({fill: '#F00'});
@@ -122,24 +133,18 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
         }(sKey));
     };
 
-    var loadResponseArrows = function(sKey) {
-        var sOrigin = oSteps[sKey].from;
-
-        nY0 = oHistory[sOrigin];
-        oCanvas.rect(oSteps[sKey].nX0 - 5, nY0 - 5, 10, oSteps[sKey].nY - nY0 + 10).attr({
-                'fill': '#FFF'
-        });
-
-        if (oSteps[sKey].info !== '') {
-            //loadInfo(oSteps[sKey].info, oSteps[sKey].nX0, oSteps[sKey].nX1, oSteps[sKey].nY, oSteps[sKey].nY0, sKey )
-        }
-
+    /**
+     * Loads arrow for a response
+     *
+     * @param sKey
+     */
+    var renderItemResponseArrow = function(sKey) {
         oCanvas.arrow(oSteps[sKey].nX0, oSteps[sKey].nY, oSteps[sKey].nX1, oSteps[sKey].nY, '#F00').attr({
             'stroke-width': 2,
             'stroke-dasharray': '-'
         });
         oCanvas.text(Math.abs((oSteps[sKey].nX0 + oSteps[sKey].nX1)/2), oSteps[sKey].nY - 7, 'return').attr({
-            'font-size': 14,
+            'font-size': 12,
             'cursor': 'pointer'
         }).hover(function() {
             this.attr({fill: '#F00'});
@@ -151,24 +156,41 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
                 $('#call').html('');
                 $('#json').attr('href', 'codebrowser:' + sFile + '->' + sKey);
                 $('#source').attr('href', 'codebrowser:' + oSteps[sKey].path);
-                //$('#debug').html(oSteps[sKey]['response']);
             }
         }(sKey));
     };
 
-    var loadInfo = function(sInfo, nX0, nX1, nY0, nY1) {
-        if (nX0 > nX1) {
-            oPaper.text(nX0 + 10, (nY0 + nY1 ) / 2, sInfo).attr({
-                'text-anchor':'start',
-                'font-size': 14
-            });
-        } else {
-            oPaper.text(nX0 - 10, (nY0 + nY1 ) / 2, sInfo).attr({
-                'text-anchor':'end',
-                'font-size': 14
-            });
+    var renderItemInfo = function(sKey) {
+        var sOrigin = oSteps[sKey].from;
+
+        nY0 = oHistory[sOrigin];
+
+        if (oSteps[sKey].info == '') {
+            return;
         }
-        console.log(sInfo);
+
+        oPaper.rect(0, oSteps[sKey].nY - (SCALE_Y / 2), nWidth, SCALE_Y - 2).attr({
+            'fill': '#00F',
+            'stroke': '#FFF',
+            'opacity':.3
+        });
+
+        oPaper.text(nWidth - 10, oSteps[sKey].nY, oSteps[sKey].info).attr({
+            'text-anchor':'end',
+            'font-size': 14
+        });
+    };
+
+    /**
+     * Renders the information for a method call
+     *
+     * @param sKey
+     */
+    var renderItemResponseMethod = function(sKey) {
+        var sOrigin = oSteps[sKey].from, nY0;
+
+        nY0 = oHistory[sOrigin];
+        oCanvas.rect(oSteps[sKey].nX0 - 5, nY0 - 5, 10, oSteps[sKey].nY - nY0 + 10).attr({'fill': '#FFF'});
     };
 
     nHeight = (getSize(oSteps) + 1) * SCALE_Y + MARGIN_TOP;
@@ -177,8 +199,11 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
     oCanvas = new Paper(nX, nY, nWidth, nHeight);
 
     loadSteps();
-    loadNamespacesColumns();
-    loadArrows();
+
+    renderInfo();
+    renderNamespacesColumns();
+    renderMethods();
+    renderArrows();
 };
 
 var Paper = function(nX, nY, nWidth, nHeight) {
