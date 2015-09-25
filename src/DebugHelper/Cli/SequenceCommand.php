@@ -366,8 +366,9 @@ class SequenceCommand extends Abstracted
         }
 
         $this->stats['steps']++;
-        $this->registerNamespace($matches['namespace']);
         $id = uniqid();
+
+        $this->registerNamespace($matches['namespace']);
         $step = [
             'line_no'           => $this->stats['lines'],
             'depth'             => $depth,
@@ -379,7 +380,7 @@ class SequenceCommand extends Abstracted
         ];
         $this->debug("Method call. {$matches['namespace']}->{$matches['method']}", $depth);
         $this->steps[$id] = $step;
-        $this->history[$depth] = $step;
+        $this->history[$depth] = $id;
     }
 
     /**
@@ -414,15 +415,18 @@ class SequenceCommand extends Abstracted
             return;
         }
 
+        $callerId = $this->history[$depth];
         $this->stats['steps']++;
         $id = uniqid();
+        $this->steps[$callerId]['end'] = $id;
         $step = [
             'line_no'           => $this->stats['lines'],
             'depth'             => $depth,
-            'source'            => $this->history[$depth]['namespace'],
-            'namespace'         => $this->history[$depth]['source'],
+            'source'            => $this->steps[$callerId]['namespace'],
+            'namespace'         => $this->steps[$callerId]['source'],
             'response'          => $lineInfo['response'],
-            'type'              => self::STEP_RETURN
+            'type'              => self::STEP_RETURN,
+            'from'              => $callerId
         ];
         $this->debug("Return", $depth);
         $this->steps[$id] = $step;

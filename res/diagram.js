@@ -4,7 +4,7 @@ $().ready(function(){
 
 var Diagram = function(nX, nY, oSteps, oNamespaces) {
     var nWidth, nHeight, oCanvas,
-        SCALE_X = 80, SCALE_Y = 25, MARGIN_TOP = 200;
+        SCALE_X = 80, SCALE_Y = 25, MARGIN_TOP = 200, oHistory = {};
 
     var getSize = function(oObject) {
         var nSize = 0, sKey;
@@ -86,6 +86,7 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
     };
 
     var loadCall = function(nX0, nX1, nY, sKey) {
+        oHistory[sKey] = nY;
         oCanvas.arrow(nX0, nY, nX1, nY, '#F00').attr({
             'stroke-width': 2
         });
@@ -107,6 +108,11 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
     };
 
     var loadResponse = function(nX0, nX1, nY, sKey) {
+        var sOrigin = oSteps[sKey].from;
+
+        nY0 = oHistory[sOrigin];
+        oCanvas.rect(nX0 - 5, nY0 - 5, 10, nY - nY0 + 10);
+
         oCanvas.arrow(nX0, nY, nX1, nY, '#F00').attr({
             'stroke-width': 2,
             'stroke-dasharray': '-'
@@ -141,9 +147,12 @@ var Paper = function(nX, nY, nWidth, nHeight) {
     oPaper = Raphael(nX, nY, nWidth, nHeight);
     oPaper.rect(0, 0, nWidth, nHeight);
 
+    this.rect = function(nX0, nY0, nX1, nY1) {
+        return oPaper.rect(nX0, nY0, nX1, nY1);
+    };
+
     this.line = function(nX0, nY0, nX1, nY1) {
         var sPath = 'M' + nX0 + ' ' + nY0 + 'L' + nX1 + ' ' + nY1;
-
         return oPaper.path(sPath);
     };
 
