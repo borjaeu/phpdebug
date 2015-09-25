@@ -122,9 +122,11 @@ class SequenceCommand extends Abstracted
         'Symfony\Component\DependencyInjection\Container'                   => self::IGNORE_NAMESPACE,
         'Twig_Environment'                                                  => self::IGNORE_NAMESPACE,
         'QaamGo\RestApiBundle\Api\Validation\RequestValidator'              => self::IGNORE_NAMESPACE,
-        'Qaamgo\OnlineConvertApiBundle\Api\Job\Find'                        => self::IGNORE_NAMESPACE,
         'Symfony\Bundle\FrameworkBundle\Controller\Controller'              => self::IGNORE_NAMESPACE,
-        'Symfony\Component\HttpFoundation\JsonResponse'                     => self::IGNORE_NAMESPACE
+        'Symfony\Component\HttpFoundation\JsonResponse'                     => self::IGNORE_NAMESPACE,
+        'GuzzleHttp\Client'                                                 => self::IGNORE_NAMESPACE,
+        'GuzzleHttp\Message\Response'                                       => self::IGNORE_NAMESPACE,
+        'Qaamgo\OnlineConvertApiBundle\Api\Job\Find'                        => self::IGNORE_NAMESPACE
     ];
 
     /**
@@ -170,6 +172,11 @@ class SequenceCommand extends Abstracted
             $this->skipTo = $this->arguments['skip-to'];
         }
         $this->generateFiles($file, !empty($this->arguments['no-cache']));
+        $this->generateFiles(
+            $file,
+            empty($this->arguments['limit']) ? 1000000 : $this->arguments['limit'],
+            !empty($this->arguments['no-cache'])
+        );
         echo "Finished $file!!!\n";
     }
 
@@ -177,9 +184,10 @@ class SequenceCommand extends Abstracted
      * Generates the output
      *
      * @param string $file File to process
+     * @param int $maxLines Max lines to parse
      * @param bool $ignoreCache Ignores the cache and regenerates the file
      */
-    protected function generateFiles($file, $ignoreCache = false)
+    protected function generateFiles($file, $maxLines, $ignoreCache = false)
     {
         if (!$ignoreCache && is_file($file . '.json')) {
             $data = json_decode(file_get_contents($file . '.json'), true);
@@ -194,7 +202,6 @@ class SequenceCommand extends Abstracted
             $this->namespaces = ['root' => 0];
 
             $fileIn = fopen($file . '.xt', 'r');
-            $maxLines = 1000000;
             while (!feof($fileIn) && $maxLines-- > 0) {
                 $line = fgets($fileIn);
                 $this->stats['lines']++;
@@ -202,7 +209,8 @@ class SequenceCommand extends Abstracted
             }
             fclose($fileIn);
             echo 'Ignored classes';
-            print_r(ksort($this->ignoreCount));
+            ksort($this->ignoreCount);
+            \DebugHelper::dump($this->ignoreCount);
 
             file_put_contents($file . '.json', json_encode($this->steps, JSON_PRETTY_PRINT));
         }
@@ -221,7 +229,8 @@ class SequenceCommand extends Abstracted
         foreach ($this->steps as $step) {
             $indent = str_repeat(' ', $step['depth']);
             if ($step['type'] == self::STEP_CALL) {
-                $stepLog = sprintf('%06d %s%s->%s (%s)%s',
+                $stepLog = sprintf(
+                    '%06d %s%s->%s (%s)%s',
                     $step['line_no'],
                     $indent,
                     $step['namespace'],
@@ -336,7 +345,6 @@ class SequenceCommand extends Abstracted
                 $this->stats['applied']++;
                 if ($ignore === self::IGNORE_CALL) {
                     $this->ignoreCount[$this->ignoreNamespace]++;
-                    $this->ignoreDepth--;
                     $this->debug("Skipped. Ignored call for current call", $depth);
                     return;
                 }
@@ -395,9 +403,9 @@ class SequenceCommand extends Abstracted
         }
 
         if (!isset($this->history[$depth])) {
-            die(sprintf("<pre><a href=\"codebrowser:%s:%d\">DIE</a></pre>", __FILE__, __LINE__));
-            exit;
+            return;
         }
+
         if ($this->history[$depth] == self::HISTORY_METHOD) {
             $this->debug("Skipped. Ignored return for method", $depth);
             return;
