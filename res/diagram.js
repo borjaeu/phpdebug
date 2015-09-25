@@ -99,6 +99,7 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
             this.attr({fill: '#000'});
         }).click(function(sKey) {
             return function() {
+                $('#main_panel').removeClass('hidden');
                 $('#call').html(oSteps[sKey]['namespace'] + '::' + oSteps[sKey]['method'] + '()');
                 $('#json').attr('href', 'codebrowser:' + sFile + '->' + sKey);
                 $('#source').attr('href', 'codebrowser:' + oSteps[sKey].path);
@@ -126,6 +127,7 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
             this.attr({fill: '#000'});
         }).click(function(sKey) {
             return function() {
+                $('#main_panel').removeClass('hidden');
                 $('#call').html('');
                 $('#json').attr('href', 'codebrowser:' + sFile + '->' + sKey);
                 $('#source').attr('href', 'codebrowser:' + oSteps[sKey].path);
