@@ -126,7 +126,8 @@ class SequenceCommand extends Abstracted
         'Symfony\Component\HttpFoundation\JsonResponse'                     => self::IGNORE_NAMESPACE,
         'GuzzleHttp\Client'                                                 => self::IGNORE_NAMESPACE,
         'GuzzleHttp\Message\Response'                                       => self::IGNORE_NAMESPACE,
-        'Qaamgo\OnlineConvertApiBundle\Api\Job\Find'                        => self::IGNORE_NAMESPACE
+//        'Qaamgo\OnlineConvertApiBundle\Api\Job\Find'                        => self::IGNORE_NAMESPACE,
+        'Qaamgo\OnlineConvertApiBundle\Entity\JobRepository'                => self::IGNORE_NAMESPACE,
     ];
 
     /**
@@ -135,13 +136,6 @@ class SequenceCommand extends Abstracted
      * @var int
      */
     protected $skipTo;
-
-    /**
-     * Level for the line to find if any
-     *
-     * @var int
-     */
-    protected $skipLineDepth;
 
     /**
      * Execute the command line
@@ -167,7 +161,6 @@ class SequenceCommand extends Abstracted
         ];
 
         $this->skipTo = false;
-        $this->skipLineDepth = false;
         if (!empty($this->arguments['skip-to'])) {
             $this->skipTo = $this->arguments['skip-to'];
         }
@@ -290,27 +283,10 @@ class SequenceCommand extends Abstracted
             return false;
         }
 
-        $depth = $lineInfo['depth'];
-
-        if ($this->skipLineDepth !== false) {
-            if ($depth > $this->skipLineDepth) {
-                return false;
-            } elseif ($this->skipLineDepth != 65000) {
-                $this->foundClassDepth = 65000;
-                $this->debug('Ignored when not within the search class', $depth);
-                return true;
-            } else {
-                return true;
-            }
+        if ($this->stats['lines'] >= $this->skipTo) {
+            return false;
         } else {
-            if ($this->stats['lines'] == $this->skipTo) {
-                $this->skipLineDepth = $depth;
-                $this->debug('Found  class in ' . $lineInfo['call'], $depth);
-                return false;
-            } else {
-                $this->debug('Ignored when no in line ' . $this->skipTo, $depth);
-                return true;
-            }
+            return true;
         }
     }
 
@@ -406,6 +382,12 @@ class SequenceCommand extends Abstracted
         if (!isset($this->history[$depth])) {
             return;
         }
+        $callerId = $this->history[$depth];
+
+        if (!empty($this->steps[$callerId]['end'])) {
+            $this->debug("Skipped. The original method already has the return", $depth);
+            return;
+        }
 
         if ($this->history[$depth] == self::HISTORY_METHOD) {
             $this->debug("Skipped. Ignored return for method", $depth);
@@ -415,7 +397,6 @@ class SequenceCommand extends Abstracted
             return;
         }
 
-        $callerId = $this->history[$depth];
         $this->stats['steps']++;
         $id = uniqid();
         $this->steps[$callerId]['end'] = $id;
