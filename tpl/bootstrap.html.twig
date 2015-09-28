@@ -2,21 +2,15 @@
 <html>
 <head>
     <title>{% block title %}Debug{% endblock %}</title>
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
-    <style>
-        body {
-            padding-top: 50px;
-        }
-    </style>
     {% block style %}{% endblock %}
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 {% block javascript %}{% endblock %}
 </head>
 <body>
-<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+<div class="navbar navbar-inverse" role="navigation">
     <div class="container">
         <div class="navbar-header">
             <a class="navbar-brand" href="?">Debug index</a></a>
@@ -27,7 +21,8 @@
                 <li{% if section == 'stats' %} class="active"{% endif %}><a href="?stats={{ id }}" title="Grouped code with stats">Stats</a></li>
                 <li{% if section == 'trace' %} class="active"{% endif %}><a href="?trace={{ id }}" title="See trace">Trace</a></li>
                 <li{% if section == 'coverage' %} class="active"{% endif %}><a href="?coverage={{ id }}" title="Coverage">Coverage</a></li>
-                <li{% if section == 'sequence' %} class="active"{% endif %}><a href="?sequence={{ id }}" title="Sequence Diagram">Sequence</a></li>
+                <li{% if section == 'diagram' %} class="active"{% endif %}><a href="?diagram={{ id }}" title="Diagram">Diagram</a></li>
+                <li{% if section == 'sequence' %} class="active"{% endif %}><a href="?sequence={{ id }}" title="Diagram">Sequence</a></li>
 {% endif %}
             </ul>
         </div>

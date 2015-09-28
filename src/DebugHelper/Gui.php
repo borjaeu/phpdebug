@@ -14,9 +14,15 @@ class Gui
         } elseif (isset($_GET['coverage'])) {
             $coverage = new \DebugHelper\Gui\Coverage();
             $coverage->setFile($_GET['coverage'])->renderLoadsHtml();
+        } elseif (isset($_GET['diagram'])) {
+            $coverage = new \DebugHelper\Gui\Diagram();
+            $coverage->setFile($_GET['diagram'])->renderLoadsHtml();
         } elseif (isset($_GET['sequence'])) {
             $coverage = new \DebugHelper\Gui\Sequence();
             $coverage->setFile($_GET['sequence'])->renderLoadsHtml();
+        } elseif (isset($_GET['res'])) {
+            $resource = new \DebugHelper\Gui\Resource();
+            $resource->setFile($_GET['res'])->renderLoadsHtml();
         } elseif (isset($_GET['delete'])) {
             self::delete($_GET['delete']);
             echo 'ok';

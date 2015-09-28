@@ -10,7 +10,6 @@ class Template
     public function __construct()
     {
         $base_path = __DIR__ . '/../../../tpl/';
-        \Twig_Autoloader::register();
         $loader = new \Twig_Loader_Filesystem($base_path);
         $this->twig = new \Twig_Environment($loader, array('debug' => true));
         $this->twig->addExtension(new \Twig_Extension_Debug());

@@ -1,0 +1,83 @@
+{% extends 'bootstrap.html.twig' %}
+{% set WIDTH = 8 %}
+
+{% block title %}Debug - Code Sequence{% endblock %}
+{% block style %}
+    <style>
+        div.column { float: left; margin: 0; }
+        div.row { height: 20px; padding: 2px; }
+        div.timebar { background-color: green; height: 16px; }
+        div.odd { background-color: #d1d1d1; }
+        div.step { background-color: #bcffbf; width: {{ WIDTH - 1 }}px; margin-right: 1px; float: left; height: 16px; cursor: pointer; }
+        div.step_in { background-color: #fffcd9; }
+        div.step_out { background-color: #d1f3ff; }
+
+        div.step_in.selected { background-color: #ffff00; }
+        div.step_out.selected { background-color: blue; }
+        div.selected { background-color: #ff0000; }
+        div.step_info { display: none; clear: both; }
+    </style>
+    {% block javascript %}
+<script type="text/javascript">
+    function show(id) {
+        $('.step_info').hide();
+        $('#info_' + id).show();
+        $('.step').removeClass('selected');
+        $('#index_' + id).addClass('selected');
+        $('#step_' + id + '_in' ).addClass('selected');
+        $('#step_' + id + '_out' ).addClass('selected');
+    }
+</script>
+    {% endblock %}
+{% endblock %}
+{% block body %}
+    <h2>Sequence diagram</h2>
+    <div id="title" class="column">
+        <div class="row even">Timeline {{ steps }}</div>
+{% for name, class in classes %}
+        <div class="row {{ cycle(['odd', 'even'], loop.index0) }}">{{ name }}</div>
+{% endfor %}
+    </div>
+    <div id="lines" class="column">
+        <div class="row even">
+            {% for id in 1..steps %}
+                <div id="index_{{ id }}" onmouseover="show({{ id }});" class="step" title="{{ id }}"></div>
+            {% endfor %}
+        </div>
+{% for name, class in classes %}
+        <div class="row {{ cycle(['odd', 'even'], loop.index0) }}" style="padding-left: {{ class.start*WIDTH }}px;">
+            <div class="timebar" style="width:{{ class.length*WIDTH }}px">
+{% for pos, step in class.steps  %}
+                    <div id="step_{{ step.id }}" onmouseover="show({{ step.index }});" class="step step_{{ step.type }}" style="margin-left: {{ (step.margin)*WIDTH }}px;" title="{{ step.call }}"></div>
+{% endfor %}
+            </div>
+        </div>
+{% endfor %}
+    </div>
+
+{% for name, class in classes %}
+{% for pos, step in class.steps  %}
+{% if step.type == 'in' %}
+    <div class="step_info panel panel-default" id="info_{{ step.index }}">
+        <div class="panel-heading">{{ step.namespace }}::{{ step.method }}()</div>
+        <div class="panel-body">
+            <pre>{{ step.call }}</pre>
+            <ul>
+                <li>
+                    <a href="codebrowser:{{ step.path }}" title="{{ step.path }}">
+                        {{ step.path }}
+                    </a>
+                </li>
+                <li>
+                    <a href="?trace={{ id }}&line={{ step.line_no }}" target="_blank" title="View trace line {{ step.line_no }}">
+                        <span class="glyphicon glyphicon-sunglasses"></span> go to trace line no {{ step.line_no }}
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+{% endblock %}
