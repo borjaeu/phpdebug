@@ -68,7 +68,7 @@ class Processor
 
     public function getTree()
     {
-        $children = $this->getChildren(1, 0);
+        $children = $this->getChildren(1, $this->getMinDepth(), true);
 
         return array(
             'name' => 'root',
@@ -81,7 +81,18 @@ class Processor
         return $this->lines;
     }
 
-    protected function getChildren($index, $depth)
+    protected function getMinDepth()
+    {
+        $minDepth = 100;
+        for ($i = 1; $i < 20; $i++) {
+            if ($this->lines[$i]['depth'] < $minDepth) {
+                $minDepth = $this->lines[$i]['depth'];
+            }
+        }
+        return $minDepth;
+    }
+
+    protected function getChildren($index, $depth, $force = false)
     {
         $result = array();
 
@@ -106,7 +117,8 @@ class Processor
                 }
                 $result[] = $element;
                 $max_time_children = max($this->lines[$i]['time_children'], $max_time_children);
-            } elseif ($this->lines[$i]['depth'] < $depth) {
+                $force = false;
+            } elseif ($this->lines[$i]['depth'] < $depth && !$force) {
                 break;
             }
         }

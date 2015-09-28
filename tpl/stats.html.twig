@@ -1,6 +1,6 @@
 {% extends 'bootstrap.html.twig' %}
-
 {% macro showChildren(files, id) %}
+{% import _self as tree %}
 <ul>
 {% for file in files %}
     <li class="{% if file.count_children %}parent{% else %}leaf{% endif %}">
@@ -11,12 +11,13 @@
         <span>{{ file.call }}</span>
             <div class="bar" style="width:{{ file.relative }}%"></div>
 {% if file.count_children %}
-{{ _self.showChildren(file.children, id) }}
+{{ tree.showChildren(file.children, id) }}
 {% endif %}
         </li>
 {% endfor %}
 </ul>
 {% endmacro %}
+{% import _self as tree %}
 
 {% block title %}Debug - Trace{% endblock %}
 {% block style %}
@@ -43,5 +44,5 @@
 {% endblock %}
 
 {% block body %}
-{{ _self.showChildren(files.children, id) }}
+{{ tree.showChildren(files.children, id) }}
 {% endblock %}
