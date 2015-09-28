@@ -33,18 +33,54 @@ class Sequence
     public function renderLoadsHtml()
     {
         $steps = json_decode(file_get_contents($this->file), true);
-        $namespaces = $this->loadNamespaces($steps);
+        if (empty($_GET['operation'])) {
+            $namespaces = $this->loadNamespaces($steps);
 
-        $template = new Template();
-        $template->assign('id', $this->id);
+            $template = new Template();
+            $template->assign('id', $this->id);
+            $template->assign('file', realpath($this->file));
+            $template->assign('section', 'sequence');
+            $template->assign('resource', $this->getResourcePath());
+            $template->assign('steps', json_encode($steps));
+            $template->assign('namespaces', json_encode($namespaces));
 
-        $template->assign('file', realpath($this->file));
-        $template->assign('section', 'sequence');
-        $template->assign('resource', $this->getResourcePath());
-        $template->assign('steps', json_encode($steps));
-        $template->assign('namespaces', json_encode($namespaces));
+            echo $template->fetch('sequence');
+        } else {
+            switch($_GET['operation']) {
+                case 'delete':
+                    $steps = $this->remove($steps, $_GET['step']);
+            }
+            file_put_contents($this->file, json_encode($steps, JSON_PRETTY_PRINT));
+            $namespaces = $this->loadNamespaces($steps);
 
-        echo $template->fetch('sequence');
+            echo json_encode(['steps' => $steps, 'namespaces' => $namespaces]);
+        }
+    }
+
+    protected function remove($steps, $key)
+    {
+        if (isset($steps[$key])) {
+            if ($steps[$key]['type'] == 3) {
+                unset($steps[$key]);
+            } else {
+                $removing = false;
+                $stepType = $steps[$key]['type'];
+                foreach ($steps as $currentKey => $step) {
+                    $matchesFrom = (isset($step['from']) && $step['from'] == $key);
+                    $matchesEnd = (isset($step['end']) && $step['end'] == $key);
+                    if (($stepType == 2 && $currentKey == $key) || $matchesFrom) {
+                        unset($steps[$currentKey]);
+                        break;
+                    } elseif (($stepType == 1 && $currentKey == $key) || $matchesEnd) {
+                        unset($steps[$currentKey]);
+                        $removing = true;
+                    } elseif ($removing) {
+                        unset($steps[$currentKey]);
+                    }
+                }
+            }
+        }
+        return $steps;
     }
 
     /**

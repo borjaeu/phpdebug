@@ -16,9 +16,11 @@
 <script type="text/javascript" src="{{ resource }}diagram.js"></script>
 <script type="text/javascript" src="{{ resource }}raphael-min.js"></script>
 <script type="text/javascript">
-    var sFile = '{{ file }}';
-    var oSteps = {{  steps | raw }};
-    var oNamespaces = {{ namespaces | raw }};
+
+    var sFile = '{{ file }}',
+        sId = '{{ id }}',
+        oSequenceSteps = {{  steps | raw }},
+        oSequenceNamespaces = {{ namespaces | raw }};
 </script>
 {% endblock %}
 
@@ -27,7 +29,11 @@
         <div class="panel-heading"><a href="#" onclick="$('#main_panel').addClass('hidden');">Close</a></div>
         <div class="panel-body">
             <h3 id="call"></h3>
-            <p><a id="source">Open Source</a> / <a id="json" href="core">Open Json</a></p>
+            <ul>
+                <li id="source"><a href="#">Open Source</a></li>
+                <li><a id="json" href="#">Open Json</a></li>
+                <li><a href="#" id="delete">Delete</a></li>
+            </ul>
             <pre id="debug"></pre>
         </div>
     </div>

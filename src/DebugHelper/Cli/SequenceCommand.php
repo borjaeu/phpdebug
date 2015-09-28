@@ -124,17 +124,17 @@ class SequenceCommand extends Abstracted
         'QaamGo\RestApiBundle\Serializer\Entity'                            => self::IGNORE_NAMESPACE,
         'QaamGo\RestApiBundle\Api\Validation\Schema\Constraint'             => self::IGNORE_NAMESPACE,
         'Symfony\Component\EventDispatcher\ContainerAwareEventDispatcher'   => self::IGNORE_NAMESPACE,
-        'Symfony\Component\DependencyInjection\Container'                   => self::IGNORE_NAMESPACE,
+        'Symfony\Component\DependencyInjection\Container'                   => self::IGNORE_CALL,
         'Twig_Environment'                                                  => self::IGNORE_NAMESPACE,
         'QaamGo\RestApiBundle\Api\Validation\RequestValidator'              => self::IGNORE_NAMESPACE,
         'Symfony\Bundle\FrameworkBundle\Controller\Controller'              => self::IGNORE_NAMESPACE,
         'Symfony\Component\HttpFoundation\JsonResponse'                     => self::IGNORE_NAMESPACE,
         'GuzzleHttp\Client'                                                 => self::IGNORE_NAMESPACE,
         'GuzzleHttp\Message\Response'                                       => self::IGNORE_NAMESPACE,
-//        'Qaamgo\OnlineConvertApiBundle\Api\Job\Find'                        => self::IGNORE_NAMESPACE,
         'Qaamgo\OnlineConvertApiBundle\Entity\JobRepository'                => self::IGNORE_NAMESPACE,
         'Qaamgo\OnlineConvertApiBundle\Factory\Job'                         => self::IGNORE_NAMESPACE,
         'Qaamgo\OnlineConvertApiBundle\Handler\OnlineConvertApi'            => self::IGNORE_NAMESPACE,
+        'Doctrine\Common\Collections\ArrayCollection'                       => self::IGNORE_CALL
     ];
 
     /**

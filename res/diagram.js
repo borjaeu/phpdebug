@@ -1,10 +1,32 @@
-$().ready(function(){
-    var oDiagram = new Diagram(10, 60, oSteps, oNamespaces);
+var oDiagram;
+
+$().ready(function() {
+    oDiagram = new Diagram();
+    oDiagram.render(10, 60, oSequenceSteps, oSequenceNamespaces);
+    $('#delete').on('click', function () {
+        oDiagram.deleteSelected();
+    });
 });
 
-var Diagram = function(nX, nY, oSteps, oNamespaces) {
-    var nWidth, nHeight, oCanvas,
+var Diagram = function() {
+    var nWidth, nHeight, oCanvas, sSelected, oSteps, oNamespaces,
         SCALE_X = 80, SCALE_Y = 25, MARGIN_TOP = 200, oHistory = {};
+
+    this.render = function(nX, nY, oParamSteps, oParamNamespaces) {
+        oSteps = oParamSteps;
+        oNamespaces = oParamNamespaces;
+        nHeight = (getSize(oSteps) + 1) * SCALE_Y + MARGIN_TOP;
+        nWidth = getSize(oNamespaces) * SCALE_X + 40;
+
+        oCanvas = new Paper(nX, nY, nWidth, nHeight);
+
+        loadSteps();
+
+        renderInfo();
+        renderNamespacesColumns();
+        renderMethods();
+        renderArrows();
+    };
 
     var getSize = function(oObject) {
         var nSize = 0, sKey;
@@ -12,6 +34,17 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
             nSize++;
         }
         return nSize;
+    };
+
+    this.deleteSelected = function() {
+        $.ajax({
+            dataType: "json",
+            url: '?sequence=' + sId + '&operation=delete&step=' + sSelected,
+            success: function(oData) {
+                $('svg').remove();
+                oDiagram.render(10, 60, oData.steps, oData.namespaces);
+            }
+        });
     };
 
     /**
@@ -132,13 +165,7 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
         },function() {
             this.attr({fill: '#000'});
         }).click(function(sKey) {
-            return function() {
-                $('#main_panel').removeClass('hidden');
-                $('#call').html(oSteps[sKey]['namespace'] + '::' + oSteps[sKey]['method'] + '()');
-                $('#json').attr('href', 'codebrowser:' + sFile + '->' + sKey);
-                $('#source').attr('href', 'codebrowser:' + oSteps[sKey].path);
-                $('#info').attr('href', oSteps[sKey].path);
-            }
+            return function() { updatePanel(sKey); }
         }(sKey));
     };
 
@@ -160,13 +187,7 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
         },function() {
             this.attr({fill: '#000'});
         }).click(function(sKey) {
-            return function() {
-                $('#main_panel').removeClass('hidden');
-                $('#call').html(oSteps[sKey]['namespace'] + '::' + oSteps[sKey]['method'] + '()');
-                $('#json').attr('href', 'codebrowser:' + sFile + '->' + sKey);
-                $('#source').attr('href', 'codebrowser:' + oSteps[sKey].path);
-                $('#info').attr('href', oSteps[sKey].path);
-            }
+            return function() { updatePanel(sKey); }
         }(sKey));
     };
 
@@ -188,13 +209,28 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
         },function() {
             this.attr({fill: '#000'});
         }).click(function(sKey) {
-            return function() {
-                $('#main_panel').removeClass('hidden');
-                $('#call').html('');
-                $('#json').attr('href', 'codebrowser:' + sFile + '->' + sKey);
-                $('#source').attr('href', 'codebrowser:' + oSteps[sKey].path);
-            }
+            return function() { updatePanel(sKey); }
         }(sKey));
+    };
+
+    /**
+     * Updates info panel with selected call info
+     *
+     * @param string sKey Identifier of the step
+     */
+    var updatePanel = function(sKey) {
+        $('#main_panel').removeClass('hidden');
+
+        sSelected = sKey;
+        if (oSteps[sKey]['type'] != 2) {
+            $('#call').html(oSteps[sKey]['namespace'] + '::' + oSteps[sKey]['method'] + '()');
+            $('#source a').attr('href', 'codebrowser:' + oSteps[sKey].path).removeClass('hidden');
+            $('#source').removeClass('hidden');
+        } else {
+            $('#source').addClass('hidden');
+        }
+        $('#info').attr('href', oSteps[sKey].path);
+        $('#json').attr('href', 'codebrowser:' + sFile + '->' + sKey);
     };
 
     var renderItemInfo = function(sKey) {
@@ -217,18 +253,6 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
             'font-size': 14
         });
     };
-
-    nHeight = (getSize(oSteps) + 1) * SCALE_Y + MARGIN_TOP;
-    nWidth = getSize(oNamespaces) * SCALE_X + 40;
-
-    oCanvas = new Paper(nX, nY, nWidth, nHeight);
-
-    loadSteps();
-
-    renderInfo();
-    renderNamespacesColumns();
-    renderMethods();
-    renderArrows();
 };
 
 var Paper = function(nX, nY, nWidth, nHeight) {
