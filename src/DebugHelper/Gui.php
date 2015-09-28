@@ -3,8 +3,21 @@ namespace DebugHelper;
 
 class Gui
 {
-    public static function renderLoadsHtml()
+    /**
+     * Options sent to the GUI
+     *
+     * @var array
+     */
+    static protected $options;
+
+    /**
+     * @param array $options
+     * @throws \Exception
+     */
+    public static function renderLoadsHtml(array $options = array())
     {
+        self::$options = $options;
+
         if (isset($_GET['stats'])) {
             $stats = new \DebugHelper\Gui\Stats();
             $stats->setFile($_GET['stats'])->renderLoadsHtml();
@@ -23,10 +36,10 @@ class Gui
         } elseif (isset($_GET['res'])) {
             $resource = new \DebugHelper\Gui\Resource();
             $resource->setFile($_GET['res'])->renderLoadsHtml();
-        } elseif (isset($_GET['delete'])) {
+        } elseif (isset($_GET['delete']) && !self::get('readonly')) {
             self::delete($_GET['delete']);
             echo 'ok';
-        } elseif (isset($_GET['rename'])) {
+        } elseif (isset($_GET['rename']) && !self::get('readonly')) {
             self::rename($_GET['rename'], $_GET['name']);
             echo 'ok';
         } else {
@@ -34,15 +47,36 @@ class Gui
         }
     }
 
+    /**
+     * Gets and option if available or default value
+     *
+     * @param string $key Key for the option to get
+     * @param mixed $default Default value for the option if not present
+     * @return mixed
+     */
+    public static function get($key, $default = null)
+    {
+        return isset(self::$options[$key]) ? self::$options[$key] : $default;
+    }
+
+    /**
+     * Shows an index with all the available debug files
+     */
     protected static function showIndex()
     {
         $files = self::getFiles();
         $template = new Gui\Template();
         $template->assign('root_dir', \DebugHelper::getDebugDir());
         $template->assign('files', $files);
+        $template->assign('readonly', self::get('readonly', false));
         echo $template->fetch('index');
     }
 
+    /**
+     * Gets a list of available files with all its options
+     *
+     * @return array
+     */
     protected static function getFiles()
     {
         $path = \DebugHelper::getDebugDir();
@@ -74,6 +108,12 @@ class Gui
         return $files;
     }
 
+    /**
+     * Gets the date of the debug from the trace file
+     *
+     * @param string $file Filename
+     * @return mixed|string
+     */
     protected static function getTraceTime($file)
     {
         $fp = fopen($file, 'r');
@@ -83,6 +123,12 @@ class Gui
         return $line;
     }
 
+    /**
+     * Loads details for the current debug file
+     *
+     * @param array $info Server information
+     * @return string
+     */
     protected static function getDetails($info)
     {
         $significantData = array('PHP_SELF', 'REMOTE_ADDR');
@@ -95,6 +141,11 @@ class Gui
         return trim($details);
     }
 
+    /**
+     * Delete debug file(s)
+     *
+     * @param string $id Identifier for the debug file
+     */
     protected static function delete($id)
     {
         $path = \DebugHelper::getDebugDir();
@@ -105,6 +156,12 @@ class Gui
         });
     }
 
+    /**
+     * Changes the file(s) name for a new one
+     *
+     * @param string $id Identifier for the debug file
+     * @param string $name New name for the debug file
+     */
     protected static function rename($id, $name)
     {
         $path = \DebugHelper::getDebugDir();

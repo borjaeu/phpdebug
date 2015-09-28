@@ -57,8 +57,10 @@
                 <a href="?coverage={{ file.id }}" title="Coverage"><span class="glyphicon glyphicon-book"></span></a>
                 <a href="?diagram={{ file.id }}" title="Diagram"><span class="glyphicon glyphicon-th"></span></a>
                 <a href="?sequence={{ file.id }}" title="Sequence Diagram 2"><span class="glyphicon glyphicon-transfer"></span></a>
+{% if not readonly %}
                 <a href="?delete={{ file.id }}" onclick="deleteTrace('{{ file.id }}'); return false;" title="delete file"><span class="glyphicon glyphicon-remove"></span></a>
                 <a href="?rename={{ file.id }}" onclick="renameTrace('{{ file.id }}'); return false;" title="rename file"><span class="glyphicon glyphicon-edit"></span></a>
+{% endif %}
             </td>
             <td>{{ file.time }}</td>
             <td class="name">{{ file.name }}</td>
