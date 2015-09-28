@@ -84,9 +84,16 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
 
     var renderMethods = function() {
         var sKey;
-
         for(sKey in oSteps) {
-            renderItemResponseMethod(sKey);
+            if (oSteps[sKey].type == 2) {
+                var sOrigin = oSteps[sKey].from, nY0;
+                nY0 = oHistory[sOrigin];
+                oCanvas.rect(oSteps[sKey].nX0 - 5, nY0 - 5, 10, oSteps[sKey].nY - nY0 + 10).attr({'fill': '#FFF'});
+            } else if (oSteps[sKey].type == 3) {
+                oCanvas.rect(oSteps[sKey].nX1 - 5, oSteps[sKey].nY - 10, 10, 20).attr({'fill': '#FFF'});
+            } else if (typeof oSteps[sKey].end == 'undefined') {
+                oCanvas.rect(oSteps[sKey].nX1 - 5, oSteps[sKey].nY - 10, 10, nHeight).attr({'fill': '#FFF'});
+            }
         }
     };
 
@@ -209,21 +216,6 @@ var Diagram = function(nX, nY, oSteps, oNamespaces) {
             'text-anchor':'end',
             'font-size': 14
         });
-    };
-
-    /**
-     * Renders the information for a method call
-     *
-     * @param sKey
-     */
-    var renderItemResponseMethod = function(sKey) {
-        if (oSteps[sKey].type == 2) {
-            var sOrigin = oSteps[sKey].from, nY0;
-            nY0 = oHistory[sOrigin];
-            oCanvas.rect(oSteps[sKey].nX0 - 5, nY0 - 5, 10, oSteps[sKey].nY - nY0 + 10).attr({'fill': '#FFF'});
-        } else if (oSteps[sKey].type == 3) {
-            oCanvas.rect(oSteps[sKey].nX1 - 5, oSteps[sKey].nY - 10, 10, 20).attr({'fill': '#FFF'});
-        }
     };
 
     nHeight = (getSize(oSteps) + 1) * SCALE_Y + MARGIN_TOP;

@@ -109,8 +109,9 @@ class Diagram
                     for ($j = $i+2; $j < count($tokens); $j++) {
                         if ($tokens[$j] == ';') {
                             break;
+                        } elseif (isset($tokens[$j][1])) {
+                            $namespace .= $tokens[$j][1];
                         }
-                        $namespace .= $tokens[$j][1];
                     }
                 }
                 if ($tokens[$i][0] === T_CLASS) {

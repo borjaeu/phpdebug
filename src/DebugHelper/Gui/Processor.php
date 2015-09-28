@@ -34,8 +34,8 @@ class Processor
         if (!is_file($file)) {
             throw new \Exception("Error Processing file $file");
         }
-        if (is_file($this->file . '.json')) {
-            $this->lines = json_decode(file_get_contents($this->file . '.json'), true);
+        if (is_file($this->file . '.steps')) {
+            $this->lines = json_decode(file_get_contents($this->file . '.steps'), true);
         } else {
             $this->generateFiles();
         }
@@ -63,7 +63,7 @@ class Processor
         foreach ($this->lines as $i => & $line) {
             $this->postProcessInputLine($i, $line);
         }
-        file_put_contents($this->file . '.json', json_encode($this->lines, JSON_PRETTY_PRINT));
+        file_put_contents($this->file . '.steps', json_encode($this->lines, JSON_PRETTY_PRINT));
     }
 
     public function getTree()
