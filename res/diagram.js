@@ -3,7 +3,8 @@ var oDiagram;
 $().ready(function() {
     oDiagram = new Diagram();
     oDiagram.render(10, 60, oSequenceSteps, oSequenceNamespaces);
-    $('#delete').on('click', function () {
+    $('#delete').on('click', function (oEvent) {
+        oEvent.preventDefault();
         oDiagram.deleteSelected();
     });
 });

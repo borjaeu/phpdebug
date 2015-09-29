@@ -57,6 +57,13 @@ class Sequence
         }
     }
 
+    /**
+     * Remove an element from the step
+     *
+     * @param array $steps Steps to remove the information from
+     * @param string $key Key to remove from the steps
+     * @return array
+     */
     protected function remove($steps, $key)
     {
         if (isset($steps[$key])) {

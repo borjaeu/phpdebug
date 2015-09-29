@@ -134,7 +134,8 @@ class SequenceCommand extends Abstracted
         'Qaamgo\OnlineConvertApiBundle\Entity\JobRepository'                => self::IGNORE_NAMESPACE,
         'Qaamgo\OnlineConvertApiBundle\Factory\Job'                         => self::IGNORE_NAMESPACE,
         'Qaamgo\OnlineConvertApiBundle\Handler\OnlineConvertApi'            => self::IGNORE_NAMESPACE,
-        'Doctrine\Common\Collections\ArrayCollection'                       => self::IGNORE_CALL
+        'Doctrine\Common\Collections\ArrayCollection'                       => self::IGNORE_CALL,
+        'PhpAmqpLib'                                                        => self::IGNORE_NAMESPACE
     ];
 
     /**
@@ -208,8 +209,13 @@ class SequenceCommand extends Abstracted
             echo "Ignored classes\n";
             ksort($this->ignoreCount);
             \DebugHelper::dump($this->ignoreCount);
-
-            file_put_contents($file . '.json', json_encode($this->steps, JSON_PRETTY_PRINT));
+            $output = json_encode($this->steps, JSON_PRETTY_PRINT);
+            if ($output == false) {
+                var_dump(json_last_error());
+                var_dump(json_last_error_msg());
+            } else {
+                file_put_contents($file . '.json', $output);
+            }
         }
         $this->writeLog($file);
     }
