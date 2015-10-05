@@ -1,9 +1,15 @@
+;
+; AutoHotkey Version: 1.x
+; Language: English
+; Platform: Win9x/NT
+; Author: Borja Morales
+;
 ; Script Function:
 ;	Opens the urls like codebrowser:path_to_file:line in the configured editor.
 ;
 ; History:
 ;	2011 01 31	Added the {MyDocuments} var in ini file.
-;	2011 01 31	Support for testing environemnt.
+;	2011 01 31	Support for testing environment.
 ;	2011 01 14	Add support for Geany.
 ;	2011 01 03	Opens files directly from production.
 ;	2010 12 16	Fix char '|' escape in chrome.
@@ -23,7 +29,7 @@
 ;	2012 12 11	Allow parameter when running external programs.
 ;	2013 04 02	Allow merge from link.
 ;	2013 04 23	Remove replace tpl.
-;	2014 03 11	Allow to start in an specific line by regular expression
+;	2014 03 11	Allow to start in an specific line by regular expresion
 ;	2014 08 25	Switch opener for different paths.
 ;	2015 02 16	Remove merge from link.
 ;				More debug options.
@@ -49,7 +55,7 @@ Loop
 ;Testing purposes.
 If !A_IsCompiled
 {
-	sQuery = codebrowser:/vagrant/shared/app/public/root/index.php:11
+    sQuery = codebrowser:/vagrant/shared/app/public/root/index.php:11
 }
 ; Ini file paremeters
 sIniSection := A_ComputerName
@@ -135,28 +141,37 @@ StringReplace, sFile, sFile, `%20, %sSpace%, All
 nPatternsTried = 0
 Loop, Read, %A_ScriptDir%\codebrowser_rules.txt
 {
-	RegExMatch(A_LoopReadLine, "^(.*?)\s*=>\s*(.*?)$", data )
-	sRuleFind := data1
-	sRuleReplace := data2
+    If (RegExMatch(A_LoopReadLine, "^(.*?)(\((\w+)\))?:\s+(.*?)\s*=>\s*(.*?)$", sData)) {
+        nPatternsTried++
 
-	sNewFile := RegExReplace(sFile, sRuleFind, sRuleReplace)
-	If sNewFile != %sFile%
-	{
-		IfNotExist, %sNewFile%
-		{
-			IfExist, %A_ScriptDir%\%sNewFile%
-			{
-				sFile = %A_ScriptDir%\%sNewFile%
-				break
-			}
-		}
-		Else
-		{
-			sFile := sNewFile
-			break
-		}
-	}
-	nPatternsTried++
+        ;MsgBox 1: %sData1% - 2: %sData2% - 3: %sData3% - 4: %sData4% - 5: %sData5%
+        sLabel := sData1
+        sEditor := sData3
+        If sEditor = 
+        {
+            sEditor = Default
+        }
+        sRuleFind := sData4
+        sRuleReplace := sData5
+
+        sNewFile := RegExReplace(sFile, sRuleFind, sRuleReplace)
+        If sNewFile != %sFile%
+       {
+            IfNotExist, %sNewFile%
+            {
+                IfExist, %A_ScriptDir%\%sNewFile%
+                {
+                    sFile = %A_ScriptDir%\%sNewFile%
+                    break
+                }
+            }
+            Else
+            {
+                sFile := sNewFile
+                break
+            }
+        }
+    }
 }
 
 ;--------------------------------------------------------
@@ -164,61 +179,50 @@ Loop, Read, %A_ScriptDir%\codebrowser_rules.txt
 ;--------------------------------------------------------
 IfNotExist, %sFile%
 {
-	MsgBox, 33, , #3 Not found`n%sFile%`n%sQuery%`n%nPatternsTried% patterns tried. Edit config file?
-	IfMsgBox, Cancel
-	{
-		TrayTip, Open file, #2 Not found file '%sFile%' in %A_ScriptDir%
-		SetTimer, FinishApp, 5000
-		Return
-	}
+    MsgBox, 33, , #3 Not found`n%sFile%`n%sQuery%`n%nPatternsTried% patterns tried. Edit config file?
+    IfMsgBox, Cancel
+    {
+        TrayTip, Open file, #2 Not found file '%sFile%' in %A_ScriptDir%
+        SetTimer, FinishApp, 5000
+        Return
+    }
 
-	StringReplace, clipboard, sFile, \, \\, 1
-	sFile = %A_ScriptDir%\codebrowser_rules.txt
+    StringReplace, clipboard, sFile, \, \\, 1
+    sFile = %A_ScriptDir%\codebrowser_rules.txt
 }
 
 sExtension := sMatch4
 If sMatch7 <>
 {
-	nLine := sMatch7
+    nLine := sMatch7
 }
 If sMatch6 <>
 {
-	nLine = 0
-	Loop, read, %sFile%
-	{
-		nLine++
-		If RegExMatch(A_LoopReadLine, sMatch6 )
-		{
-			Break
-		}
-	}
+    nLine = 0
+    Loop, read, %sFile%
+    {
+        nLine++
+        If RegExMatch(A_LoopReadLine, sMatch6 )
+        {
+            Break
+        }
+    }
 }
 
 
 ; Get editor from ini file.
-nCount = 1
-loop
+IniRead, sEditorPath, %sIniFile%, %sIniSection%, %sEditor%
+
+If sExpresion = ERROR
 {
-	IniRead, sExpresion, %sIniFile%, %sIniSection%, Matches%nCount%
-	IniRead, sCurrentEditorPath, %sIniFile%, %sIniSection%, Editor%nCount%
-
-	If sExpresion = ERROR
-	{
-		Break
-	}
-
-	If RegExMatch( sFile, sExpresion )
-	{
-		sEditorPath := sCurrentEditorPath
-		Break
-	}
-	nCount++
+    ExitApp
 }
 
 A_ProgramFiles64 := RegExReplace(A_ProgramFiles, "\s+\(x\d+\)", "" )
 
 StringReplace, sEditorPath, sEditorPath, {MyDocuments}, %A_MyDocuments%
 StringReplace, sEditorPath, sEditorPath, {ProgramFiles}, %A_ProgramFiles%
+
 
 ; Check if it is a directory.
 result := FileExist(sFile)
@@ -238,7 +242,7 @@ If nLine
 {
     IfInString, sEditorPath, notepad++
     {
-        command = %command% -n %nLine%
+        command = %command% -n%nLine%
     }
     Else IfInString, sEditorPath, netbeans.exe
     {
@@ -258,9 +262,10 @@ If nLine
     }
 }
 Run, %command%
-TrayTip, Open file, File '%sFile%' loaded.
+TrayTip, Used %sLabel%, File '%sFile%' loaded`n%nPatternsTried% patterns check. %sLabel% used for %sEditor%:`n%sEditorPath%
 SetTimer, FinishApp, 2000
 Return
+
 
 FinishApp:
 	ExitApp
