@@ -81,11 +81,11 @@ class Gui
     {
         $path = \DebugHelper::getDebugDir();
 
-        $files = glob($path . '*.xt');
+        $files = glob($path . '*.svr');
         array_walk($files, function (&$item) use ($path) {
             $time = self::getTraceTime($item);
 
-            if (preg_match('/(?P<id>.*)\.xt$/', basename($item), $match)) {
+            if (preg_match('/(?P<id>.*)\.svr$/', basename($item), $match)) {
                 $info = json_decode(file_get_contents($path . $match['id'] . '.svr'), true);
 
                 $item = array(
@@ -94,6 +94,8 @@ class Gui
                     'time' => $time,
                     'path' => $item,
                     'details' => self::getDetails($info),
+                    'trace' => is_file($path . $match['id'] . '.xt'),
+                    'coverage' => is_file($path . $match['id'] . '.cvg'),
                     'info' => $info,
                     'size' => floor(filesize($item) / 1024),
                 );

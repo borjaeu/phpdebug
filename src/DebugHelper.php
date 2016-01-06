@@ -1,7 +1,4 @@
 <?php
-set_error_handler(array('DebugHelper\Error', 'handler'));
-ini_set('xdebug.collect_params', 1); // 0 None, 1, Simple, 3 Full
-
 /**
  * Helper with static methods for debug.
  */
@@ -50,7 +47,7 @@ class DebugHelper
      *
      * @return Object
      */
-    protected static function getClass($class_name)
+    public static function getClass($class_name)
     {
         if (empty(self::$objects[$class_name])) {
             self::$objects[$class_name] = new $class_name();
@@ -78,32 +75,6 @@ class DebugHelper
     public static function dump($data = '')
     {
         return self::getClass('\DebugHelper\Tools\Dump')->dump($data);
-
-
-    }
-
-    /**
-     * Begins the trace to watch where the code goes.
-     *
-     * @param boolean $silent
-     * @param boolean $trace_file Name of the file to save the data.
-     * @param boolean $ignore Name of the file to save the data.
-     */
-    public static function watch($silent = false, $trace_file = false, $ignore = false)
-    {
-        return self::getClass('\DebugHelper\Tools\Watcher')->watch($silent, $trace_file, $ignore);
-    }
-
-    /**
-     * Shows a coverage report of the trace since the watch() method was called.
-     *
-     * @param boolean $finish_execution Ends the script execution.
-     *
-     * @return string
-     */
-    public static function endWatch($finish_execution = false)
-    {
-        return self::getClass('\DebugHelper\Tools\Watcher')->endWatch($finish_execution);
     }
 
     /**
@@ -127,17 +98,6 @@ class DebugHelper
     public static function clearLog($data = null)
     {
         return self::getClass('\DebugHelper\Tools\Log')->clearLog($data);
-    }
-
-    /**
-     * Save the data to a log file.
-     *
-     * @param mixed $data Data to be written in the log.
-     * @param string $header Identifier for the header of the log entry.
-     */
-    public static function log($data, $header = 'LOG', $caller_depth = 2)
-    {
-        return self::getClass('\DebugHelper\Tools\Log')->log($data, $header, $caller_depth);
     }
 
     /**
@@ -263,4 +223,45 @@ class DebugHelper
     {
         return PHP_SAPI == 'cli';
     }
+
+    public static function init()
+    {
+
+    }
+}
+
+/**
+ * @return \DebugHelper\Tools\Watcher
+ */
+function k_get_watcher()
+{
+    return DebugHelper::getClass('\DebugHelper\Tools\Watcher');
+}
+
+function k_collect_errors()
+{
+    set_error_handler(array('DebugHelper\Error', 'handler'));
+}
+
+/**
+ * Shows the HTML trace.
+ *
+ * @param boolean $finish Finish the script execution.
+ * @param boolean $return_trace Returns the trace instead of printing it.
+ * @return mixed
+ */
+function k_trace($finish = true, $return_trace = false)
+{
+    return DebugHelper::getClass('\DebugHelper\Tools\Dump')->showtrace($finish, $return_trace);
+}
+
+/**
+ * Save the data to a log file.
+ *
+ * @param mixed $data Data to be written in the log.
+ * @param string $header Identifier for the header of the log entry.
+ */
+function k_log($data, $header = 'LOG', $caller_depth = 2)
+{
+    return DebugHelper::getClass('\DebugHelper\Tools\Log')->log($data, $header, $caller_depth);
 }

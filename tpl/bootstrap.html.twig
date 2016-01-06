@@ -18,11 +18,11 @@
         <div class="collapse navbar-collapse">
             <ul class="nav navbar-nav">
 {% if id %}
-                <li{% if section == 'stats' %} class="active"{% endif %}><a href="?stats={{ id }}" title="Grouped code with stats">Stats</a></li>
-                <li{% if section == 'trace' %} class="active"{% endif %}><a href="?trace={{ id }}" title="See trace">Trace</a></li>
-                <li{% if section == 'coverage' %} class="active"{% endif %}><a href="?coverage={{ id }}" title="Coverage">Coverage</a></li>
-                <li{% if section == 'diagram' %} class="active"{% endif %}><a href="?diagram={{ id }}" title="Diagram">Diagram</a></li>
-                <li{% if section == 'sequence' %} class="active"{% endif %}><a href="?sequence={{ id }}" title="Diagram">Sequence</a></li>
+                <li{% if section == 'stats' %} class="active"{% endif %}><a href="?kizilare_debug=1&stats={{ id }}" title="Grouped code with stats">Stats</a></li>
+                <li{% if section == 'trace' %} class="active"{% endif %}><a href="?kizilare_debug=1&trace={{ id }}" title="See trace">Trace</a></li>
+                <li{% if section == 'coverage' %} class="active"{% endif %}><a href="?kizilare_debug=1&coverage={{ id }}" title="Coverage">Coverage</a></li>
+                <li{% if section == 'diagram' %} class="active"{% endif %}><a href="?kizilare_debug=1&diagram={{ id }}" title="Diagram">Diagram</a></li>
+                <li{% if section == 'sequence' %} class="active"{% endif %}><a href="?kizilare_debug=1&sequence={{ id }}" title="Diagram">Sequence</a></li>
 {% endif %}
             </ul>
         </div>
