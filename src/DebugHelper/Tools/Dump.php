@@ -10,7 +10,7 @@ class Dump extends Abstracted
      *
      * @param mixed $data Information to be dumped to the browser.
      */
-    public function dump($data = '')
+    public function dump($data = null, $depth = 2)
     {
         static $start = false;
 
@@ -23,13 +23,21 @@ class Dump extends Abstracted
         $split = number_format($split, 6);
 
         Styles::showHeader('dump', 'objectToHtml');
-        $pos = $this->getCallerDetails(2);
+        $pos = $this->getCallerDetails($depth);
 
-        $data = $this->objectToHtml($data);
+        if (!is_null($data)) {
+            $data = $this->objectToHtml($data);
+        }
         $id = uniqid();
         if (\DebugHelper::isCli()) {
             echo "[Dump] var, $pos====================================\n$data====================================\n";
         } else {
+            if (!is_null($data)) {
+                $data = "<div class=\"data\">{$data}</div>";
+            } else {
+                $data = '';
+            }
+
             echo <<<DEBUG
 
 <div id="$id" class="debug_dump">
@@ -37,7 +45,7 @@ class Dump extends Abstracted
         <span class="timer">$split</span>
         <span class="code">$pos</span>
      </div>
-     <div class="data">{$data}</div>
+     {$data}
 </div>
 
 DEBUG;

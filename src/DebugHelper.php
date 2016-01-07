@@ -265,3 +265,23 @@ function k_log($data, $header = 'LOG', $caller_depth = 2)
 {
     return DebugHelper::getClass('\DebugHelper\Tools\Log')->log($data, $header, $caller_depth);
 }
+
+
+/**
+ * Displays the data passed as information.
+ *
+ * @param mixed $data Information to be dumped to the browser.
+ */
+function k_dump($data = '')
+{
+    return DebugHelper::getClass('\DebugHelper\Tools\Dump')->dump($data);
+}
+
+/**
+ * Displays the data passed as information.
+ */
+function k_die()
+{
+    DebugHelper::getClass('\DebugHelper\Tools\Dump')->dump();
+    exit;
+}
