@@ -214,7 +214,7 @@ class SequenceCommand extends Abstracted
                 var_dump(json_last_error());
                 var_dump(json_last_error_msg());
             } else {
-                file_put_contents($file . '.json', $output);
+                file_put_contents($file . '.xt.diag.json', $output);
             }
         }
         $this->writeLog($file);

@@ -9,6 +9,8 @@ class ListCommand extends Abstracted
     public function run()
     {
         $files = $this->getFiles();
+        printf('%30s %30s %21s %10s %s', 'id', 'name', 'time', 'size', PHP_EOL);
+
         foreach ($files as $info) {
             printf('%30s %30s %21s %10s %s', $info['id'], $info['name'], $info['time'], $info['size'], PHP_EOL);
         }

@@ -81,21 +81,23 @@ class Gui
     {
         $path = \DebugHelper::getDebugDir();
 
-        $files = glob($path . '*.xt');
+        $files = glob($path . '*.svr');
         array_walk($files, function (&$item) use ($path) {
-            $time = self::getTraceTime($item);
-
-            if (preg_match('/(?P<id>.*)\.xt$/', basename($item), $match)) {
+            if (preg_match('/(?P<id>.*)\.svr$/', basename($item), $match)) {
                 $info = json_decode(file_get_contents($path . $match['id'] . '.svr'), true);
-
                 $item = array(
-                    'id' => $match['id'],
-                    'name' => $match['id'],
-                    'time' => $time,
-                    'path' => $item,
-                    'details' => self::getDetails($info),
-                    'info' => $info,
-                    'size' => floor(filesize($item) / 1024),
+                    'id'        => $match['id'],
+                    'name'      => $match['id'],
+                    'time'      => isset($info['time']) ? self::getRelativeTime($info['time']) : 0,
+                    'path'      => $item,
+                    'details'   => self::getDetails($info),
+                    'trace'     => is_file($path . $match['id'] . '.xt'),
+                    'coverage'  => is_file($path . $match['id'] . '.cvg'),
+                    'clean'     => is_file($path . $match['id'] . '.xt.clean'),
+                    'json'     => is_file($path . $match['id'] . '.xt.json'),
+                    'info'      => $info,
+                    'size'      => self::fileSizeConvert(filesize($path . $match['id'] . '.xt'))
+
                 );
             }
         });
@@ -108,20 +110,75 @@ class Gui
         return $files;
     }
 
-    /**
-     * Gets the date of the debug from the trace file
-     *
-     * @param string $file Filename
-     * @return mixed|string
-     */
-    protected static function getTraceTime($file)
+    protected static function getRelativeTime($timestamp)
     {
-        $fp = fopen($file, 'r');
-        $line = fgets($fp);
-        fclose($fp);
-        $line = preg_replace('/\s*TRACE START\s*\[(.*)\]/', '$1', $line);
-        return $line;
+        if(!ctype_digit($timestamp)) {
+            $timestamp = strtotime($timestamp);
+        }
+
+        $diff = time() - $timestamp;
+        if($diff == 0) {
+            return 'now';
+        } elseif($diff > 0) {
+            $day_diff = floor($diff / 86400);
+            if($day_diff == 0) {
+                if($diff < 60) return 'just now';
+                if($diff < 120) return '1 minute ago';
+                if($diff < 3600) return floor($diff / 60) . ' minutes ago';
+                if($diff < 7200) return '1 hour ago';
+                if($diff < 86400) return floor($diff / 3600) . ' hours ago';
+            }
+            if($day_diff == 1) return 'Yesterday';
+            if($day_diff < 7) return $day_diff . ' days ago';
+            if($day_diff < 31) return ceil($day_diff / 7) . ' weeks ago';
+            if($day_diff < 60) return 'last month';
+            return date('F Y', $timestamp);
+        } else {
+            $diff = abs($diff);
+            $day_diff = floor($diff / 86400);
+            if($day_diff == 0) {
+                if($diff < 120) return 'in a minute';
+                if($diff < 3600) return 'in ' . floor($diff / 60) . ' minutes';
+                if($diff < 7200) return 'in an hour';
+                if($diff < 86400) return 'in ' . floor($diff / 3600) . ' hours';
+            }
+            if($day_diff == 1) return 'Tomorrow';
+            if($day_diff < 4) return date('l', $timestamp);
+            if($day_diff < 7 + (7 - date('w'))) return 'next week';
+            if(ceil($day_diff / 7) < 4) return 'in ' . ceil($day_diff / 7) . ' weeks';
+            if(date('n', $timestamp) == date('n') + 1) return 'next month';
+            return date('F Y', $timestamp);
+        }
     }
+
+    /**
+     * Converts bytes into human readable file size.
+     *
+     * @param string $bytes
+     * @return string human readable file size (2,87 Мб)
+     * @author Mogilev Arseny
+     */
+    protected static function fileSizeConvert($bytes)
+    {
+        $bytes = floatval($bytes);
+        $arBytes = array(
+            0 => array("UNIT" => "TB", "VALUE" => pow(1024, 4)),
+            1 => array("UNIT" => "GB", "VALUE" => pow(1024, 3)),
+            2 => array("UNIT" => "MB", "VALUE" => pow(1024, 2)),
+            3 => array("UNIT" => "KB", "VALUE" => 1024),
+            4 => array("UNIT" => "B", "VALUE" => 1)
+        );
+
+        foreach($arBytes as $arItem) {
+            if($bytes >= $arItem["VALUE"]) {
+                $result = $bytes / $arItem["VALUE"];
+                $result = str_replace(".", "," , strval(round($result, 2)))." ".$arItem["UNIT"];
+                break;
+            }
+        }
+        return $result;
+    }
+
 
     /**
      * Loads details for the current debug file

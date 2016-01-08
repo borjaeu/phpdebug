@@ -3,7 +3,7 @@ namespace DebugHelper;
 
 class Cli
 {
-    protected $options = ['list', 'sequence'];
+    protected $options = ['list', 'sequence', 'clean'];
 
     /**
      * Execute the command line
@@ -14,7 +14,7 @@ class Cli
     public function execute(array $arguments)
     {
         if (empty($arguments[1])) {
-            throw new \Exception('Invalid request');
+            throw new \Exception('Invalid request:' . PHP_EOL . implode(PHP_EOL, $this->options));
         }
         $option = $arguments[1];
         if (!in_array($option, $this->options)) {

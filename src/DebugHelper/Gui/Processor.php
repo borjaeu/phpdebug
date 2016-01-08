@@ -3,8 +3,6 @@ namespace DebugHelper\Gui;
 
 class Processor
 {
-    protected $file;
-
     protected $min_depth;
 
     protected $shorter_path;
@@ -28,42 +26,51 @@ class Processor
      *
      * @param string $file the file
      */
-    public function process($file)
+    public function process($fileId, $run = true)
     {
-        $this->file = $file;
-        if (!is_file($file)) {
-            throw new \Exception("Error Processing file $file");
+        $fileIn     = \DebugHelper::getDebugDir() . '/' . $fileId . '.xt.clean';
+        $fileOut    = \DebugHelper::getDebugDir() . '/' . $fileId . '.xt.json';
+
+        if (!is_file($fileIn)) {
+            throw new \Exception("Error Processing file {$fileIn}");
         }
-        if (is_file($this->file . '.steps')) {
-            $this->lines = json_decode(file_get_contents($this->file . '.steps'), true);
+        if (is_file($fileOut)) {
+            $this->lines = json_decode(file_get_contents($fileOut), true);
+        } else if ($run) {
+            $this->generateFiles($fileIn, $fileOut);
         } else {
-            $this->generateFiles();
+            throw new \Exception("No processed file {$fileOut}");
         }
     }
 
     /**
      * Sets the value of file.
      */
-    protected function generateFiles()
+    protected function generateFiles($fileIn, $fileOut)
     {
         $this->lines = array();
 
-        $file_in = fopen($this->file, 'r');
+        $file_in = fopen($fileIn, 'r');
         $this->min_depth = 65000;
         $this->shorter_path = 65000;
         $count = 320000000;
         $line_no = 0;
+        echo "Start processing\n";
         while (!feof($file_in) && $count-- > 0) {
             $line = fgets($file_in);
             $line_no++;
+            if ($line_no % 100 === 0) {
+                echo $line_no . PHP_EOL;
+            }
             $this->preProcessInputLine($line, $line_no);
         }
+        echo $line_no;
         fclose($file_in);
 
         foreach ($this->lines as $i => & $line) {
             $this->postProcessInputLine($i, $line);
         }
-        file_put_contents($this->file . '.steps', json_encode($this->lines, JSON_PRETTY_PRINT));
+        file_put_contents($fileOut, json_encode($this->lines, JSON_PRETTY_PRINT));
     }
 
     public function getTree()

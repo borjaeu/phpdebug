@@ -8,93 +8,171 @@ class Watcher extends Abstracted
      *
      * @var string
      */
-    static protected $trace_file;
+    protected $traceFile;
+
+    /**
+     * Flag to determine when the watch is already active
+     *
+     * @var string
+     */
+    protected $watching;
+
+    /**
+     * Verbosity level
+     *
+     * @var bool
+     */
+    protected $level;
+
+    /**
+     * Shall execute trace
+     *
+     * @var bool
+     */
+    protected $trace;
+
+    /**
+     * Shall execute coverage
+     *
+     * @var bool
+     */
+    protected $coverage;
+
+    /**
+     * Watcher constructor.
+     *
+     * Initializes the logging
+     */
+    public function __construct()
+    {
+        $this->level = 100;
+        $this->watching = false;
+        $this->trace = true;
+        $this->coverage = true;
+        $this->watching = false;
+
+        preg_match('/0\.(?P<decimal>\d+)/', microtime(), $matches);
+        $traceFile = date('Y_m_d_h_i_s_') . $matches['decimal'];
+
+        $this->setTraceFile($traceFile);
+
+        file_put_contents($this->traceFile . '.svr', json_encode(array(
+            'time'      => time(),
+            'server'    => $_SERVER,
+            'post'      => $_POST,
+            'get'       => $_GET,
+            'files'     => $_FILES
+        ), JSON_PRETTY_PRINT));
+    }
+
+    /**
+     * @param string $file Filename of the trace
+     * @return $this
+     */
+    public function setTraceFile($file)
+    {
+        $this->traceFile = \DebugHelper::getDebugDir() . $file;
+        return $this;
+    }
+
+    /**
+     * Change the level of verbosity of the app
+     *
+     * @param integer $level of the output to show
+     * @return $this
+     */
+    public function setLevel($level)
+    {
+        $this->level = $level;
+        return $this;
+    }
+
+    /**
+     * Disable the coverage info
+     *
+     * @return $this
+     */
+    public function disableCoverage()
+    {
+        $this->coverage = false;
+        return $this;
+    }
+
+    /**
+     * Disable the trace info
+     *
+     * @return $this
+     */
+    public function disableTrace()
+    {
+        $this->trace = false;
+        return $this;
+    }
 
     /**
      * Begins the trace to watch where the code goes.
-     *
-     * @param boolean $silent
-     * @param boolean $trace_file Name of the file to save the data.
-     * @param boolean $ignore Name of the file to save the data.
      */
-    public function watch($silent = false, $trace_file = false, $ignore = false)
+    public function watch()
     {
-        static $watching = false;
-
-        if ($watching) {
-            if ($ignore) {
-                return;
-            }
+        if ($this->watching) {
             $pos = $this->getCallerDetails(1, false);
-            echo <<<ERROR
+            $error = <<<ERROR
 <pre>
-Watch already started in $watching
+Watch already started in {$this->watching}
 Could not be start at $pos
 </pre>
 ERROR;
+            $this->output($error, 200);
             exit;
-        } else {
-            $watching = self::getCallerDetails(1, false);
         }
 
-        ini_set('xdebug.profiler_enable', 1);
-        ini_set('xdebug.profiler_output_dir', \DebugHelper::getDebugDir());
-        ini_set('xdebug.collect_params', 1); // 0 None, 1, Simple, 3 Full
-        ini_set('xdebug.collect_return', 1); // 0 None, 1, Yes
-        ini_set('xdebug.var_display_max_depth', 2);
-        ini_set('xdebug.var_display_max_data', 128);
-        preg_match('/0\.(?P<decimal>\d+)/', microtime(), $matches);
-        $trace_key = $trace_file ? $trace_file : date('Y_m_d_h_i_s_') . $matches['decimal'];
+        $this->watching = self::getCallerDetails(1, false);
 
-        self::$trace_file = \DebugHelper::getDebugDir() . $trace_key;
-        if ($trace_file && is_file(self::$trace_file)) {
+        if (is_file($this->traceFile)) {
             return;
         }
 
-        file_put_contents(self::$trace_file . '.svr', json_encode(array(
-            'server' => $_SERVER,
-            'post' => $_POST,
-            'get' => $_GET,
-            'files' => $_FILES
-        ), JSON_PRETTY_PRINT));
-
-        // Info about the data.
-        $log_info = $this->getCallerInfo(false, 2);
+        $log_info = $this->getCallerInfo(false, 1);
         $file = strlen($log_info['file']) > 36 ? '...' . substr($log_info['file'], -35) : $log_info['file'];
-        \DebugHelper::log("Watch started at $file:{$log_info['line']}", 'AUTO');
+        k_log("Watch started at $file:{$log_info['line']}", 'AUTO');
 
-        if (!$silent) {
-            $pos = $this->getCallerDetails(4, false);
-            echo <<<OUTPUT
-Watch started at $pos
-<a href="http://base.bmorales.coredev/utils/phpdebug/index.php">Debugs</a>
+        $info = <<<OUTPUT
+Watch started at {$this->watching}
 
 OUTPUT;
+        $this->output($info, 100);
+
+        if ($this->trace) {
+            $this->startTrace();
         }
-        xdebug_start_trace(self::$trace_file);
-        xdebug_start_code_coverage();
+
+        if ($this->coverage) {
+            xdebug_start_code_coverage();
+        }
         register_shutdown_function('\DebugHelper\Tools\Watcher::shutDownEndWatch');
     }
 
     /**
      * Shows a coverage report of the trace since the watch() method was called.
      *
-     * @param boolean $finish_execution Ends the script execution.
-     *
+     * @param boolean $finishExecution Ends the script execution.
      * @return string
      */
-    public function endWatch($finish_execution = false)
+    public function endWatch($finishExecution = false)
     {
-        if (empty(self::$trace_file)) {
+        if (empty($this->traceFile)) {
             return;
         }
-        xdebug_stop_trace();
+        if ($this->trace) {
+            xdebug_stop_trace();
+        }
+        if ($this->coverage) {
+            $coverage = $this->getCodeCoverage();
+            file_put_contents($this->traceFile . '.cvg', json_encode($coverage));
+        }
 
-        $coverage = $this->getCodeCoverage();
-
-        file_put_contents(self::$trace_file . '.cvg', json_encode($coverage));
-        self::$trace_file = '';
-        if ($finish_execution) {
+        $this->traceFile = '';
+        if ($finishExecution) {
             die(sprintf("<pre><a href=\"codebrowser:%s:%d\">DIE</a></pre>", __FILE__, __LINE__));
         }
     }
@@ -104,7 +182,33 @@ OUTPUT;
      */
     public static function shutDownEndWatch()
     {
-        \DebugHelper::endWatch();
+        $watcher = \DebugHelper::getClass('\DebugHelper\Tools\Watcher');
+        $watcher->endWatch();
+    }
+
+    protected function startTrace()
+    {
+        ini_set('xdebug.profiler_enable', 1);
+        ini_set('xdebug.profiler_output_dir', \DebugHelper::getDebugDir());
+        ini_set('xdebug.collect_params', 0); // 0 None, 1, Simple, 3 Full
+        ini_set('xdebug.collect_return', 0); // 0 None, 1, Yes
+        ini_set('xdebug.var_display_max_depth', 2);
+        ini_set('xdebug.var_display_max_data', 128);
+        xdebug_start_trace($this->traceFile);
+
+    }
+
+    /**
+     * Displays a message depending on the severity level
+     *
+     * @param string $message message to output
+     * @param int $level Level of the message
+     */
+    protected function output($message, $level)
+    {
+        if ($this->level >= $level) {
+            echo $message;
+        }
     }
 
     /**
