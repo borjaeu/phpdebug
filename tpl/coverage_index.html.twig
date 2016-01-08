@@ -1,40 +1,50 @@
 {% extends 'bootstrap.html.twig' %}
+{%  macro renderTree(nodes, id) %}
+{%      for key, subNodes in nodes %}
+<li>
+{%          if subNodes['file'] is defined %}
+    <div class="file {{ cycle(['odd', 'even'], loop.index0) }}">
+        <a href="codebrowser:{{ subNodes['file'] }}" title="Open info file"><span class="glyphicon glyphicon-edit"></span></a>
+        <a class="file" href="?kizilare_debug=1&coverage={{ id }}&file={{ subNodes['file'] }}" title="Open info file" target="_blank">{{ subNodes['file'] }} </a>
+        <span class="lines">{{ subNodes['lines'] }}</span>
+    </div>
+{%          else %}
+    <a href="#" onclick="toggleNext(this); return false;"><strong> {{ key }} [{{ subNodes | length }}]</strong></a>
+    <ul>
+        {{ _self.renderTree(subNodes, id) }}
+    </ul>
+{%          endif %}
+</li>
+{%      endfor %}
+{%  endmacro %}
+
+
 {% block title %}Debug - Code Trace{% endblock %}
 {% block style %}
 <style>
-        ul { list-style: none; padding: 0; }
-        a { text-decoration: none; color: black; float: left; display: block; margin-right: 10px; }
+        ul { list-style: none; }
+        ul#files ul { border-top: 3px solid #DEDEDE; border-left: 3px solid #DEDEDE; }
+
         a:hover { text-decoration: underline; }
-        li span { width: 100px; }
+        div.file { display: block; }
+        span.lines { float: right; }
         .even { background-color:#DEDEDE; }
         .odd { background-color:#FFFFFF; }
 </style>
 {% endblock %}
 {% block javascript %}
 <script type="text/javascript">
-    function deleteTrace(sTraceId) {
-        $.get('?delete=' + sTraceId, function(oData) {
-            $('#' + sTraceId).fadeOut();
-        });
+    function toggleNext(oItem) {
+        $(oItem).next().slideToggle();
     }
 </script>
 {% endblock %}
 {% block body %}
-    <table class="table">
-        <thead>
-            <tr>
-                <th>File</th>
-                <th>Lines</th>
-            </tr>
-        </thead>
-{% for file, lines in files %}
-        <tr>
-            <td>
-                <a href="codebrowser:{{ file }}" title="Open info file"><span class="glyphicon glyphicon-edit"></span></a>
-                <a href="?kizilare_debug=1&coverage={{ id }}&file={{ file }}" title="Open info file">{{ file }}</a>
-            </td>
-            <td>{{ lines | length }}</td>
-        </tr>
-{% endfor %}
-    </table>
+    {% import _self as tree %}
+    <h1>Main menu</h1>
+    <ul id="files">
+        {{ tree.renderTree(nodes, id) }}
+    </ul>
 {% endblock %}
+
+

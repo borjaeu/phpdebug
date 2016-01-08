@@ -15,7 +15,6 @@ class Coverage
         } else {
             $this->renderIndex($files);
         }
-
     }
 
     /**
@@ -56,7 +55,50 @@ class Coverage
         $template = new Template();
         $template->assign('id', $this->id);
         $template->assign('files', $files);
+        $tree = [];
+        foreach($files as $file => $lines) {
+            $levels = explode('/', $file);
+            $this->insertBranches($levels, $tree, [
+                'lines' => count($lines),
+                'file'  => $file
+            ]);
+        }
+
+        $tree = $this->collapseTree($tree);
         $template->assign('section', 'coverage');
+        $template->assign('nodes', $tree);
         echo $template->fetch('coverage_index');
+    }
+
+    protected function collapseTree($tree, $parentKey = '')
+    {
+        if (isset($tree['file'])) {
+            return $tree;
+        }
+        if(count($tree) == 1) {
+            $key = array_keys($tree)[0];
+            $newTree = $this->collapseTree($tree[$key], $parentKey . $key . '/');
+        } else {
+            $newTree = [];
+            foreach($tree as $branch => $subtree) {
+//                $newTree[$parentKey . $branch] = $subtree;
+                $newTree[$parentKey . $branch] = $this->collapseTree($subtree);
+            }
+        }
+        return $newTree;
+    }
+
+
+    protected function insertBranches($levels, &$tree, $value)
+    {
+        if (empty($levels)) {
+            $tree = $value;
+        } else {
+            $level = array_shift($levels);
+            if (!isset($tree[$level])) {
+                $tree[$level] = [];
+            }
+            $this->insertBranches($levels, $tree[$level], $value);
+        }
     }
 }

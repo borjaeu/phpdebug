@@ -84,6 +84,11 @@ class Gui
         $files = glob($path . '*.svr');
         array_walk($files, function (&$item) use ($path) {
             if (preg_match('/(?P<id>.*)\.svr$/', basename($item), $match)) {
+                $hasTrace = is_file($path . $match['id'] . '.xt');
+                $hasCoverage = is_file($path . $match['id'] . '.cvg');
+                $hasCleanVersion = is_file($path . $match['id'] . '.xt.clean');
+                $hasJsonStructure = is_file($path . $match['id'] . '.xt.json');
+
                 $info = json_decode(file_get_contents($path . $match['id'] . '.svr'), true);
                 $item = array(
                     'id'        => $match['id'],
@@ -91,12 +96,12 @@ class Gui
                     'time'      => isset($info['time']) ? self::getRelativeTime($info['time']) : 0,
                     'path'      => $item,
                     'details'   => self::getDetails($info),
-                    'trace'     => is_file($path . $match['id'] . '.xt'),
-                    'coverage'  => is_file($path . $match['id'] . '.cvg'),
-                    'clean'     => is_file($path . $match['id'] . '.xt.clean'),
-                    'json'     => is_file($path . $match['id'] . '.xt.json'),
+                    'trace'     => $hasTrace,
+                    'coverage'  => $hasCoverage,
+                    'clean'     => $hasCleanVersion,
+                    'json'      => $hasJsonStructure,
                     'info'      => $info,
-                    'size'      => self::fileSizeConvert(filesize($path . $match['id'] . '.xt'))
+                    'size'      => $hasTrace ? self::fileSizeConvert(filesize($path . $match['id'] . '.xt')) : '-'
 
                 );
             }
