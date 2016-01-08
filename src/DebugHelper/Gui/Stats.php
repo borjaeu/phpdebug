@@ -12,7 +12,7 @@ class Stats
     public function renderLoadsHtml()
     {
         $processor  = new Processor();
-        $processor->process($this->file);
+        $processor->process($this->id, false);
 
         $data = $processor->getTree();
         $this->renderPage($data);
@@ -28,15 +28,14 @@ class Stats
     public function setFile($file)
     {
         $this->id = $file;
+        $this->file = \DebugHelper::getDebugDir() . $file . '.xt.clean';
 
-        $file = \DebugHelper::getDebugDir() . $file . '.xt';
-
-        if (!is_file($file)) {
-            throw new \Exception("Error Processing file $file");
+        if (!is_file($this->file)) {
+            $this->file = \DebugHelper::getDebugDir() . $file . '.xt';
+            if (!is_file($this->file)) {
+                throw new \Exception("Error Processing file $file");
+            }
         }
-
-        $this->file = $file;
-
         return $this;
     }
 

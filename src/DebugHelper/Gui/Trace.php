@@ -33,9 +33,13 @@ class Trace
             throw new \Exception("Error Processing file {$this->coverage_file}");
         }
 
-        $this->trace_file = \DebugHelper::getDebugDir() . $file . '.xt';
+        $this->trace_file = \DebugHelper::getDebugDir() . $file . '.xt.clean';
         if (!is_file($this->trace_file)) {
-            throw new \Exception("Error Processing file {$this->trace_file}");
+            $this->trace_file = \DebugHelper::getDebugDir() . $file . '.xt';
+            if (!is_file($this->trace_file)) {
+                throw new \Exception("Error Processing file {$this->trace_file}");
+            }
+
         }
         return $this;
     }

@@ -57,10 +57,11 @@ class Watcher extends Abstracted
         $this->setTraceFile($traceFile);
 
         file_put_contents($this->traceFile . '.svr', json_encode(array(
-            'server' => $_SERVER,
-            'post' => $_POST,
-            'get' => $_GET,
-            'files' => $_FILES
+            'time'      => time(),
+            'server'    => $_SERVER,
+            'post'      => $_POST,
+            'get'       => $_GET,
+            'files'     => $_FILES
         ), JSON_PRETTY_PRINT));
     }
 
@@ -131,7 +132,7 @@ ERROR;
             return;
         }
 
-        $log_info = $this->getCallerInfo(false, 2);
+        $log_info = $this->getCallerInfo(false, 1);
         $file = strlen($log_info['file']) > 36 ? '...' . substr($log_info['file'], -35) : $log_info['file'];
         k_log("Watch started at $file:{$log_info['line']}", 'AUTO');
 
@@ -193,7 +194,8 @@ OUTPUT;
         ini_set('xdebug.collect_return', 0); // 0 None, 1, Yes
         ini_set('xdebug.var_display_max_depth', 2);
         ini_set('xdebug.var_display_max_data', 128);
-        xdebug_start_trace();
+        xdebug_start_trace($this->traceFile);
+
     }
 
     /**

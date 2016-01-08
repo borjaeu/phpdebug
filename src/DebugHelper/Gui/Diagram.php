@@ -14,7 +14,7 @@ class Diagram
     public function renderLoadsHtml()
     {
         $processor  = new Processor();
-        $processor->process($this->file);
+        $processor->process($this->id);
 
         $steps = $processor->getLines();
         $this->loadClasses($steps);
