@@ -68,29 +68,6 @@ class DebugHelper
     }
 
     /**
-     * Displays the data passed as information.
-     *
-     * @param mixed $data Information to be dumped to the browser.
-     */
-    public static function dump($data = '')
-    {
-        return self::getClass('\DebugHelper\Tools\Dump')->dump($data);
-    }
-
-    /**
-     * Shows the HTML trace.
-     *
-     * @param boolean $finish Finish the script execution.
-     * @param boolean $return_trace Returns the trace instead of printing it.
-     *
-     * @return mixed
-     */
-    public static function showtrace($finish = true, $return_trace = false)
-    {
-        return self::getClass('\DebugHelper\Tools\Dump')->showtrace($finish, $return_trace);
-    }
-
-    /**
      * Clears the log file
      *
      * @var string $data Data to be saved in the new created log.
@@ -142,16 +119,6 @@ class DebugHelper
     public static function search($data, $needle)
     {
         return self::getClass('\DebugHelper\Tools\Arrays')->search($data, $needle);
-    }
-
-    /**
-     * Begins the trace to watch where the code goes.
-     *
-     * @param Exception $exception
-     */
-    public static function exception($exception)
-    {
-        return self::getClass('\DebugHelper\Tools\Exception')->exception($exception);
     }
 
     /**
@@ -247,12 +214,12 @@ function k_collect_errors()
  * Shows the HTML trace.
  *
  * @param boolean $finish Finish the script execution.
- * @param boolean $return_trace Returns the trace instead of printing it.
+ * @param boolean $returnTrace Returns the trace instead of printing it.
  * @return mixed
  */
-function k_trace($finish = true, $return_trace = false)
+function k_trace($returnTrace = false)
 {
-    return DebugHelper::getClass('\DebugHelper\Tools\Dump')->showtrace($finish, $return_trace);
+    return DebugHelper::getClass('\DebugHelper\Tools\Dump')->showtrace($returnTrace);
 }
 
 /**
@@ -284,4 +251,14 @@ function k_die()
 {
     DebugHelper::getClass('\DebugHelper\Tools\Dump')->dump();
     exit;
+}
+
+/**
+ * Begins the trace to watch where the code goes.
+ *
+ * @param Exception $exception
+ */
+function k_exception($exception)
+{
+    return DebugHelper::getClass('\DebugHelper\Tools\Exception')->exception($exception);
 }

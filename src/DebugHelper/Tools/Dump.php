@@ -55,14 +55,13 @@ DEBUG;
     /**
      * Shows the HTML trace.
      *
-     * @param boolean $finish Finish the script execution.
-     * @param boolean $return_trace Returns the trace instead of printing it.
+     * @param boolean $returnTrace Returns the trace instead of printing it.
      *
      * @return mixed
      */
-    public function showtrace($finish = true, $return_trace = false)
+    public function showtrace($returnTrace = false)
     {
-        if (!($return_trace || \DebugHelper::isCli())) {
+        if (!($returnTrace || \DebugHelper::isCli())) {
             Styles::showHeader('showtrace');
             Styles::showHeader('objectToHtml');
         }
@@ -94,14 +93,11 @@ DEBUG;
             $debug_backtrace = "<pre>$pos$debug_backtrace</pre>";
         }
 
-        if ($return_trace) {
+        if ($returnTrace) {
             return $debug_backtrace;
         }
 
         echo $debug_backtrace;
-        if ($finish) {
-            die();
-        }
         return '';
     }
 }

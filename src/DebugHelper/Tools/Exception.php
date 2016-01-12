@@ -10,7 +10,11 @@ class Exception extends Abstracted
      */
     public function exception( $exception )
     {
-        $exception_name = get_class( $exception );
+        if (!$exception instanceof \Exception) {
+            k_die(); // The given exception is not a valid one...
+        }
+
+        $exceptionName = get_class( $exception );
         $file = $exception->getFile();
         $line = $exception->getLine();
         $trace = $exception->getTrace();
@@ -29,24 +33,25 @@ class Exception extends Abstracted
 
             $debug_backtrace
                 .= <<<ROW
-	<tr class="">
-		<td><a href="codebrowser:{$item['file']}:{$item['line']}">$file</a></td>
-		<td>{$item['line']}</td>
-		<td>$function()</td>
-	</tr>
+<tr class="">
+        <td><a href="codebrowser:{$item['file']}:{$item['line']}">$file</a></td>
+        <td>{$item['line']}</td>
+        <td>$function()</td>
+    </tr>
 
 ROW;
         }
         $debug_backtrace .= "\n</table>-------- END: TRACE --------\n";
 
         echo <<<EXCEPTION
-$exception_name
+$exceptionName
 <a href="codebrowser:$file:$line">$file:$line</a>
 $debug_backtrace
 EXCEPTION;
 
+
         //var_dump( $exception );
-        \DebugHelper::dump( $exception->getMessage() );
+        k_dump($exception->getMessage());
     }
 
 }
