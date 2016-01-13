@@ -22,7 +22,7 @@ class CleanCommand extends Abstracted
         'Symfony\Component\OptionsResolver',
 //        'Symfony\Component\Form',
         'Symfony\Component\Debug',
-        'Monolog'
+//        'Monolog'
     );
 
     protected $namespaces = [];
@@ -82,22 +82,26 @@ class CleanCommand extends Abstracted
         $count = 320000000;
         $lineNo = 0;
         $lineCount = 0;
-        echo "Starting" . PHP_EOL;
-        
-        while (!feof($fileIn) && $count-- > 0) {
+
+        $fileSize = filesize("temp/{$fileId}.xt");;
+        echo "Starting $fileSize" . PHP_EOL;
+        /*while (!feof($fileIn) && $count-- > 0) {
             fgets($fileIn);
             $lineCount++;
         }
-        echo "Total lines $lineCount" . PHP_EOL;
+        echo "Total lines $lineCount" . PHP_EOL;*/
 
         $totalPassed = 0;
         fseek($fileIn, 0);
         $fileOut = fopen("temp/{$fileId}.xt.clean", 'w');
+        $size = 0;
         while (!feof($fileIn) && $count-- > 0) {
             $line = fgets($fileIn);
+            $size += strlen($line);
             $lineNo++;
             if ($lineNo % 1000 == 0) {
-                printf('%0.2f%% %d/%d' . PHP_EOL, ($lineNo / $lineCount) * 100, $lineNo, $lineCount);
+                printf('%0.2f%% %0.2f%% %d/%d %d/%d' . PHP_EOL, ($size / $fileSize) * 100, ($totalPassed/ $lineNo) * 100, $lineNo, $lineCount, $size, $fileSize);
+                //printf('%0.2f%% %d/%d %d/%d' . PHP_EOL, ($lineNo / $lineCount) * 100, $lineNo, $lineCount, $size, $fileSize);
             }
             $outLine = $this->processInputLine($line);
             if ($outLine !== false) {
