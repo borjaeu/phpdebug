@@ -55,20 +55,31 @@ DEBUG;
     /**
      * Shows the HTML trace.
      *
-     * @param boolean $returnTrace Returns the trace instead of printing it.
-     *
      * @return mixed
      */
-    public function showtrace($returnTrace = false)
+    public function showtrace()
     {
-        if (!($returnTrace || \DebugHelper::isCli())) {
+        $trace = xdebug_get_function_stack();
+        $trace = array_slice($trace, 0, count($trace) - 1);
+        $debugTrace = self::getDebugTrace($trace);
+        echo $debugTrace;
+    }
+
+    /**
+     * Shows the HTML trace.
+     *
+     * @return string
+     */
+    public function getDebugTrace($trace)
+    {
+        if (!\DebugHelper::isCli()) {
             Styles::showHeader('showtrace');
             Styles::showHeader('objectToHtml');
         }
-        $trace = xdebug_get_function_stack();
-        $trace = array_slice($trace, 0, count($trace) - 1);
 
-        $debug_backtrace = array();
+        print_r($trace);
+
+        $debugBacktrace = array();
         foreach ($trace as $item) {
             $step = array();
 
@@ -79,25 +90,19 @@ DEBUG;
             } else {
                 $step['function'] = 'include: ' . $item['include_filename'];
             }
-            $step['params'] = count($item['params']);
+            $step['params'] = isset($item['params']) ? count($item['params']) : '-';
             $step['file'] = $item['file'];
             $step['line'] = $item['line'];
-            $debug_backtrace[] = $step;
+            $debugBacktrace[] = $step;
         }
 
-        $pos = $this->getCallerDetails(2);
+        $pos = $this->getCallerDetails(3);
         if (\DebugHelper::isCli()) {
-            $debug_backtrace = "Showtrace in " . $pos . $this->array2Text($debug_backtrace);
+            $debugBacktrace = "Showtrace in " . $pos . $this->array2Text($debugBacktrace);
         } else {
-            $debug_backtrace = $this->array2Html($debug_backtrace, 'showtrace');
-            $debug_backtrace = "<pre>$pos$debug_backtrace</pre>";
+            $debugBacktrace = $this->array2Html($debugBacktrace, 'showtrace');
+            $debugBacktrace = "<pre>$pos$debugBacktrace</pre>";
         }
-
-        if ($returnTrace) {
-            return $debug_backtrace;
-        }
-
-        echo $debug_backtrace;
-        return '';
+        return $debugBacktrace;
     }
 }
