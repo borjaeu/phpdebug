@@ -60,6 +60,7 @@ class Abstracted
         if (is_object($data)) {
             $debug['value'] = get_class($data);
             $debug['type'] = 'object(' . count($data) . ')';
+            $debug['class'] = 'object';
             $reflection = new ReflectionClass($data);
             $properties = $reflection->getProperties();
             $properties_array = array();
@@ -72,7 +73,8 @@ class Abstracted
         if (is_array($data)) {
             $debug['sub_items'] = array();
             $debug['type'] .= '(' . count($data) . ')';
-            if ($level<3) {
+            $debug['class'] = 'array';
+            if ($level<5) {
                 foreach ($data as $sub_key => $sub_value) {
                     $debug['sub_items'][$sub_key] = $this->objectToArray($sub_value, $level + 1);
                 }
@@ -83,6 +85,7 @@ class Abstracted
             if (is_string($data)) {
                 $size = strlen($data);
                 $debug['type'] = 'string(' . $size . ')';
+                $debug['class'] = 'string';
                 $debug['value'] = $data;
                 if ($size > 160) {
                     $debug['sub_items'] = $data;
@@ -90,15 +93,19 @@ class Abstracted
                 }
             } elseif (is_null($data)) {
                 $debug['type'] = 'null';
+                $debug['class'] = 'null';
                 $debug['value'] = '';
             } elseif (is_integer($data)) {
                 $debug['type'] = 'integer';
+                $debug['class'] = 'integer';
                 $debug['value'] = $data;
             } elseif (is_bool($data)) {
                 $debug['type'] = 'boolean';
+                $debug['class'] = 'boolean';
                 $debug['value'] = $data ? 'true' : 'false';
             } elseif (is_float($data)) {
                 $debug['type'] = 'float';
+                $debug['class'] = 'float';
                 $debug['value'] = $data;
             } else {
                 echo 'Unknown type';
@@ -129,8 +136,8 @@ class Abstracted
         if (isset($data['sub_items'])) {
             if (is_array($data['sub_items']) && !empty($data['sub_items'])) {
                 $extra = "$indent<ul>\n";
-                foreach ($data['sub_items'] as $sub_key => $sub_value) {
-                    $extra .= $this->tree2Html($sub_value, $sub_key, $level + 1);
+                foreach ($data['sub_items'] as $subKey => $subValue) {
+                    $extra .= $this->tree2Html($subValue, $subKey, $level + 1);
                 }
                 $extra .= "$indent</ul>\n";
             } elseif (is_string($data['sub_items'])) {
@@ -152,7 +159,7 @@ class Abstracted
         $status = '';
         $script = '';
         if (!empty($extra)) {
-            $status = \DebugHelper::isEnabled(\DebugHelper::DUMP_COLLAPSED) ? 'collapsed' : 'expanded';
+            $status = \DebugHelper::isEnabled(\DebugHelper::OPTION_DUMP_COLLAPSED) ? 'collapsed' : 'expanded';
             $script = 'onclick="return toggleObjectToHtmlNode(' . $id . ');"';
         }
         $debug .= <<<HTML

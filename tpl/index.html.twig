@@ -53,7 +53,9 @@
                 <pre class="details">{{ file.details }}</pre>
                 <a href="codebrowser:{{ root_dir }}{{ file.id }}.svr" title="Open info file"><span class="glyphicon glyphicon-eye-open"></span></a>
 {% if file.trace %}
+{% if file.json %}
                 <a href="?stats={{ file.id }}&kizilare_debug=1" title="Grouped code with stats"><span class="glyphicon glyphicon-stats"></span></a>
+{% endif %}
                 <a href="?trace={{ file.id }}&kizilare_debug=1" title="See trace"><span class="glyphicon glyphicon-sunglasses"></span></a>
                 <a href="?diagram={{ file.id }}&kizilare_debug=1" title="Diagram"><span class="glyphicon glyphicon-th"></span></a>
                 <a href="?sequence={{ file.id }}&kizilare_debug=1" title="Sequence Diagram 2"><span class="glyphicon glyphicon-transfer"></span></a>
@@ -65,8 +67,6 @@
                 <a href="?delete={{ file.id }}&kizilare_debug=1" onclick="deleteTrace('{{ file.id }}'); return false;" title="delete file"><span class="glyphicon glyphicon-remove"></span></a>
                 <a href="?rename={{ file.id }}&kizilare_debug=1" onclick="renameTrace('{{ file.id }}'); return false;" title="rename file"><span class="glyphicon glyphicon-edit"></span></a>
 {% endif %}
-                {% if file.clean %}clean{% endif %}
-                {% if file.json %}json{% endif %}
             </td>
             <td class="name"><strong>{{ file.name }}</strong></td>
             <td>{{ file.time }}</td>

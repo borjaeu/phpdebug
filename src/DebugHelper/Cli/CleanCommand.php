@@ -5,8 +5,6 @@ use DebugHelper\Gui\Processor;
 
 class CleanCommand extends Abstracted
 {
-    protected $file;
-
     protected $ignoreDepth;
 
     protected $ignoring;
@@ -20,25 +18,27 @@ class CleanCommand extends Abstracted
         'Symfony\Component\Yaml',
         //'Symfony\Component\EventDispatcher',
         'Symfony\Component\OptionsResolver',
-//        'Symfony\Component\Form',
+        'Symfony\Component\Form',
         'Symfony\Component\Debug',
-//        'Monolog'
+        'Monolog'
     );
 
     protected $namespaces = [];
 
     protected $skipped = [];
 
-    protected $invalidLines;
+    protected $stats;
+
+    protected $options;
 
     /**
      * Execute the command line
      */
     public function run()
     {
-        if (isset($this->arguments[2])) {
-            $file = \DebugHelper::getDebugDir() . $this->arguments[2];
-            $this->cleanFile($file);
+        $this->loadArguments();
+        if ($this->options['file']) {
+            $this->cleanFile($this->options['file']);
         } else {
             $files = glob(\DebugHelper::getDebugDir() . '/*.xt');
             foreach($files as $file) {
@@ -47,9 +47,33 @@ class CleanCommand extends Abstracted
         }
     }
 
+    protected function loadArguments()
+    {
+        $this->options = [
+            'file' => false,
+            'functions' => false
+        ];
+        foreach($this->arguments as $argument) {
+            switch($argument) {
+                case 'console':
+                case 'clean':
+                    break;
+                case 'functions':
+                    $this->options['functions'] = true;
+                    break;
+                default:
+                    $this->options['file'] = \DebugHelper::getDebugDir() . $argument;
+            }
+        }
+    }
+
     protected function cleanFile($file)
     {
-        $this->invalidLines = 0;
+        $this->stats = [
+            'invalid'   => 0,
+            'functions' => 0,
+            'skipped'   => 0
+        ];
         $this->namespaces = [];
         $this->skipped = [];
         preg_match('/^(.*\/)?(?P<id>.*?)(\.\w*)?$/', $file, $matches);
@@ -66,6 +90,7 @@ class CleanCommand extends Abstracted
             $lines = $this->generateFiles($fileId);
             if ($lines < 10000) {
                 $processor = new Processor();
+                echo "Generating structure for {$fileId}\n";
                 $processor->process($fileId);
             }
         }
@@ -73,11 +98,12 @@ class CleanCommand extends Abstracted
 
     /**
      * Sets the value of file.
+     *
+     * @param string $fileId Identifier for the file
+     * @return integer
      */
     protected function generateFiles($fileId)
     {
-        $this->lines = array();
-
         $fileIn = fopen("temp/{$fileId}.xt", 'r');
         $count = 320000000;
         $lineNo = 0;
@@ -85,11 +111,6 @@ class CleanCommand extends Abstracted
 
         $fileSize = filesize("temp/{$fileId}.xt");;
         echo "Starting $fileSize" . PHP_EOL;
-        /*while (!feof($fileIn) && $count-- > 0) {
-            fgets($fileIn);
-            $lineCount++;
-        }
-        echo "Total lines $lineCount" . PHP_EOL;*/
 
         $totalPassed = 0;
         fseek($fileIn, 0);
@@ -101,7 +122,6 @@ class CleanCommand extends Abstracted
             $lineNo++;
             if ($lineNo % 1000 == 0) {
                 printf('%0.2f%% %0.2f%% %d/%d %d/%d' . PHP_EOL, ($size / $fileSize) * 100, ($totalPassed/ $lineNo) * 100, $lineNo, $lineCount, $size, $fileSize);
-                //printf('%0.2f%% %d/%d %d/%d' . PHP_EOL, ($lineNo / $lineCount) * 100, $lineNo, $lineCount, $size, $fileSize);
             }
             $outLine = $this->processInputLine($line);
             if ($outLine !== false) {
@@ -112,19 +132,37 @@ class CleanCommand extends Abstracted
         $this->namespaces = array_filter ($this->namespaces, function($element){
             return $element > 10;
         });
-        $this->skipped = array_filter ($this->skipped, function($element){
+        $this->skipped = array_filter($this->skipped, function($element){
             return $element > 0;
         });
 
         asort($this->namespaces);
-        print_r($this->namespaces);
-        print_r($this->skipped);
-        echo <<<INFO
-$totalPassed lines of $lineCount has gone through.
-{$this->invalidLines} invalid lines.
+        $namespaces = array_slice($this->namespaces, -10);
+        echo 'Most used namespaces' . PHP_EOL;
+        foreach($namespaces as $namespace => $lines) {
+            printf('%6d %s%s', $lines, $namespace, PHP_EOL);
+        }
 
-INFO;
+        asort($this->skipped);
+        echo 'Skipped namespaces' . PHP_EOL;
+        foreach($this->skipped as $namespace => $lines) {
+            printf('%6d %s%s', $lines, $namespace, PHP_EOL);
+        }
 
+        printf('Stats
+%6d valid lines
+%6d invalid lines
+%6d functions skipped
+%6d namespaces skipped
+----
+%4d Total lines
+',
+            $totalPassed,
+            $this->stats['invalid'],
+            $this->stats['functions'],
+            $this->stats['skipped'],
+            $lineNo
+        );
         return $totalPassed;
     }
 
@@ -135,6 +173,7 @@ INFO;
             if ($this->ignoreDepth) {
                 if ($line_info['depth'] > $this->ignoreDepth) {
                     $this->skipped[$this->ignoring]++;
+                    $this->stats['skipped']++;
                     return false;
                 } else {
                     $this->ignoreDepth = false;
@@ -149,6 +188,7 @@ INFO;
                     }
                 }
             } else {
+                $this->stats['functions']++;
                 return false;
             }
 
@@ -156,12 +196,16 @@ INFO;
 
             return $line;
         } else {
-            $this->invalidLines++;
+            $this->stats['invalid']++;
+            return false;
         }
     }
 
     protected function isIgnoredNamespace($namespace)
     {
+        if ($this->options['functions']) {
+            return false;
+        }
         foreach ($this->ignoreNamespaces as $ignoreNamespaces) {
             if (substr($namespace, 0, strlen($ignoreNamespaces)) == $ignoreNamespaces) {
                 return true;

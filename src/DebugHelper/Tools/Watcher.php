@@ -1,6 +1,8 @@
 <?php
 namespace DebugHelper\Tools;
 
+use DebugHelper\Tools\Model\Position;
+
 class Watcher extends Abstracted
 {
     /**
@@ -13,7 +15,7 @@ class Watcher extends Abstracted
     /**
      * Flag to determine when the watch is already active
      *
-     * @var string
+     * @var Position
      */
     protected $watching;
 
@@ -114,33 +116,23 @@ class Watcher extends Abstracted
      */
     public function watch()
     {
+        $position = $this->getCallerInfo(1);
         if ($this->watching) {
-            $pos = $this->getCallerDetails(1, false);
-            $error = <<<ERROR
-<pre>
-Watch already started in {$this->watching}
-Could not be start at $pos
-</pre>
-ERROR;
-            $this->output($error, 200);
+            $this->output('Watch already started', $this->watching, 200);
+            $this->output('Could not start watching', $position, 200);
             exit;
         }
 
-        $this->watching = self::getCallerDetails(1, false);
-
+        $this->watching = $position;
         if (is_file($this->traceFile)) {
             return;
         }
 
-        $log_info = $this->getCallerInfo(false, 1);
-        $file = strlen($log_info['file']) > 36 ? '...' . substr($log_info['file'], -35) : $log_info['file'];
-        k_log("Watch started at $file:{$log_info['line']}", 'AUTO');
-
-        $info = <<<OUTPUT
-Watch started at {$this->watching}
-
-OUTPUT;
-        $this->output($info, 100);
+        $file = $position->getFile();
+        $line = $position->getLine();
+        $file = strlen($file) > 36 ? '...' . substr($file, -35) : $file;
+        k_log("Watch started at $file:$line", 'AUTO');
+        $this->output('Watch started', $position, 100);
 
         if ($this->trace) {
             $this->startTrace();
@@ -195,19 +187,19 @@ OUTPUT;
         ini_set('xdebug.var_display_max_depth', 2);
         ini_set('xdebug.var_display_max_data', 128);
         xdebug_start_trace($this->traceFile);
-
     }
 
     /**
      * Displays a message depending on the severity level
      *
      * @param string $message message to output
+     * @param Position $position Position where the output has been triggered
      * @param int $level Level of the message
      */
-    protected function output($message, $level)
+    protected function output($message, Position $position, $level)
     {
         if ($this->level >= $level) {
-            echo $message;
+            \DebugHelper::getClass('\DebugHelper\Tools\Output')->dump($position, $message);
         }
     }
 

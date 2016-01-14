@@ -136,10 +136,14 @@ HEAD;
 		font-style:normal;
 		font-weight:bold;
 	}
-	ul.object_dump span.type { margin-right: 5px; }
+    .object_dump span.type { margin-right: 5px; }
 	ul.object_dump span.string { color:#008800; }
 	ul.object_dump span.integer { color:#880000; }
 	ul.object_dump span.boolean { color:#000088; }
+
+	li.string > span.row span.type { color:#008800; }
+	li.integer > span.row span.type { color:#880000; }
+	li.boolean > span.row span.type { color:#000088; }
 
 	</style>
 	<script type="text/javascript">

@@ -16,7 +16,7 @@ class DebugHelper
      *
      * @var string
      */
-    const DUMP_COLLAPSED = 'dump_collapsed';
+    const OPTION_DUMP_COLLAPSED = 'dump_collapsed';
 
     /**
      * All debug operations enabled by default.
@@ -233,7 +233,6 @@ function k_log($data, $header = 'LOG', $caller_depth = 2)
     return DebugHelper::getClass('\DebugHelper\Tools\Log')->log($data, $header, $caller_depth);
 }
 
-
 /**
  * Displays the data passed as information.
  *
@@ -261,4 +260,14 @@ function k_die()
 function k_exception($exception)
 {
     return DebugHelper::getClass('\DebugHelper\Tools\Exception')->exception($exception);
+}
+
+function enable($option)
+{
+    \DebugHelper::enable($option);
+}
+
+function k_disable($option)
+{
+    \DebugHelper::disable($option);
 }

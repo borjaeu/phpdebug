@@ -32,8 +32,8 @@ class Log extends Abstracted
         static $first_log = false;
 
         // Get filename and last directory.
-        $pos = $this->getCallerInfo(false, $caller_depth);
-        $path = substr($pos['file'], -32);
+        $pos = $this->getCallerInfo($caller_depth);
+        $path = substr($pos->getFile(), -32);
 
         $ms = microtime(true);
         $elapsed = date('Y/m/d H:i:s ') . ($ms - floor($ms));
@@ -58,7 +58,8 @@ class Log extends Abstracted
         }
 
         // Build label.
-        $pos = "$path:{$pos['line']} [$elapsed]";
+        $line = $pos->getLine();
+        $pos = "$path:$line [$elapsed]";
         if ($header) {
             $log = "\n[$header] {$pos}\n{$data}";
         } elseif ($header === false) {
