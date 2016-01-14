@@ -23,33 +23,10 @@ class Dump extends Abstracted
         $split = number_format($split, 6);
 
         Styles::showHeader('dump', 'objectToHtml');
-        $pos = $this->getCallerDetails($depth);
 
-        if (!is_null($data)) {
-            $data = $this->objectToHtml($data);
-        }
-        $id = uniqid();
-        if (\DebugHelper::isCli()) {
-            echo "[Dump] var, $pos====================================\n$data====================================\n";
-        } else {
-            if (!is_null($data)) {
-                $data = "<div class=\"data\">{$data}</div>";
-            } else {
-                $data = '';
-            }
+        $pos = $this->getCallerInfo($depth);
 
-            echo <<<DEBUG
-
-<div id="$id" class="debug_dump">
-    <div class="header">
-        <span class="timer">$split</span>
-        <span class="code">$pos</span>
-     </div>
-     {$data}
-</div>
-
-DEBUG;
-        }
+        \DebugHelper::getClass('\DebugHelper\Tools\Output')->dump($pos, $data);
     }
 
     /**
@@ -76,9 +53,6 @@ DEBUG;
             Styles::showHeader('showtrace');
             Styles::showHeader('objectToHtml');
         }
-
-        print_r($trace);
-
         $debugBacktrace = array();
         foreach ($trace as $item) {
             $step = array();
@@ -90,18 +64,21 @@ DEBUG;
             } else {
                 $step['function'] = 'include: ' . $item['include_filename'];
             }
-            $step['params'] = isset($item['params']) ? count($item['params']) : '-';
-            $step['file'] = $item['file'];
-            $step['line'] = $item['line'];
+            $step['params'] = isset($item['params'])
+                ? count($item['params'])
+                : isset($item['args'])
+                    ? count($item['args']) :
+                    '-';
+            $step['file'] = isset($item['file']) ? $item['file'] : '-';
+            $step['line'] = isset($item['line']) ? $item['line'] : '-';
             $debugBacktrace[] = $step;
         }
 
-        $pos = $this->getCallerDetails(3);
         if (\DebugHelper::isCli()) {
-            $debugBacktrace = "Showtrace in " . $pos . $this->array2Text($debugBacktrace);
+            $debugBacktrace = "Showtrace in " . $this->array2Text($debugBacktrace);
         } else {
             $debugBacktrace = $this->array2Html($debugBacktrace, 'showtrace');
-            $debugBacktrace = "<pre>$pos$debugBacktrace</pre>";
+            $debugBacktrace = "<pre>$debugBacktrace</pre>";
         }
         return $debugBacktrace;
     }

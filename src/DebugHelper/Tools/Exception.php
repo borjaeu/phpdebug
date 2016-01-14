@@ -1,6 +1,8 @@
 <?php
 namespace DebugHelper\Tools;
 
+use DebugHelper\Tools\Model\Position;
+
 class Exception extends Abstracted
 {
     /**
@@ -8,47 +10,28 @@ class Exception extends Abstracted
      *
      * @param Exception $exception
      */
-    public function exception( $exception )
+    public function exception($exception)
     {
         if (!$exception instanceof \Exception) {
             k_die(); // The given exception is not a valid one...
         }
 
         $exceptionName = get_class( $exception );
-        $file = $exception->getFile();
-        $line = $exception->getLine();
-        $trace = $exception->getTrace();
+        $exceptionFile = $exception->getFile();
+        $exceptionLine = $exception->getLine();
+        $position = new Position($exceptionFile, $exceptionLine);
 
-        $debug_backtrace = '<table>';
-        foreach ($trace as $item) {
-            if (!isset( $item['file'] )) {
-                continue;
-            }
-            if (isset( $item['function'] )) {
-                $function = isset( $item['class'] ) ? $item['class'] . '::' . $item['function'] : $item['function'];
-            } else {
-                $function = 'inlcude: ' . $item['include_filename'];
-            }
-            $file = $item['file'];
+        $exceptionTrace = $exception->getTrace();
+        $exceptionTrace = \DebugHelper::getClass('\DebugHelper\Tools\Dump')->getDebugTrace($exceptionTrace);
 
-            $debug_backtrace
-                .= <<<ROW
-<tr class="">
-        <td><a href="codebrowser:{$item['file']}:{$item['line']}">$file</a></td>
-        <td>{$item['line']}</td>
-        <td>$function()</td>
-    </tr>
-
-ROW;
-        }
-        $debug_backtrace .= "\n</table>-------- END: TRACE --------\n";
-
-        echo <<<EXCEPTION
+        /*echo <<<EXCEPTION
+Exception thrown:
 $exceptionName
-<a href="codebrowser:$file:$line">$file:$line</a>
-$debug_backtrace
+<a href="codebrowser:$exceptionFile:$exceptionLine">$exceptionFile:$exceptionLine</a>
+$exceptionTrace
 EXCEPTION;
-
-        return \DebugHelper::getClass('\DebugHelper\Tools\Dump')->dump($exception->getMessage(), 3);
+*/
+        \DebugHelper::getClass('\DebugHelper\Tools\Output')->dump($position, $exception->getMessage());
+        \DebugHelper::getClass('\DebugHelper\Tools\Dump')->dump($exceptionTrace, 3);
     }
 }

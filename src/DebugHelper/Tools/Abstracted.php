@@ -2,6 +2,7 @@
 namespace DebugHelper\Tools;
 
 use DebugHelper\Styles;
+use DebugHelper\Tools\Model\Position;
 use ReflectionClass;
 
 class Abstracted
@@ -10,76 +11,9 @@ class Abstracted
      * Exports the filter debug info.
      *
      * @param integer $depth Depth of the callers to get.
-     * @param boolean $show_header
-     * @return string
+     * @return Position
      */
-    protected function getCallerDetails($depth, $show_header = true)
-    {
-        $item = $this->getCallerInfo(false, $depth + 1);
-        if (false === $item) {
-            return false;
-        }
-
-        $title = $item['function'];
-        if (isset($item['class']) && isset($item['type'])) {
-            $title = $item['class'] . $item['type'] . $title;
-        }
-
-        $id = uniqid();
-
-        if ($show_header) {
-            Styles::showHeader('getCallers');
-        }
-
-        if (isset($item['file'])) {
-            // Get code line.
-            $code = self::getCodeLineInfo($item['file'], $item['line']);
-            $line = trim(str_replace("\t", '→|', $code['source']));
-            $file = $this->getShortenedPath($item['file'], 3);
-
-            if (\DebugHelper::isCli()) {
-                $link = <<<POS
-caller: {$file}:{$item['line']} in {$code['class']}::{$code['method']}() "$line"
-
-POS;
-
-            } else {
-                $link = <<<POS
-<a class="debug_caller" name="$id" href="codebrowser:{$item['file']}:{$item['line']}" title="in {$code['class']}::{$code['method']}()">$line<span class="line">$file:{$item['line']}</span></a>
-
-POS;
-            }
-        } else {
-            $link = $title;
-        }
-        return $link;
-    }
-
-    /**
-     * Exports the filter debug info.
-     *
-     * @param integer $depth Depth of the callers to get.
-     * @return string
-     */
-    protected function getCallerSource($depth)
-    {
-        $item = $this->getCallerInfo(false, $depth + 1);
-        if (isset($item['file'])) {
-            // Get code line.
-            $code = self::getCodeLineInfo($item['file'], $item['line']);
-            return $code['source'];
-        }
-        return '';
-    }
-
-    /**
-     * Returns the information of the function dirty_that called this one.
-     *
-     * @param boolean $key Return only one of the keys of the array.
-     * @param integer $depth Numbers of method to go back.
-     * @return array
-     */
-    protected function getCallerInfo($key = false, $depth = 2)
+    protected function getCallerInfo($depth)
     {
         $trace = debug_backtrace(false);
 
@@ -87,47 +21,14 @@ POS;
             return false;
         }
         $item = $trace[$depth];
-        if ($key) {
-            return $item[$key];
+        if (false === $item) {
+            return false;
         }
-        return $item;
+
+        $position = new Position($item['file'], $item['line']);
+        $position->setCall($item['function']);
+        return $position;
     }
-
-    /**
-     * Gets information about a code file by opening the file and reading the PHP code.
-     *
-     * @param string $file Path to the file
-     * @param integer $line Line number
-     * @return array
-     */
-    protected function getCodeLineInfo($file, $line)
-    {
-        $result = array(
-            'class' => false,
-            'method' => false,
-            'source' => ''
-        );
-
-        if (!is_file($file)) {
-            return $result;
-        }
-
-        // Get code line.
-        $fp = fopen($file, 'r');
-        $line_no = 0;
-        $class_reg_exp = '/^\s*(abstract)?\s*[cC]lass\s+([^\s]*)\s*(extends)?\s*([^\s]*)/';
-        $function_reg_exp = '/^\s+(.*)function\s+([^\(]*)\((.*)\)/';
-        while ($line_no++ < $line) {
-            $result['source'] = fgets($fp);
-            if (preg_match($class_reg_exp, $result['source'], $matches)) {
-                $result['class'] = $matches[2];
-            } elseif (preg_match($function_reg_exp, $result['source'], $matches)) {
-                $result['method'] = $matches[2];
-            }
-        }
-        return $result;
-    }
-
 
     /**
      * Convert data to HTML.
