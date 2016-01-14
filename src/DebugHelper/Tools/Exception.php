@@ -49,9 +49,6 @@ $exceptionName
 $debug_backtrace
 EXCEPTION;
 
-
-        //var_dump( $exception );
-        k_dump($exception->getMessage());
+        return \DebugHelper::getClass('\DebugHelper\Tools\Dump')->dump($exception->getMessage(), 3);
     }
-
 }

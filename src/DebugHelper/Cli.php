@@ -3,7 +3,7 @@ namespace DebugHelper;
 
 class Cli
 {
-    protected $options = ['list', 'sequence', 'clean'];
+    protected $options = ['list', 'sequence', 'clean', 'tail'];
 
     /**
      * Execute the command line
