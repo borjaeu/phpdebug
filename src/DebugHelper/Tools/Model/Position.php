@@ -77,7 +77,7 @@ class Position
         $class_reg_exp = '/^\s*(abstract)?\s*[cC]lass\s+([^\s]*)\s*(extends)?\s*([^\s]*)/';
         $function_reg_exp = '/^\s+(.*)function\s+([^\(]*)\((.*)\)/';
         while ($line_no++ < $this->line) {
-            $result['source'] = fgets($fp);
+            $result['source'] = rtrim(fgets($fp));
             if (preg_match($class_reg_exp, $result['source'], $matches)) {
                 $result['class'] = $matches[2];
             } elseif (preg_match($function_reg_exp, $result['source'], $matches)) {

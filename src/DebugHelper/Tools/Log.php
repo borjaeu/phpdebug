@@ -59,9 +59,10 @@ class Log extends Abstracted
 
         // Build label.
         $line = $pos->getLine();
+        $source = $pos->getSource();
         $pos = "$path:$line [$elapsed]";
         if ($header) {
-            $log = "\n[$header] {$pos}\n{$data}";
+            $log = "\n[$header] {$pos} '$source'\n{$data}";
         } elseif ($header === false) {
             $log = "\n$data";
         } else {
