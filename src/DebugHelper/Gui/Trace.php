@@ -7,6 +7,7 @@ class Trace
     protected $coverage_file;
     protected $trace_file;
     protected $coverage;
+    protected $totalLines;
 
     /**
      * Runs the execution of the code shown.
@@ -54,23 +55,32 @@ class Trace
         return json_decode(file_get_contents($this->coverage_file), true);
     }
 
-    protected function renderCode($target_line_no)
+    /**
+     * Renders the code in the given line
+     *
+     * @param integer $targetLineNo Position of the trace
+     */
+    protected function renderCode($targetLineNo)
     {
-        $trace_lines = $this->getLines($this->trace_file, $target_line_no, 30);
+        $this->totalLines = 0;
+        $trace_lines = $this->getLines($this->trace_file, $targetLineNo, 30);
+
         $context = '';
-        if (preg_match('/\s+(?P<file>\/.*?:)(\d+)/', $trace_lines[$target_line_no], $matches)) {
-            $context = $this->getContext($this->trace_file, $target_line_no, $matches['file']);
+        if (preg_match('/\s+(?P<file>\/.*?:)(\d+)/', $trace_lines[$targetLineNo], $matches)) {
+            $context = $this->getContext($this->trace_file, $targetLineNo, $matches['file']);
         }
-        $navigation = $this->getTraceBreadCrumbs($this->trace_file, $target_line_no);
+        $navigation = $this->getTraceBreadCrumbs($this->trace_file, $targetLineNo);
 
         $template = new Template();
         $template->assign('id', $this->id);
-        $template->assign('selected_trace', $target_line_no);
+        $template->assign('selected_trace', $targetLineNo);
         $template->assign('trace_lines', $trace_lines);
+        $template->assign('total_lines', $this->totalLines);
+        $template->assign('progress', floor(100 * $targetLineNo / $this->totalLines));
         $template->assign('navigation', $navigation);
         $template->assign('context', $context);
         $template->assign('section', 'trace');
-        $template->assign('code_lines', $this->getCodeLines($trace_lines[$target_line_no]));
+        $template->assign('code_lines', $this->getCodeLines($trace_lines[$targetLineNo]));
         echo $template->fetch('trace');
     }
 
@@ -235,6 +245,7 @@ class Trace
             }
             $line_no++;
         }
+        $this->totalLines = $line_no - 1;
         fclose($fp);
         return $context;
     }

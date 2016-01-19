@@ -139,8 +139,6 @@ class Processor
     {
         static $count = 0;
 
-//        if ($line_no > 4) return;
-
         $line_info =  $this->getLineInfo($line);
         if ($line_info) {
             if ($this->ignore_depth) {

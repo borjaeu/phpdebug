@@ -14,6 +14,25 @@
         a { color: #000000; text-decoration: none; }
     </style>
 {% endblock %}
+{% block javascript %}
+   <script type="application/javascript">
+       var nTotalLines = {{ total_lines }};
+    $().ready(function() {
+        $('div.progress').bind('mousemove', function(oEvent) {
+            $('div.progress-bar').html('{{ selected_trace }} / {{ total_lines }} (' + getLine(oEvent.clientX) + ')');
+        }).bind('click', function(oEvent) {
+            window.location.href = '?trace={{ id }}&line=' + getLine(oEvent.clientX) + '&kizilare_debug=1';
+        }).bind('mouseout', function(oEvent) {
+            $('div.progress-bar').html('{{ selected_trace }} / {{ total_lines }} - ');
+        });
+    });
+
+    function getLine(nOffsetX) {
+        var nLine = nTotalLines * (nOffsetX / $('div.progress').width());
+        return parseInt(nLine);
+    }
+   </script>
+{% endblock %}
 {% block body %}
     <ol class="breadcrumb">
 {% for info in navigation.breadcrumbs %}
@@ -22,6 +41,11 @@
         <li class="active">...</li>
         <li><a href="?trace={{ id }}&line={{ navigation.next.line }}&kizilare_debug=1" title="{{ navigation.next.call }}()">{{ navigation.next.name }}()</a></li>
     </ol>
+    <div class="progress">
+        <div class="progress-bar" role="progressbar" aria-valuenow="{{ selected_trace }}" aria-valuemin="0" aria-valuemax="{{ total_lines }}" style="width: {{ progress }}%;">
+            {{ selected_trace }} / {{ total_lines }}
+        </div>
+    </div>
 <div class="column">
     <div class="inner">
 {% for line_no, line in trace_lines %}

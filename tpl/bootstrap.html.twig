@@ -25,9 +25,11 @@
                 <li{% if section == 'sequence' %} class="active"{% endif %}><a href="?kizilare_debug=1&sequence={{ id }}" title="Diagram">Sequence</a></li>
 {% endif %}
             </ul>
+{% if root_dir %}
             <ul class="nav navbar-nav navbar-right">
                 <li><a href="codebrowser:{{ root_dir }}" title="{{ root_dir }}">Root Dir</a></li>
             </ul>
+{% endif %}
         </div>
     </div>
 </div>

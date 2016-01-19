@@ -16,7 +16,6 @@ class CleanCommand extends Abstracted
         'Symfony\Component\Debug',
         'Symfony\Component\Config',
         'Symfony\Component\Yaml',
-        //'Symfony\Component\EventDispatcher',
         'Symfony\Component\OptionsResolver',
         'Symfony\Component\Form',
         'Symfony\Component\Debug',
@@ -49,21 +48,13 @@ class CleanCommand extends Abstracted
 
     protected function loadArguments()
     {
-        $this->options = [
-            'file' => false,
-            'functions' => false
-        ];
-        foreach($this->arguments as $argument) {
-            switch($argument) {
-                case 'console':
-                case 'clean':
-                    break;
-                case 'functions':
-                    $this->options['functions'] = true;
-                    break;
-                default:
-                    $this->options['file'] = \DebugHelper::getDebugDir() . $argument;
-            }
+        $this->options = [];
+        $this->options['functions'] = !empty($this->arguments['functions']);
+        $this->options['force'] = !empty($this->arguments['force']);
+        $this->options['file'] = isset($this->arguments[2]) ? \DebugHelper::getDebugDir() . $this->arguments[2] : false;
+
+        if (!empty($this->arguments['namespaces'])) {
+            $this->ignoreNamespaces = preg_split('/\s*,\s*/', $this->arguments['namespaces']);
         }
     }
 
@@ -83,7 +74,7 @@ class CleanCommand extends Abstracted
             throw new \Exception("Error Processing file $fileId");
         }
 
-        if (is_file("temp/{$fileId}.xt.clekkan") && empty($this->arguments[3])) {
+        if (is_file("temp/{$fileId}.xt.clean") && empty($this->options['force'])) {
             echo "Already exists {$fileId}.xt.clean\n";
         } else {
             echo "Generating file {$fileId}.xt.clean\n";
@@ -107,7 +98,6 @@ class CleanCommand extends Abstracted
         $fileIn = fopen("temp/{$fileId}.xt", 'r');
         $count = 320000000;
         $lineNo = 0;
-        $lineCount = 0;
 
         $fileSize = filesize("temp/{$fileId}.xt");;
         echo "Starting $fileSize" . PHP_EOL;
@@ -120,8 +110,9 @@ class CleanCommand extends Abstracted
             $line = fgets($fileIn);
             $size += strlen($line);
             $lineNo++;
-            if ($lineNo % 1000 == 0) {
-                printf('%0.2f%% %0.2f%% %d/%d %d/%d' . PHP_EOL, ($size / $fileSize) * 100, ($totalPassed/ $lineNo) * 100, $lineNo, $lineCount, $size, $fileSize);
+            if ($lineNo % 1000 == 0)  {
+                $status = sprintf('ratio %0.2f%%; line %d', ($totalPassed/ $lineNo) * 100, $lineNo);
+                $this->showStatus($size, $fileSize, $status);
             }
             $outLine = $this->processInputLine($line);
             if ($outLine !== false) {
@@ -226,7 +217,6 @@ class CleanCommand extends Abstracted
         }
     }
 
-
     protected function registerNamespace($namespace)
     {
         $levels = explode('\\', $namespace);
@@ -237,6 +227,38 @@ class CleanCommand extends Abstracted
             }
             array_pop($levels);
             $this->namespaces[$namespace]++;
+        }
+    }
+
+    /**
+     * @param integer $done
+     * @param integer  $total
+     * @param string $extra
+     */
+    protected function showStatus($done, $total, $extra = '')
+    {
+        $size = 80;
+
+        if($done > $total) {
+            return;
+        }
+        $percentage = (double)($done / $total);
+        $bar = floor($percentage * $size);
+        $statusBar = "\r[";
+        $statusBar .= str_repeat("=", $bar);
+        if($bar < $size){
+            $statusBar .= ">";
+            $statusBar .= str_repeat(" ", $size-$bar);
+        } else {
+            $statusBar .= "=";
+        }
+        $percentage = number_format($percentage * 100, 0);
+        $statusBar .= "] $percentage%  $done/$total";
+        echo "$statusBar $extra";
+        flush();
+
+        if($done == $total) {
+            echo "\n";
         }
     }
 }
