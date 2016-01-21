@@ -62,6 +62,9 @@ class Trace
      */
     protected function renderCode($targetLineNo)
     {
+        if ($targetLineNo < 1) {
+            $targetLineNo = 1;
+        }
         $this->totalLines = 0;
         $trace_lines = $this->getLines($this->trace_file, $targetLineNo, 30);
 
@@ -76,7 +79,11 @@ class Trace
         $template->assign('selected_trace', $targetLineNo);
         $template->assign('trace_lines', $trace_lines);
         $template->assign('total_lines', $this->totalLines);
-        $template->assign('progress', floor(100 * $targetLineNo / $this->totalLines));
+        if ($this->totalLines) {
+            $template->assign('progress', floor(100 * $targetLineNo / $this->totalLines));
+        } else {
+            $template->assign('progress', false);
+        }
         $template->assign('navigation', $navigation);
         $template->assign('context', $context);
         $template->assign('section', 'trace');

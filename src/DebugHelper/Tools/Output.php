@@ -25,7 +25,7 @@ class Output extends Abstracted
 
         if (\DebugHelper::isCli()) {
             return <<<POS
-caller: {$pos['file']}:{$pos['line']} in {$pos['class']}{$pos['method']} "{$pos['line']}"
+caller: {$file}:{$line} in {$call} "{$line}"
 
 POS;
         } else {

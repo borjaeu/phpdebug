@@ -10,18 +10,7 @@ class CleanCommand extends Abstracted
 
     protected $ignoring;
 
-    protected $ignoreNamespaces = array(
-        'Doctrine',
-        'Composer',
-        'DebugHelper',
-        'Symfony\Component\Debug',
-        'Symfony\Component\Config',
-        'Symfony\Component\Yaml',
-        'Symfony\Component\OptionsResolver',
-        'Symfony\Component\Form',
-        'Symfony\Component\Debug',
-        'Monolog'
-    );
+    protected $ignoreNamespaces = [];
 
     protected $namespaces = [];
 
@@ -43,6 +32,7 @@ class CleanCommand extends Abstracted
      */
     public function run()
     {
+        $this->namespaces = [];
         $this->progress = new Progress();
         if (!empty($this->arguments['help'])) {
             echo "./console clean [file] [--force] [--functions] [--namespaces='namespace1, namespace2]\n";
@@ -81,6 +71,8 @@ class CleanCommand extends Abstracted
         ];
         $this->namespaces = [];
         $this->skipped = [];
+        $this->ignoreDepth = false;
+        $this->ignoring = false;
         preg_match('/^(.*\/)?(?P<id>.*?)(\.\w*)?$/', $file, $matches);
         $fileId = $matches['id'];
 
