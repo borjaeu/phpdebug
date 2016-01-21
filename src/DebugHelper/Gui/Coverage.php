@@ -20,9 +20,9 @@ class Coverage
     /**
      * Sets the value of file.
      *
-     * @param mixed $file the file
-     *
-     * @return self
+     * @param string $file File the file
+     * @return $this
+     * @throws \Exception
      */
     public function setFile($file)
     {
@@ -50,6 +50,11 @@ class Coverage
         echo $template->fetch('coverage_code');
     }
 
+    /**
+     * Show the index of all coverage files
+     *
+     * @param array $files List of files in the coverage
+     */
     protected function renderIndex($files)
     {
         $template = new Template();
@@ -63,13 +68,21 @@ class Coverage
                 'file'  => $file
             ]);
         }
-
         $tree = $this->collapseTree($tree);
+        $total = $this->buildStats($tree);
         $template->assign('section', 'coverage');
         $template->assign('nodes', $tree);
+        $template->assign('total', $total);
         echo $template->fetch('coverage_index');
     }
 
+    /**
+     * Collapse the tree avoiding parent with only one child
+     *
+     * @param string $tree
+     * @param string $parentKey
+     * @return array
+     */
     protected function collapseTree($tree, $parentKey = '')
     {
         if (isset($tree['file'])) {
@@ -81,14 +94,45 @@ class Coverage
         } else {
             $newTree = [];
             foreach($tree as $branch => $subtree) {
-//                $newTree[$parentKey . $branch] = $subtree;
                 $newTree[$parentKey . $branch] = $this->collapseTree($subtree);
             }
         }
         return $newTree;
     }
 
+    /**
+     * Collapse the tree avoiding parent with only one child
+     *
+     * @param string $tree
+     * @param string $parentKey
+     * @return array
+     */
+    protected function buildStats(& $tree)
+    {
+        $total = 0;
+        $children = [];
+        foreach($tree as $key => $branch) {
+            if (is_array($branch) && !isset($branch['file'])) {
+                $total += $this->buildStats($branch);
+            } else {
+                $total++;
+            }
+            $children[$key] = $branch;
+        }
+        $tree = [
+            'total'     => $total,
+            'children'  => $children
+        ];
+        return $total;
+    }
 
+    /**
+     * Recursive method to build the tree
+     *
+     * @param array $levels
+     * @param array $tree Tree being built
+     * @param $value
+     */
     protected function insertBranches($levels, &$tree, $value)
     {
         if (empty($levels)) {

@@ -9,9 +9,9 @@
         <span class="lines">{{ subNodes['lines'] }}</span>
     </div>
 {%          else %}
-    <a href="#" onclick="toggleNext(this); return false;"><strong> {{ key }} [{{ subNodes | length }}]</strong></a>
+    <a href="#" onclick="toggleNext(this); return false;"><strong> {{ key }} [{{ subNodes | length }}, {{ subNodes.total }}]</strong></a>
     <ul>
-        {{ _self.renderTree(subNodes, id) }}
+        {{ _self.renderTree(subNodes.children, id) }}
     </ul>
 {%          endif %}
 </li>
@@ -43,7 +43,7 @@
     {% import _self as tree %}
     <h1>Main menu</h1>
     <ul id="files">
-        {{ tree.renderTree(nodes, id) }}
+        {{ tree.renderTree(nodes.children, id) }}
     </ul>
 {% endblock %}
 
