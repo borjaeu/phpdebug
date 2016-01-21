@@ -1,6 +1,7 @@
 <?php
 namespace DebugHelper\Cli;
 
+use DebugHelper\Cli\Util\Progress;
 use DebugHelper\Gui\Processor;
 
 class CleanCommand extends Abstracted
@@ -31,10 +32,23 @@ class CleanCommand extends Abstracted
     protected $options;
 
     /**
+     * Progress display for CLI
+     *
+     * @var Progress
+     */
+    protected $progress;
+
+    /**
      * Execute the command line
      */
     public function run()
     {
+        $this->progress = new Progress();
+        if (!empty($this->arguments['help'])) {
+            echo "./console clean [file] [--force] [--functions] [--namespaces='namespace1, namespace2]\n";
+            return;
+        }
+
         $this->loadArguments();
         if ($this->options['file']) {
             $this->cleanFile($this->options['file']);
@@ -81,6 +95,7 @@ class CleanCommand extends Abstracted
             $lines = $this->generateFiles($fileId);
             if ($lines < 10000) {
                 $processor = new Processor();
+                $processor->setProgress($this->progress);
                 echo "Generating structure for {$fileId}\n";
                 $processor->process($fileId);
             }
@@ -112,7 +127,7 @@ class CleanCommand extends Abstracted
             $lineNo++;
             if ($lineNo % 1000 == 0)  {
                 $status = sprintf('ratio %0.2f%%; line %d', ($totalPassed/ $lineNo) * 100, $lineNo);
-                $this->showStatus($size, $fileSize, $status);
+                $this->progress->showStatus($size, $fileSize, $status);
             }
             $outLine = $this->processInputLine($line);
             if ($outLine !== false) {
@@ -120,7 +135,7 @@ class CleanCommand extends Abstracted
                 $totalPassed++;
             }
         }
-        $this->namespaces = array_filter ($this->namespaces, function($element){
+        $this->namespaces = array_filter($this->namespaces, function($element){
             return $element > 10;
         });
         $this->skipped = array_filter($this->skipped, function($element){
@@ -128,26 +143,27 @@ class CleanCommand extends Abstracted
         });
 
         asort($this->namespaces);
-        $namespaces = array_slice($this->namespaces, -10);
-        echo 'Most used namespaces' . PHP_EOL;
+        $namespaces = array_slice($this->namespaces, -20);
+        echo PHP_EOL . PHP_EOL . "\033[32mMost used namespaces\033[0m" . PHP_EOL;
         foreach($namespaces as $namespace => $lines) {
             printf('%6d %s%s', $lines, $namespace, PHP_EOL);
         }
 
         asort($this->skipped);
-        echo 'Skipped namespaces' . PHP_EOL;
+        echo PHP_EOL . "\033[32mSkipped namespaces\033[0m" . PHP_EOL;
         foreach($this->skipped as $namespace => $lines) {
             printf('%6d %s%s', $lines, $namespace, PHP_EOL);
         }
 
-        printf('Stats
+        printf("
+\033[32mStats\033[0m
 %6d valid lines
 %6d invalid lines
 %6d functions skipped
 %6d namespaces skipped
 ----
-%4d Total lines
-',
+\033[31m%4d\033[0m Total lines
+",
             $totalPassed,
             $this->stats['invalid'],
             $this->stats['functions'],
@@ -182,9 +198,9 @@ class CleanCommand extends Abstracted
                 $this->stats['functions']++;
                 return false;
             }
-
-            $this->registerNamespace($matches['namespace']);
-
+            if ($matches['namespace'] !== $this->ignoring) {
+                $this->registerNamespace($matches['namespace']);
+            }
             return $line;
         } else {
             $this->stats['invalid']++;
@@ -197,6 +213,7 @@ class CleanCommand extends Abstracted
         if ($this->options['functions']) {
             return false;
         }
+
         foreach ($this->ignoreNamespaces as $ignoreNamespaces) {
             if (substr($namespace, 0, strlen($ignoreNamespaces)) == $ignoreNamespaces) {
                 return true;
@@ -227,38 +244,6 @@ class CleanCommand extends Abstracted
             }
             array_pop($levels);
             $this->namespaces[$namespace]++;
-        }
-    }
-
-    /**
-     * @param integer $done
-     * @param integer  $total
-     * @param string $extra
-     */
-    protected function showStatus($done, $total, $extra = '')
-    {
-        $size = 80;
-
-        if($done > $total) {
-            return;
-        }
-        $percentage = (double)($done / $total);
-        $bar = floor($percentage * $size);
-        $statusBar = "\r[";
-        $statusBar .= str_repeat("=", $bar);
-        if($bar < $size){
-            $statusBar .= ">";
-            $statusBar .= str_repeat(" ", $size-$bar);
-        } else {
-            $statusBar .= "=";
-        }
-        $percentage = number_format($percentage * 100, 0);
-        $statusBar .= "] $percentage%  $done/$total";
-        echo "$statusBar $extra";
-        flush();
-
-        if($done == $total) {
-            echo "\n";
         }
     }
 }

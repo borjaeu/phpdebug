@@ -1,6 +1,8 @@
 <?php
 namespace DebugHelper\Gui;
 
+use DebugHelper\Cli\Util\Progress;
+
 class Processor
 {
     protected $min_depth;
@@ -20,6 +22,13 @@ class Processor
         'QaamGo\RestApiBundle\Serializer\Entity',
         'QaamGo\RestApiBundle\Api\Validation\Schema\Constraint\Schema'
     );
+
+    /**
+     * Progress display for CLI
+     *
+     * @var Progress
+     */
+    protected $progress;
 
     /**
      * Sets the value of file.
@@ -44,28 +53,42 @@ class Processor
     }
 
     /**
+     * @param Progress $progress
+     */
+    public function setProgress($progress)
+    {
+        $this->progress = $progress;
+    }
+
+    /**
      * Sets the value of file.
      */
-    protected function generateFiles($fileIn, $fileOut)
+    protected function generateFiles($filename, $fileOut)
     {
         $this->lines = array();
 
-        $file_in = fopen($fileIn, 'r');
+        $fileIn = fopen($filename, 'r');
         $this->min_depth = 65000;
         $this->shorter_path = 65000;
         $count = 320000000;
         $line_no = 0;
-        echo "Start processing\n";
-        while (!feof($file_in) && $count-- > 0) {
-            $line = fgets($file_in);
+        $lineCount = 0;
+
+        while (!feof($fileIn) && $count-- > 0) {
+            fgets($fileIn);
+            $lineCount++;
+        }
+
+        fseek($fileIn, 0);
+        while (!feof($fileIn) && $count-- > 0) {
+            $line = fgets($fileIn);
             $line_no++;
-            if ($line_no % 100 === 0) {
-                echo $line_no . PHP_EOL;
+            if (!empty($this->progress) && $line_no % 100 === 0) {
+                $this->progress->showStatus($line_no, $lineCount);
             }
             $this->preProcessInputLine($line, $line_no);
         }
-        echo $line_no;
-        fclose($file_in);
+        fclose($fileIn);
 
         foreach ($this->lines as $i => & $line) {
             $this->postProcessInputLine($i, $line);
