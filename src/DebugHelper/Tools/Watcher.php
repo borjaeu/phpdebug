@@ -5,6 +5,10 @@ use DebugHelper\Tools\Model\Position;
 
 class Watcher extends Abstracted
 {
+    const COLLECT_PARAMS_NONE = 0;
+    const COLLECT_PARAMS_SIMPLE = 1;
+    const COLLECT_PARAMS_FULL = 3;
+
     /**
      * File to save the trace information.
      *
@@ -25,6 +29,16 @@ class Watcher extends Abstracted
      * @var bool
      */
     protected $level;
+
+    /**
+     * @var bool
+     */
+    protected $collectReturn;
+
+    /**
+     * @var int
+     */
+    protected $collectParams;
 
     /**
      * Shall execute trace
@@ -52,6 +66,8 @@ class Watcher extends Abstracted
         $this->trace = true;
         $this->coverage = true;
         $this->watching = false;
+        $this->collectReturn = false;
+        $this->collectParams = self::COLLECT_PARAMS_NONE;
 
         preg_match('/0\.(?P<decimal>\d+)/', microtime(), $matches);
         $traceFile = date('Y_m_d_h_i_s_') . $matches['decimal'];
@@ -108,6 +124,26 @@ class Watcher extends Abstracted
     public function disableTrace()
     {
         $this->trace = false;
+        return $this;
+    }
+
+    /**
+     * @param boolean $collectReturn
+     * @return $this
+     */
+    public function setCollectReturn($collectReturn)
+    {
+        $this->collectReturn = $collectReturn;
+        return $this;
+    }
+
+    /**
+     * @param int $collectParams
+     * @return $this
+     */
+    public function setCollectParams($collectParams)
+    {
+        $this->collectParams = $collectParams;
         return $this;
     }
 
@@ -182,8 +218,8 @@ class Watcher extends Abstracted
     {
         ini_set('xdebug.profiler_enable', 1);
         ini_set('xdebug.profiler_output_dir', \DebugHelper::getDebugDir());
-        ini_set('xdebug.collect_params', 0); // 0 None, 1, Simple, 3 Full
-        ini_set('xdebug.collect_return', 0); // 0 None, 1, Yes
+        ini_set('xdebug.collect_params', $this->collectParams); // 0 None, 1, Simple, 3 Full
+        ini_set('xdebug.collect_return', $this->collectReturn); // 0 None, 1, Yes
         ini_set('xdebug.var_display_max_depth', 2);
         ini_set('xdebug.var_display_max_data', 128);
         xdebug_start_trace($this->traceFile);
