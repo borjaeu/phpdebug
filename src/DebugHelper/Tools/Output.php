@@ -21,7 +21,7 @@ class Output extends Abstracted
         $line = $position->getLine();
         $file = $position->getFile();
         $call = $position->getCall();
-        $source = str_replace("\t", '->', $position->getSource());
+        $source = str_replace(array("\t", ' '), array('->', '.'), $position->getSource());
 
         if (\DebugHelper::isCli()) {
             return <<<POS
@@ -45,7 +45,7 @@ POS;
      * @param array $pos Position information where the dump is made
      * @param mixed $data Information to be dumped to the browser.
      */
-    public function dump(Position $pos, $data = null)
+    public function dump(Position $pos, $data = null, $maxDepth = 5)
     {
         static $start = false;
 
@@ -60,7 +60,7 @@ POS;
         Styles::showHeader('dump', 'objectToHtml');
 
         if (!is_null($data) && !is_string($data)) {
-            $data = $this->objectToHtml($data);
+            $data = $this->objectToHtml($data, $maxDepth);
         }
         $pos = $this->getCallerDetails($pos);
         $id = uniqid();

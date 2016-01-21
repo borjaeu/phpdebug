@@ -238,9 +238,9 @@ function k_log($data, $header = 'LOG', $caller_depth = 2)
  *
  * @param mixed $data Information to be dumped to the browser.
  */
-function k_dump($data = '')
+function k_dump($data = '', $maxDepth = 5)
 {
-    return DebugHelper::getClass('\DebugHelper\Tools\Dump')->dump($data);
+    return DebugHelper::getClass('\DebugHelper\Tools\Dump')->dump($data, 2, $maxDepth);
 }
 
 /**

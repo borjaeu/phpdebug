@@ -10,7 +10,7 @@ class Dump extends Abstracted
      *
      * @param mixed $data Information to be dumped to the browser.
      */
-    public function dump($data = null, $depth = 2)
+    public function dump($data = null, $depth = 2, $maxDepth = 5)
     {
         static $start = false;
 
@@ -20,13 +20,12 @@ class Dump extends Abstracted
         } else {
             $split = microtime(true) - $start;
         }
-        $split = number_format($split, 6);
 
         Styles::showHeader('dump', 'objectToHtml');
 
         $pos = $this->getCallerInfo($depth);
 
-        \DebugHelper::getClass('\DebugHelper\Tools\Output')->dump($pos, $data);
+        \DebugHelper::getClass('\DebugHelper\Tools\Output')->dump($pos, $data, $maxDepth);
     }
 
     /**

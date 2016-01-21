@@ -36,9 +36,9 @@ class Abstracted
      * @param object $data Data to convert to array
      * @return mixed
      */
-    protected function objectToHtml($data)
+    protected function objectToHtml($data, $maxDepth = 5)
     {
-        $stuff = $this->objectToArray($data);
+        $stuff = $this->objectToArray($data, 0, $maxDepth);
         if (\DebugHelper::isCli()) {
             return $this->tree2Text($stuff);
         } else {
@@ -52,7 +52,7 @@ class Abstracted
      * @param object $data Data to convert to array
      * @return mixed
      */
-    protected function objectToArray($data, $level = 0)
+    protected function objectToArray($data, $level = 0, $maxLevel = 5)
     {
         static $id = 0;
 
@@ -74,12 +74,10 @@ class Abstracted
             $debug['sub_items'] = array();
             $debug['type'] .= '(' . count($data) . ')';
             $debug['class'] = 'array';
-            if ($level<5) {
+            if ($level < $maxLevel) {
                 foreach ($data as $sub_key => $sub_value) {
-                    $debug['sub_items'][$sub_key] = $this->objectToArray($sub_value, $level + 1);
+                    $debug['sub_items'][$sub_key] = $this->objectToArray($sub_value, $level + 1, $maxLevel);
                 }
-            } else {
-                $debug['value'] = $debug['type'];
             }
         } else {
             if (is_string($data)) {
