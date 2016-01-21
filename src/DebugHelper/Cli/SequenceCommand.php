@@ -151,9 +151,12 @@ class SequenceCommand extends Abstracted
     public function run()
     {
         $file = \DebugHelper::getDebugDir() . $this->arguments[2];
+        preg_match('/^(.*\/)?(?P<id>.*?)(\.\w*)?$/', $file, $matches);
+        $fileId = $matches['id'];
+        print_r($fileId);
 
-        if (!is_file($file . '.xt')) {
-            throw new \Exception("Error Processing file $file");
+        if (!is_file('temp/' . $fileId . '.xt')) {
+            throw new \Exception("Error Processing file $fileId");
         }
 
         $this->stats = [
@@ -173,24 +176,24 @@ class SequenceCommand extends Abstracted
             $this->skipTo = $this->arguments['skip-to'];
         }
         $this->generateFiles(
-            $file,
+            $fileId,
             empty($this->arguments['limit']) ? 1000000 : $this->arguments['limit'],
             !empty($this->arguments['no-cache'])
         );
-        echo "Finished $file!!!\n";
+        echo "Finished $fileId!!!\n";
     }
 
     /**
      * Generates the output
      *
-     * @param string $file File to process
+     * @param string $fileId Identifier of the file to process
      * @param int $maxLines Max lines to parse
      * @param bool $ignoreCache Ignores the cache and regenerates the file
      */
-    protected function generateFiles($file, $maxLines, $ignoreCache = false)
+    protected function generateFiles($fileId, $maxLines, $ignoreCache = false)
     {
-        if (!$ignoreCache && is_file($file . '.json')) {
-            $data = json_decode(file_get_contents($file . '.json'), true);
+        if (!$ignoreCache && is_file('temp/' . $fileId . '.json')) {
+            $data = json_decode(file_get_contents('temp/' . $fileId . '.json'), true);
 
             $this->steps = $data;
         } else {
@@ -199,7 +202,7 @@ class SequenceCommand extends Abstracted
             $this->ignoreCount = [];
             $this->history = [];
 
-            $fileIn = fopen($file . '.xt', 'r');
+            $fileIn = fopen('temp/' . $fileId . '.xt', 'r');
             while (!feof($fileIn) && $maxLines-- > 0) {
                 $line = fgets($fileIn);
                 $this->stats['lines']++;
@@ -208,16 +211,16 @@ class SequenceCommand extends Abstracted
             fclose($fileIn);
             echo "Ignored classes\n";
             ksort($this->ignoreCount);
-            \DebugHelper::dump($this->ignoreCount);
+            k_dump($this->ignoreCount);
             $output = json_encode($this->steps, JSON_PRETTY_PRINT);
             if ($output == false) {
                 var_dump(json_last_error());
                 var_dump(json_last_error_msg());
             } else {
-                file_put_contents($file . '.xt.diag.json', $output);
+                file_put_contents('temp/' . $fileId . '.xt.diag.json', $output);
             }
         }
-        $this->writeLog($file);
+        $this->writeLog('temp/' . $fileId);
     }
 
     /**

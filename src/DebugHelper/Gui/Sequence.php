@@ -14,13 +14,14 @@ class Sequence
      *
      * @return self
      */
-    public function setFile($file)
+    public function setFile($fileId)
     {
-        $this->id = $file;
-        $this->file = \DebugHelper::getDebugDir() . $file . '.json';
+        $this->id = $fileId;
+        $this->file = \DebugHelper::getDebugDir() . $fileId . '.xt.diag.json';
+
 
         if (!is_file($this->file)) {
-            throw new \Exception("Error Processing file $file");
+            throw new \Exception("Error Processing file $fileId {$this->file}");
         }
         return $this;
     }
@@ -117,6 +118,6 @@ class Sequence
      */
     protected function getResourcePath()
     {
-          return preg_replace('/\?.*$/', '?res=', $_SERVER['REQUEST_URI']);
+          return preg_replace('/\?.*$/', '?kizilare_debug=1&res=', $_SERVER['REQUEST_URI']);
     }
 }
