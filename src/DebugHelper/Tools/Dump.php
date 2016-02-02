@@ -16,9 +16,6 @@ class Dump extends Abstracted
 
         if ($start === false) {
             $start = microtime(true);
-            $split = 0;
-        } else {
-            $split = microtime(true) - $start;
         }
 
         Styles::showHeader('dump', 'objectToHtml');
@@ -63,11 +60,12 @@ class Dump extends Abstracted
             } else {
                 $step['function'] = 'include: ' . $item['include_filename'];
             }
-            $step['params'] = isset($item['params'])
-                ? count($item['params'])
-                : isset($item['args'])
-                    ? count($item['args']) :
-                    '-';
+
+//            $step['params'] = isset($item['params'])
+//                ? count($item['params'])
+//                : isset($item['args'])
+//                    ? count($item['args']) :
+//                    '-';
             $step['file'] = isset($item['file']) ? $item['file'] : '-';
             $step['line'] = isset($item['line']) ? $item['line'] : '-';
             $debugBacktrace[] = $step;
