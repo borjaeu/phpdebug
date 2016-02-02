@@ -234,7 +234,7 @@ class Watcher extends Abstracted
      */
     protected function output($message, Position $position, $level)
     {
-        if ($this->level >= $level) {
+        if ($this->level <= $level) {
             \DebugHelper::getClass('\DebugHelper\Tools\Output')->dump($position, $message);
         }
     }
