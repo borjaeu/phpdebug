@@ -9,7 +9,7 @@
         <span class="lines">{{ subNodes['lines'] }}</span>
     </div>
 {%          else %}
-    <a href="#" onclick="toggleNext(this); return false;"><strong> {{ key }} [{{ subNodes | length }}, {{ subNodes.total }}]</strong></a>
+    <a href="#" onclick="toggleNext(this); return false;"><strong> {{ key }} [{{ subNodes.children | length }}, {{ subNodes.total }}]</strong></a>
     <ul>
         {{ _self.renderTree(subNodes.children, id) }}
     </ul>
