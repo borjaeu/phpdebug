@@ -6,13 +6,15 @@ use DebugHelper\Tools\Model\Position;
 
 class Output extends Abstracted
 {
+    protected $start = false;
+
     /**
      * Exports the filter debug info.
      *
-     * @param array $pos Position information where the dump is made
+     * @param Position $position Position information where the dump is made
      * @return string
      */
-    protected function getCallerDetails(Position $position)
+    public function getCallerDetails(Position $position)
     {
         $id = uniqid();
 
@@ -39,33 +41,57 @@ POS;
         }
     }
 
-    /**
-     * Displays the data passed as information.
+    /** Displays the data passed as information.
      *
-     * @param array $pos Position information where the dump is made
-     * @param mixed $data Information to be dumped to the browser.
+     * @param Position $pos Position information where the dump is made
+     * @return Output
      */
-    public function dump(Position $pos, $data = null, $maxDepth = 5)
+    public function open(Position $pos)
     {
-        static $start = false;
-
-        if ($start === false) {
-            $start = microtime(true);
+        if ($this->start === false) {
+            $this->start = microtime(true);
             $split = 0;
         } else {
-            $split = microtime(true) - $start;
+            $split = microtime(true) - $this->start;
         }
         $split = number_format($split, 6);
 
         Styles::showHeader('dump', 'objectToHtml');
 
-        if (!is_null($data) && !is_string($data)) {
-            $data = $this->objectToHtml($data, $maxDepth);
-        }
-        $pos = $this->getCallerDetails($pos);
+
+        $pos = self::getCallerDetails($pos);
         $id = uniqid();
         if (\DebugHelper::isCli()) {
-            echo "[Dump] var, $pos====================================\n$data====================================\n";
+            echo "[Dump] var, $pos====================================\n";
+        } else {
+            echo <<<DEBUG
+
+<div id="$id" class="debug_dump">
+    <div class="header">
+        <span class="timer">$split</span>
+        <span class="code">$pos</span>
+     </div>
+
+DEBUG;
+        }
+        return $this;
+    }
+
+    /**
+     * Displays the data passed as information.
+     *
+     * @param mixed $data Information to be dumped to the browser.
+     * @param integer $maxDepth Maximum depth for objects
+     * @return Output
+     */
+    public function dump($data, $maxDepth = 5)
+    {
+        if (!is_null($data) && !is_string($data)) {
+            $data = self::objectToHtml($data, $maxDepth);
+        }
+
+        if (\DebugHelper::isCli()) {
+            echo $data;
         } else {
             if (!is_null($data)) {
                 $data = "<div class=\"data\">{$data}</div>";
@@ -74,13 +100,25 @@ POS;
             }
 
             echo <<<DEBUG
-
-<div id="$id" class="debug_dump">
-    <div class="header">
-        <span class="timer">$split</span>
-        <span class="code">$pos</span>
-     </div>
      {$data}
+
+DEBUG;
+        }
+        return $this;
+    }
+
+    /**
+     * Displays the data passed as information.
+     *
+     * @return Output
+     */
+    public function close()
+    {
+        if (\DebugHelper::isCli()) {
+            echo "====================================\n";
+        } else {
+            echo <<<DEBUG
+
 </div>
 
 DEBUG;

@@ -20,6 +20,20 @@ class Profile extends Abstracted
     protected $start_position;
 
     /**
+     * Singleton
+     *
+     * @return Log
+     */
+    public static function getInstance()
+    {
+        if (!isset(self::$instance)) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+
+    /**
      * Begins the trace to watch where the code goes.
      */
     public function profile()

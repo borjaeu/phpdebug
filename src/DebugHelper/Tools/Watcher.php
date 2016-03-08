@@ -55,6 +55,13 @@ class Watcher extends Abstracted
     protected $coverage;
 
     /**
+     * Singleton instance
+     *
+     * @var Watcher
+     */
+    protected $instance;
+
+    /**
      * Watcher constructor.
      *
      * Initializes the logging
@@ -82,6 +89,20 @@ class Watcher extends Abstracted
             'files'     => $_FILES
         ), JSON_PRETTY_PRINT));
     }
+
+    /**
+     * Singleton
+     *
+     * @return Watcher
+     */
+    public static function getInstance()
+    {
+        if (!isset(self::$instance)) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
 
     /**
      * @param string $file Filename of the trace
@@ -210,7 +231,7 @@ class Watcher extends Abstracted
      */
     public static function shutDownEndWatch()
     {
-        $watcher = \DebugHelper::getClass('\DebugHelper\Tools\Watcher');
+        $watcher = \DebugHelper\Tools\Watcher::getInstance();
         $watcher->endWatch();
     }
 
@@ -235,7 +256,7 @@ class Watcher extends Abstracted
     protected function output($message, Position $position, $level)
     {
         if ($this->level <= $level) {
-            \DebugHelper::getClass('\DebugHelper\Tools\Output')->dump($position, $message);
+            \DebugHelper\Tools\Output::dump($position, $message);
         }
     }
 
