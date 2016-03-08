@@ -1,6 +1,8 @@
 <?php
 namespace DebugHelper\Tools;
 
+use DebugHelper\Tools\Helper\Trace;
+
 class Log extends Abstracted
 {
     /**
@@ -119,35 +121,28 @@ class Log extends Abstracted
     }
 
     /**
-     * Shows the HTML trace.
-     *
-     * @param boolean $finish Finish the script execution.
-     * @param boolean $return_trace Returns the trace instead of printing it.
+     * Shows the text trace
      *
      * @return mixed
      */
     public function showtrace()
     {
-        $trace = xdebug_get_function_stack();
-        $trace = array_slice($trace, 0, count($trace) - 4);
+        $traceHelper = new Trace();
+        $trace = $traceHelper->getTrace();
 
-        $debug_backtrace = '';
+
+
+        $debugBacktrace = '';
         foreach ($trace as $item) {
 
-            if (isset($item['function'])) {
-                $function = isset($item['class']) ? $item['class'] . '::' . $item['function'] : $item['function'];
-            } else {
-                $function = 'inlcude: ' . $item['include_filename'];
-            }
-            $file = $item['file'];
 
-            $debug_backtrace
+            $debugBacktrace
                 .= <<<ROW
-{$item['file']}:{$item['line']} {$item['line']} $function()
+{$item['file']}:{$item['line']} {$item['line']} {$item['call']}()
 
 ROW;
         }
-        self::log($debug_backtrace, 'TRACE', 5);
+        self::log($debugBacktrace, 'TRACE', 5);
     }
 
     /**
