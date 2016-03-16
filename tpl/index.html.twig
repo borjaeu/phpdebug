@@ -56,6 +56,9 @@
 {% if file.json %}
                 <a href="?stats={{ file.id }}&kizilare_debug=1" title="Grouped code with stats"><span class="glyphicon glyphicon-stats"></span></a>
 {% endif %}
+{% if file.clean %}
+                <a href="?tree={{ file.id }}&kizilare_debug=1" title="Grouped tree with stats"><span class="glyphicon glyphicon glyphicon-tree-conifer"></span></a>
+{% endif %}
                 <a href="?trace={{ file.id }}&kizilare_debug=1" title="See trace"><span class="glyphicon glyphicon-sunglasses"></span></a>
                 <a href="?diagram={{ file.id }}&kizilare_debug=1" title="Diagram"><span class="glyphicon glyphicon-th"></span></a>
                 <a href="?sequence={{ file.id }}&kizilare_debug=1" title="Sequence Diagram 2"><span class="glyphicon glyphicon-transfer"></span></a>

@@ -55,13 +55,6 @@ class Watcher extends Abstracted
     protected $coverage;
 
     /**
-     * Singleton instance
-     *
-     * @var Watcher
-     */
-    protected $instance;
-
-    /**
      * Watcher constructor.
      *
      * Initializes the logging
@@ -89,20 +82,6 @@ class Watcher extends Abstracted
             'files'     => $_FILES
         ), JSON_PRETTY_PRINT));
     }
-
-    /**
-     * Singleton
-     *
-     * @return Watcher
-     */
-    public static function getInstance()
-    {
-        if (!isset(self::$instance)) {
-            self::$instance = new self();
-        }
-        return self::$instance;
-    }
-
 
     /**
      * @param string $file Filename of the trace
@@ -173,23 +152,18 @@ class Watcher extends Abstracted
      */
     public function watch()
     {
-        $position = $this->getCallerInfo(1);
         if ($this->watching) {
-            $this->output('Watch already started', $this->watching, 200);
-            $this->output('Could not start watching', $position, 200);
+            $this->output('Watch already started. Could not start watching', 200);
             exit;
         }
 
-        $this->watching = $position;
+        $this->watching = true;
         if (is_file($this->traceFile)) {
             return;
         }
 
-        $file = $position->getFile();
-        $line = $position->getLine();
-        $file = strlen($file) > 36 ? '...' . substr($file, -35) : $file;
-        k_log("Watch started at $file:$line", 'AUTO');
-        $this->output('Watch started', $position, 100);
+        k_log("Watch started", 'AUTO');
+        $this->output('Watch started', 100);
 
         if ($this->trace) {
             $this->startTrace();
@@ -231,8 +205,7 @@ class Watcher extends Abstracted
      */
     public static function shutDownEndWatch()
     {
-        $watcher = \DebugHelper\Tools\Watcher::getInstance();
-        $watcher->endWatch();
+        k_watcher()->endWatch();
     }
 
     protected function startTrace()
@@ -250,13 +223,17 @@ class Watcher extends Abstracted
      * Displays a message depending on the severity level
      *
      * @param string $message message to output
-     * @param Position $position Position where the output has been triggered
      * @param int $level Level of the message
      */
-    protected function output($message, Position $position, $level)
+    protected function output($message, $level)
     {
+        static $output;
+
+        if (!$output) {
+            $output = new Output();
+        }
         if ($this->level <= $level) {
-            \DebugHelper\Tools\Output::dump($position, $message);
+            $output->dump($message);
         }
     }
 

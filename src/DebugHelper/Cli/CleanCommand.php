@@ -2,22 +2,51 @@
 namespace DebugHelper\Cli;
 
 use DebugHelper\Cli\Util\Progress;
+use DebugHelper\Cli\Util\Statistics;
 use DebugHelper\Gui\Processor;
 
 class CleanCommand extends Abstracted
 {
+    /**
+     * Minimum depth for the current ignore namespace
+     *
+     * @var integer
+     */
     protected $ignoreDepth;
 
+    /**
+     * Currently ignoring
+     *
+     * @var bool
+     */
     protected $ignoring;
 
+    /**
+     * Namespaces to be excluded from the trace
+     *
+     * @var array
+     */
     protected $ignoreNamespaces = [];
 
-    protected $namespaces = [];
+    /**
+     * Namespaces to be excluded from the trace
+     *
+     * @var array
+     */
+    protected $ignoreDirectories = [];
 
-    protected $skipped = [];
-
+    /**
+     * Numeric statistics
+     *
+     * @var Statistics
+     */
     protected $stats;
 
+    /**
+     * Command line options
+     *
+     * @var array
+     */
     protected $options;
 
     /**
@@ -32,7 +61,6 @@ class CleanCommand extends Abstracted
      */
     public function run()
     {
-        $this->namespaces = [];
         $this->progress = new Progress();
         if (!empty($this->arguments['help'])) {
             echo "./console clean [file] [--force] [--functions] [--namespaces='namespace1, namespace2]\n";
@@ -50,6 +78,9 @@ class CleanCommand extends Abstracted
         }
     }
 
+    /**
+     * Load the command line argument
+     */
     protected function loadArguments()
     {
         $this->options = [];
@@ -57,20 +88,22 @@ class CleanCommand extends Abstracted
         $this->options['force'] = !empty($this->arguments['force']);
         $this->options['file'] = isset($this->arguments[2]) ? \DebugHelper::getDebugDir() . $this->arguments[2] : false;
 
-        if (!empty($this->arguments['namespaces'])) {
-            $this->ignoreNamespaces = preg_split('/\s*,\s*/', $this->arguments['namespaces']);
+        if (!empty($this->arguments['skip-namespace'])) {
+            $this->ignoreNamespaces = preg_split('/\s*,\s*/', $this->arguments['skip-namespace']);
+
+        }
+        if (!empty($this->arguments['skip-path'])) {
+            $this->ignoreDirectories = preg_split('/\s*,\s*/', $this->arguments['skip-path']);
         }
     }
 
+    /**
+     * @param string $file File to clean
+     * @throws \Exception
+     */
     protected function cleanFile($file)
     {
-        $this->stats = [
-            'invalid'   => 0,
-            'functions' => 0,
-            'skipped'   => 0
-        ];
-        $this->namespaces = [];
-        $this->skipped = [];
+        $this->stats = new Statistics();
         $this->ignoreDepth = false;
         $this->ignoring = false;
         preg_match('/^(.*\/)?(?P<id>.*?)(\.\w*)?$/', $file, $matches);
@@ -127,24 +160,30 @@ class CleanCommand extends Abstracted
                 $totalPassed++;
             }
         }
-        $this->namespaces = array_filter($this->namespaces, function($element){
-            return $element > 10;
-        });
-        $this->skipped = array_filter($this->skipped, function($element){
-            return $element > 0;
-        });
+        $this->stats->sort();
 
-        asort($this->namespaces);
-        $namespaces = array_slice($this->namespaces, -20);
+        $usedPaths= array_slice($this->stats->get('path.used', null, []), 0, 20);
+        echo PHP_EOL . PHP_EOL . "\033[32mMost used paths\033[0m" . PHP_EOL;
+        foreach($usedPaths as $path => $lines) {
+            printf('%6d %s%s', $lines, $path, PHP_EOL);
+        }
+
+        $usedNamespaces = array_slice($this->stats->get('namespaces.used', null, []), 0, 20);
         echo PHP_EOL . PHP_EOL . "\033[32mMost used namespaces\033[0m" . PHP_EOL;
-        foreach($namespaces as $namespace => $lines) {
+        foreach($usedNamespaces as $namespace => $lines) {
             printf('%6d %s%s', $lines, $namespace, PHP_EOL);
         }
 
-        asort($this->skipped);
+        $skippedNamespaces = array_slice($this->stats->get('namespaces.skipped', null, []), 0, 20);
         echo PHP_EOL . "\033[32mSkipped namespaces\033[0m" . PHP_EOL;
-        foreach($this->skipped as $namespace => $lines) {
+        foreach($skippedNamespaces as $namespace => $lines) {
             printf('%6d %s%s', $lines, $namespace, PHP_EOL);
+        }
+
+        $skippedPath = array_slice($this->stats->get('path.skipped', null, []), 0, 20);
+        echo PHP_EOL . "\033[32mSkipped paths\033[0m" . PHP_EOL;
+        foreach($skippedPath as $path => $lines) {
+            printf('%6d %s%s', $lines, $path, PHP_EOL);
         }
 
         printf("
@@ -152,54 +191,69 @@ class CleanCommand extends Abstracted
 %6d valid lines
 %6d invalid lines
 %6d functions skipped
+%6d files excluded
 %6d namespaces skipped
-----
-\033[31m%4d\033[0m Total lines
+------
+\033[31m%6d\033[0m Total lines
 ",
             $totalPassed,
-            $this->stats['invalid'],
-            $this->stats['functions'],
-            $this->stats['skipped'],
+            $this->stats->get('skipped_by.invalid', null, 0),
+            $this->stats->get('skipped_by.functions', null, 0),
+            $this->stats->get('skipped_by.path', null, 0),
+            $this->stats->get('skipped_by.namespace', null, 0),
             $lineNo
         );
         return $totalPassed;
     }
 
+    /**
+     * Process a single trace line
+     *
+     * @param string $line Contents of the line being processed
+     * @return bool
+     */
     protected function processInputLine($line)
     {
-        $line_info =  $this->getLineInfo($line);
-        if ($line_info) {
+        $lineInfo =  $this->getLineInfo($line);
+        if ($lineInfo) {
             if ($this->ignoreDepth) {
-                if ($line_info['depth'] > $this->ignoreDepth) {
-                    $this->skipped[$this->ignoring]++;
-                    $this->stats['skipped']++;
+                if ($lineInfo['depth'] > $this->ignoreDepth) {
+                    $this->stats->increment('namespaces.skipped', $this->ignoring);
+                    $this->stats->increment('skipped_by.namespace');
                     return false;
                 } else {
                     $this->ignoreDepth = false;
                 }
             }
-            if (preg_match('/^(?P<namespace>[^\(]+)(::|->)(?P<method>[^\(]+).*$/', $line_info['call'], $matches)) {
+            if (preg_match('/^(?P<namespace>[^\(]+)(::|->)(?P<method>[^\(]+).*$/', $lineInfo['call'], $matches)) {
                 if ($this->isIgnoredNamespace($matches['namespace'])) {
-                    $this->ignoreDepth = $line_info['depth'];
+                    $this->ignoreDepth = $lineInfo['depth'];
                     $this->ignoring = $matches['namespace'];
-                    if (!isset($this->skipped[$this->ignoring])) {
-                        $this->skipped[$this->ignoring] = 0;
-                    }
+                } elseif ($this->isIgnoredDirectory($lineInfo['path'])) {
+                    $this->stats->increment('skipped_by.path');
+                    return false;
                 }
             } else {
-                $this->stats['functions']++;
+                $this->stats->increment('skipped_by.functions');
                 return false;
             }
             if ($matches['namespace'] !== $this->ignoring) {
                 $this->registerNamespace($matches['namespace']);
             }
+            $this->registerPath($lineInfo['path']);
             return $line;
         } else {
-            $this->stats['invalid']++;
+            $this->stats->increment('skipped_by.invalid');
             return false;
         }
     }
 
+    /**
+     * Check if the given namespace should be ignored with the current filters
+     *
+     * @param string $namespace
+     * @return bool
+     */
     protected function isIgnoredNamespace($namespace)
     {
         if ($this->options['functions']) {
@@ -214,6 +268,30 @@ class CleanCommand extends Abstracted
         return false;
     }
 
+    /**
+     * Check if the given path should be ignored with the current filters
+     *
+     * @param string $path
+     * @return bool
+     */
+    protected function isIgnoredDirectory($path)
+    {
+
+        foreach ($this->ignoreDirectories as $ignoreDirectory) {
+            if (strpos($path, $ignoreDirectory) !== false) {
+                $this->stats->increment('path.skipped', $ignoreDirectory);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Extract information from a trace line
+     *
+     * @param string $line Line to process
+     * @return bool
+     */
     protected function getLineInfo($line)
     {
         $reg_exp = '/(?P<time>\d+\.\d+)\s+(?P<memory>\d+)(?P<depth>\s+)->\s+(?P<call>.*)\s+(?P<path>[^\s+]+)$/';
@@ -226,16 +304,33 @@ class CleanCommand extends Abstracted
         }
     }
 
+    /**
+     * Save a namespace for statistics
+     *
+     * @param string $namespace
+     */
     protected function registerNamespace($namespace)
     {
         $levels = explode('\\', $namespace);
         while(!empty($levels)) {
             $namespace = implode('\\', $levels);
-            if (!isset($this->namespaces[$namespace])) {
-                $this->namespaces[$namespace] = 0;
-            }
+            $this->stats->increment('namespaces.used', $namespace);
             array_pop($levels);
-            $this->namespaces[$namespace]++;
+        }
+    }
+
+    /**
+     * Save a namespace for statistics
+     *
+     * @param string $path
+     */
+    protected function registerPath($path)
+    {
+        $levels = explode('/', $path);
+        while(!empty($levels)) {
+            $namespace = implode('/', $levels);
+            $this->stats->increment('path.used', $namespace);
+            array_pop($levels);
         }
     }
 }

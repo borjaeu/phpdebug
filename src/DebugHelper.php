@@ -83,6 +83,9 @@ class DebugHelper
         return PHP_SAPI == 'cli';
     }
 
+    /**
+     * Initializes the debug
+     */
     public static function init()
     {
 
@@ -92,9 +95,15 @@ class DebugHelper
 /**
  * @return \DebugHelper\Tools\Watcher
  */
-function k_get_watcher()
+function k_watcher()
 {
-    return \DebugHelper\Tools\Watcher::getInstance();
+    static $watcher;
+
+    if (empty($watcher)) {
+        $watcher = new \DebugHelper\Tools\Watcher();
+    }
+
+    return $watcher;
 }
 
 function k_collect_errors()
@@ -107,18 +116,9 @@ function k_collect_errors()
  */
 function k_trace()
 {
-    \DebugHelper\Tools\Dump::getInstance()->showtrace();
+    \k_dump()->showtrace();
 }
 
-/**
- * Save the data to a log file.
-/*
- * @return \DebugHelper\Tools\Log
- */
-function k_logger()
-{
-    return \DebugHelper\Tools\Log::getInstance();
-}
 /**
  * Save the data to a log file.
  *
@@ -181,11 +181,21 @@ function k_exception($exception)
     $exceptionDebug->exception($exception);
 }
 
+/**
+ * Enables an option
+ *
+ * @param string $option Name of the option to enable
+ */
 function enable($option)
 {
     \DebugHelper::enable($option);
 }
 
+/**
+ * Disables an option
+ *
+ * @param string $option Name of the option to disable
+ */
 function k_disable($option)
 {
     \DebugHelper::disable($option);

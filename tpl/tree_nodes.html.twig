@@ -1,0 +1,15 @@
+<ul>
+{%  for line in lines %}
+        <li id="line_{{ line.line }}" class="{% if line.children %}parent{% else %}leaf{% endif %}">
+            <a href="codebrowser:{{ line.path }}" title="{{ line.path }}">{{ "%08d"|format(line.time) }}&micro;s</a>
+            <a href="?trace={{ id }}&line={{ line.line }}&kizilare_debug=1" target="_blank" title="View trace line {{ line.line }}"><span class="glyphicon glyphicon-sunglasses"></span></a>
+{%      if line.children %}
+            <a href="#" class="expand"><span class="glyphicon glyphicon-plus"></span></a>
+            [{{ line.children }}/{{ line.descendant }} ]
+{%      endif %}
+            <span>{{  line.call }}</span>
+            <div class="bar" style="width:{{ line.partial }}%"></div>
+            <div class="children"></div>
+        </li>
+{%  endfor %}
+</ul>

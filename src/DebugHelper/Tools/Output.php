@@ -6,7 +6,12 @@ use DebugHelper\Tools\Model\Position;
 
 class Output extends Abstracted
 {
+    /**
+     * @var integer
+     */
     protected $start = false;
+
+    protected $open = false;
 
     /**
      * Exports the filter debug info.
@@ -41,13 +46,39 @@ POS;
         }
     }
 
+    /**
+     * Exports the filter debug info.
+     *
+     * @return Position
+     */
+    protected function getCallerInfo()
+    {
+        $trace = debug_backtrace(false);
+
+        $item = ['file'=> '', 'line' => 0];
+        foreach ($trace as $item) {
+            if (isset($item['class']) && preg_match('/DebugHelper/', $item['class'])) {
+                continue;
+            }
+            if (isset($item['file']) && preg_match('/DebugHelper/', $item['file'])) {
+                continue;
+            }
+            break;
+        }
+
+        $position = new Position($item['file'], $item['line']);
+        $position->setCall($item['function']);
+        return $position;
+    }
+
     /** Displays the data passed as information.
      *
-     * @param Position $pos Position information where the dump is made
      * @return Output
      */
-    public function open(Position $pos)
+    public function open()
     {
+        $position = $this->getCallerInfo();
+        $this->open = true;
         if ($this->start === false) {
             $this->start = microtime(true);
             $split = 0;
@@ -59,7 +90,7 @@ POS;
         Styles::showHeader('dump', 'objectToHtml');
 
 
-        $pos = self::getCallerDetails($pos);
+        $pos = self::getCallerDetails($position);
         $id = uniqid();
         if (\DebugHelper::isCli()) {
             echo "[Dump] var, $pos====================================\n";
@@ -86,6 +117,11 @@ DEBUG;
      */
     public function dump($data, $maxDepth = 5)
     {
+        $mustClose = false;
+        if (!$this->open) {
+            $mustClose = true;
+            $this->open();
+        }
         if (!is_null($data) && !is_string($data)) {
             $data = self::objectToHtml($data, $maxDepth);
         }
@@ -104,6 +140,9 @@ DEBUG;
 
 DEBUG;
         }
+        if ($mustClose) {
+            $this->close();
+        }
         return $this;
     }
 
@@ -114,6 +153,7 @@ DEBUG;
      */
     public function close()
     {
+        $this->open = false;
         if (\DebugHelper::isCli()) {
             echo "====================================\n";
         } else {
