@@ -62,11 +62,15 @@ class Trace
      */
     protected function renderCode($targetLineNo)
     {
-        if ($targetLineNo < 1) {
-            $targetLineNo = 1;
-        }
         $this->totalLines = 0;
-        $trace_lines = $this->getLines($this->trace_file, $targetLineNo, 30);
+        if (!empty($_GET['search'])) {
+            list($targetLineNo, $trace_lines) = $this->getSearchLines($_GET['search']);
+        } else {
+            if ($targetLineNo < 1) {
+                $targetLineNo = 1;
+            }
+            $trace_lines = $this->getLines($this->trace_file, $targetLineNo, 30);
+        }
 
         $context = '';
         if (preg_match('/\s+(?P<file>\/.*?:)(\d+)/', $trace_lines[$targetLineNo], $matches)) {
@@ -89,6 +93,21 @@ class Trace
         $template->assign('section', 'trace');
         $template->assign('code_lines', $this->getCodeLines($trace_lines[$targetLineNo]));
         echo $template->fetch('trace');
+    }
+
+    /**
+     * @param string $search
+     * @return array
+     */
+    private function getSearchLines($search)
+    {
+        $targetLineNo = 1;
+        $searchResults = $this->getLinesForKeyword($this->trace_file, $search);
+        $traceLines = [];
+        foreach($searchResults as $targetLineNo => $searchResult) {
+            $traceLines = array_replace($traceLines, $this->getLines($this->trace_file, $targetLineNo, 5));
+        }
+        return [$targetLineNo, $traceLines];
     }
 
     /**
@@ -117,6 +136,33 @@ class Trace
     protected function getLine()
     {
         return isset($_GET['line']) ? $_GET['line'] : 1;
+    }
+
+    /**
+     * Returns an array with the lines in the specified file.
+     *
+     * @param string $file The file to return the lines from.
+     * @param integer $target_line_no Number of the line to retrieve.
+     * @return array
+     */
+    protected function getLinesForKeyword($file, $search)
+    {
+        if (!is_file($file)) {
+            return array();
+        }
+        $fp = fopen($file, 'r');
+        $line_no = 0;
+        $lines = array();
+
+        while (!feof($fp)) {
+            $line_no++;
+            $line = fgets($fp);
+            if (strpos($line, $search) !== false) {
+                $lines[$line_no] = rtrim($line);
+            }
+        }
+        fclose($fp);
+        return $lines;
     }
 
     /**
@@ -256,4 +302,5 @@ class Trace
         fclose($fp);
         return $context;
     }
+
 }
