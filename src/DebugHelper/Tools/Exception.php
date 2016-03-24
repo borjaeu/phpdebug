@@ -8,9 +8,9 @@ class Exception extends Abstracted
     /**
      * Begins the trace to watch where the code goes.
      *
-     * @param Exception $exception
+     * @param \Exception $exception
      */
-    public function exception($exception)
+    static public function exception($exception)
     {
         if (!$exception instanceof \Exception) {
             k_die(); // The given exception is not a valid one...
@@ -22,7 +22,7 @@ class Exception extends Abstracted
         $position = new Position($exceptionFile, $exceptionLine);
 
         $exceptionTrace = $exception->getTrace();
-        $exceptionTrace = \DebugHelper::getClass('\DebugHelper\Tools\Dump')->getDebugTrace($exceptionTrace);
+        $exceptionTrace = \DebugHelper\Tools\Dump::getInstance()->getDebugTrace($exceptionTrace);
 
         /*echo <<<EXCEPTION
 Exception thrown:
@@ -31,7 +31,7 @@ $exceptionName
 $exceptionTrace
 EXCEPTION;
 */
-        \DebugHelper::getClass('\DebugHelper\Tools\Output')->dump($position, $exception->getMessage());
-        \DebugHelper::getClass('\DebugHelper\Tools\Dump')->dump($exceptionTrace, 3);
+        \DebugHelper\Tools\Output::dump($position, $exception->getMessage());
+        \DebugHelper\Tools\Dump::getInstance()->dump($exceptionTrace, 3);
     }
 }

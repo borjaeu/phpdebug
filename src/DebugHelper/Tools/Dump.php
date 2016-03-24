@@ -6,23 +6,54 @@ use DebugHelper\Styles;
 class Dump extends Abstracted
 {
     /**
-     * Displays the data passed as information.
+     * Depth of the method caller
      *
-     * @param mixed $data Information to be dumped to the browser.
+     * @var int
      */
-    public function dump($data = null, $depth = 2, $maxDepth = 5)
+    protected $depth = 2;
+
+    /**
+     * Max depth for output objects
+     *
+     * @var int
+     */
+    protected $maxDepth = 5;
+
+    /**
+     * @param int $depth
+     * @return Dump
+     */
+    public function setDepth($depth)
     {
-        static $start = false;
+        $this->depth = $depth;
+        return $this;
+    }
 
-        if ($start === false) {
-            $start = microtime(true);
+    /**
+     * @param int $maxDepth
+     * @return Dump
+     */
+    public function setMaxDepth($maxDepth)
+    {
+        $this->maxDepth = $maxDepth;
+        return $this;
+    }
+
+    /**
+     * Displays the data passed as information
+     */
+    public function dump()
+    {
+        $pos = $this->getCallerInfo($this->depth);
+
+        $output = new Output();
+        $output->open($pos);
+        $args = func_get_args();
+
+        foreach ($args as $arg) {
+            $output->dump($arg, $this->maxDepth);
         }
-
-        Styles::showHeader('dump', 'objectToHtml');
-
-        $pos = $this->getCallerInfo($depth);
-
-        \DebugHelper::getClass('\DebugHelper\Tools\Output')->dump($pos, $data, $maxDepth);
+        $output->close();
     }
 
     /**

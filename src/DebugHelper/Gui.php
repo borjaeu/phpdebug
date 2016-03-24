@@ -21,6 +21,9 @@ class Gui
         if (isset($_GET['stats'])) {
             $stats = new \DebugHelper\Gui\Stats();
             $stats->setFile($_GET['stats'])->renderLoadsHtml();
+        } else if (isset($_GET['tree'])) {
+            $tree = new \DebugHelper\Gui\Tree();
+            $tree->setFile($_GET['tree'])->renderLoadsHtml();
         } elseif (isset($_GET['trace'])) {
             $trace = new \DebugHelper\Gui\Trace();
             $trace->setFile($_GET['trace'])->renderLoadsHtml();

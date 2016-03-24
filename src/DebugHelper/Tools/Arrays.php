@@ -3,9 +3,23 @@ namespace DebugHelper\Tools;
 
 class Arrays extends Abstracted
 {
+    protected static $instance;
+    /**
+     * Singleton
+     *
+     * @return Log
+     */
+    public static function getInstance()
+    {
+        if (!isset(self::$instance)) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
     /**
      * Look for information inside an array.
-     *
+     *;
      * @param array $data First array to compare.
      * @param string $needle Data to search in the array.
      */

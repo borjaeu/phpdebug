@@ -13,16 +13,6 @@ class Processor
 
     protected $lines;
 
-    protected $ignore_depth;
-
-    protected $ignored_namespace = array(
-        'Doctrine',
-        'Composer',
-        'DebugHelper',
-        'QaamGo\RestApiBundle\Serializer\Entity',
-        'QaamGo\RestApiBundle\Api\Validation\Schema\Constraint\Schema'
-    );
-
     /**
      * Progress display for CLI
      *
@@ -43,10 +33,10 @@ class Processor
         if (!is_file($fileIn)) {
             throw new \Exception("Error Processing file {$fileIn}");
         }
-        if (is_file($fileOut)) {
-            $this->lines = json_decode(file_get_contents($fileOut), true);
-        } else if ($run) {
+        if ($run) {
             $this->generateFiles($fileIn, $fileOut);
+        } elseif (is_file($fileOut)) {
+            $this->lines = json_decode(file_get_contents($fileOut), true);
         } else {
             throw new \Exception("No processed file {$fileOut}");
         }
@@ -78,6 +68,8 @@ class Processor
             fgets($fileIn);
             $lineCount++;
         }
+
+        echo $lineCount;
 
         fseek($fileIn, 0);
         while (!feof($fileIn) && $count-- > 0) {
@@ -122,11 +114,17 @@ class Processor
         return $minDepth;
     }
 
-    protected function getChildren($index, $depth, $force = false)
+    protected function getChildren($index, $maxDepth, $force = false)
     {
         $result = array();
 
         $max_time_children = 0;
+        $depth = 1000;
+        for ($i = $index; $i < count($this->lines); $i++) {
+            if ($this->lines[$i]['depth'] >= $maxDepth) {
+                $depth = min($depth, $this->lines[$i]['depth']);
+            }
+        }
         for ($i = $index; $i < count($this->lines); $i++) {
             if ($this->lines[$i]['depth'] == $depth) {
                 $children = $this->getChildren($i+1, $depth + 1);
@@ -164,20 +162,8 @@ class Processor
 
         $line_info =  $this->getLineInfo($line);
         if ($line_info) {
-            if ($this->ignore_depth) {
-                if ($line_info['depth'] > $this->ignore_depth) {
-                    $this->lines[$count]['ignored_children']++;
-                    return;
-                } else {
-                    $this->ignore_depth = false;
-                }
-            }
             $time = (integer)($line_info['time'] * 1000000);
-            if (preg_match('/^(?P<namespace>[^\(]+)(::|->)(?P<method>[^\(]+).*$/', $line_info['call'], $matches)) {
-                if ($this->isIgnoredNamespace($matches['namespace'])) {
-                    $this->ignore_depth = $line_info['depth'];
-                }
-            } else {
+            if (!preg_match('/^(?P<namespace>[^\(]+)(::|->)(?P<method>[^\(]+).*$/', $line_info['call'], $matches)) {
                 return;
             }
 
@@ -201,16 +187,6 @@ class Processor
             $this->min_depth = min($this->min_depth, $line_info['depth']);
             $this->shorter_path = min($this->shorter_path, $line_info['path_length']);
         }
-    }
-
-    protected function isIgnoredNamespace($namespace)
-    {
-        foreach ($this->ignored_namespace as $ignored_namespace) {
-            if (substr($namespace, 0, strlen($ignored_namespace)) == $ignored_namespace) {
-                return true;
-            }
-        }
-        return false;
     }
 
     protected function updateTimes($count, $time)

@@ -5,24 +5,26 @@ use DebugHelper\Styles;
 use DebugHelper\Tools\Model\Position;
 use ReflectionClass;
 
-class Abstracted
+abstract class Abstracted
 {
     /**
      * Exports the filter debug info.
      *
-     * @param integer $depth Depth of the callers to get.
      * @return Position
      */
-    protected function getCallerInfo($depth)
+    protected function getCallerInfo()
     {
         $trace = debug_backtrace(false);
 
-        if (!isset($trace[$depth])) {
-            return false;
-        }
-        $item = $trace[$depth];
-        if (false === $item) {
-            return false;
+        $item = ['file'=> '', 'line' => 0];
+        foreach ($trace as $item) {
+            if (isset($item['class']) && preg_match('/DebugHelper/', $item['class'])) {
+                continue;
+            }
+            if (isset($item['file']) && preg_match('/DebugHelper/', $item['file'])) {
+                continue;
+            }
+            break;
         }
 
         $position = new Position($item['file'], $item['line']);

@@ -1,0 +1,52 @@
+{% extends 'bootstrap.html.twig' %}
+
+{% block title %}Debug - Tree{% endblock %}
+{% block style %}
+<style>
+    #loading {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        background-color: red;
+        color: white;
+        font-weight: bold;
+        padding: 5px;
+    }
+    ul { list-style: none; padding-left 5px;}
+    li { border-left: 1px solid black; border-bottom: 1px solid black;}
+    li.leaf { background-color: #FFFFD4; }
+    li.parent { background-color: #E2FEE2; }
+    li.parent > span { cursor: pointer; font-weight:bold; }
+    li.parent > span:hover { background-color: greenyellow; }
+    div.bar { border: 2px solid red;}
+
+</style>
+{% endblock %}
+
+{% block javascript %}
+<script type="text/javascript">
+    $().ready(function(){
+        loadEvents();
+    });
+
+    function loadEvents() {
+        $('a.expand').bind('click', function(oEvent){
+            var sId = $(this).parent().attr('id');
+            var sUrl = '?kizilare_debug=1&tree={{ id }}&line=' + sId.replace('line_', '');
+
+            oEvent.preventDefault();
+            $('#loading').show();
+            $('#' + sId + ' > div.children').load(sUrl, function(oResponse){
+                $('#loading').hide();
+                loadEvents();
+            })
+        });
+    }
+</script>
+{% endblock %}
+
+{% block body %}
+<div id="loading">Loading...</div>
+    {% include 'tree_nodes.html.twig' %}
+{% endblock %}

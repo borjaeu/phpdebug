@@ -1,12 +1,39 @@
 <?php
 namespace DebugHelper\Tools;
 
+use DebugHelper\Tools\Helper\Trace;
+
 class Log extends Abstracted
 {
     /**
+     * Log header
+     *
+     * @var string
+     */
+    protected $header = 'LOG';
+    /**
+     * @var bool
+     */
+    protected $lastLog = false;
+    /**
+     * @var bool
+     */
+    protected $firstLog = false;
+
+    /**
+     * @param string $header
+     * @return Log
+     */
+    public function setHeader($header)
+    {
+        $this->header = $header;
+        return $this;
+    }
+
+    /**
      * Clears the log file
      *
-     * @var string $data Data to be saved in the new created log.
+     * @param string $data Data to be saved in the new created log.
      */
     public function clearLog($data = null)
     {
@@ -22,48 +49,41 @@ class Log extends Abstracted
 
     /**
      * Save the data to a log file.
-     *
-     * @param mixed $data Data to be written in the log.
-     * @param string $header Identifier for the header of the log entry.
      */
-    public function log($data, $header = 'LOG', $caller_depth = 1)
+    public function log()
     {
-        static $last_log = false;
-        static $first_log = false;
-
-        // Get filename and last directory.
-        $pos = $this->getCallerInfo($caller_depth);
+        $pos = $this->getCallerInfo();
         $path = substr($pos->getFile(), -32);
 
         $ms = microtime(true);
-        $elapsed = date('Y/m/d H:i:s ') . ($ms - floor($ms));
+        $elapsed = date('Y/m/d H:i:s');
 
-        if ($last_log) {
-            $elapsed = ' +' . number_format($ms - $last_log, 3);
+        if ($this->lastLog) {
+            $elapsed = ' +' . number_format($ms - $this->lastLog, 3);
         }
-        if ($first_log) {
-            $elapsed .= ' +' . number_format($ms - $first_log, 3);
+        if ($this->firstLog) {
+            $elapsed .= ' +' . number_format($ms - $this->firstLog, 3);
         } else {
-            $first_log = $ms;
+            $this->firstLog = $ms;
         }
-        $last_log = $ms;
-        $ms = explode('.', $ms);
-        $ms = isset($ms[1]) ? sprintf('%03d', round($ms[1])) : 0;
+        $this->lastLog = $ms;
 
-        if (is_array($data) || is_object($data)) {
-            $data = $this->toArray($data);
-            $data = $this->getArrayDump($data);
-        } elseif (empty($data)) {
-            $data = '';
+        $data = '';
+        foreach(func_get_args() as $argument) {
+            if (is_array($argument) || is_object($argument)) {
+                $data .= $this->getArrayDump($this->toArray($argument));
+            } else {
+                $data .= var_export($argument, true) . PHP_EOL;
+            }
         }
+        $data = trim($data);
 
-        // Build label.
         $line = $pos->getLine();
         $source = $pos->getSource();
         $pos = "$path:$line [$elapsed]";
-        if ($header) {
-            $log = "\n[$header] {$pos} '$source'\n{$data}";
-        } elseif ($header === false) {
+        if ($this->header) {
+            $log = "\n[{$this->header}] {$pos} '$source'\n{$data}";
+        } elseif ($this->header === false) {
             $log = "\n$data";
         } else {
             $log = "\n{$pos} {$data}";
@@ -78,10 +98,9 @@ class Log extends Abstracted
      * @param mixed $data Data to be written in the log.
      * @param string $header Identifier for the header of the log entry.
      */
-    public function logUnique($data, $extra = '', $caller_depth = 1)
+    public function logUnique($data, $extra = '')
     {
-        // Get filename and last directory.
-        $pos = $this->getCallerInfo(false, $caller_depth);
+        $pos = $this->getCallerInfo();
         $path = explode('/', $pos['file']);
         $path = array_splice($path, -2);
         $path = implode('/', $path);
@@ -93,45 +112,37 @@ class Log extends Abstracted
             $data = '';
         }
 
-        // Build label.
         $log = "$path:{$pos['line']}\n\n$data";
 
         $path = $this->getLogPath(true, $extra);
 
         error_log($log, 3, $path);
-        self::log(basename($path), 'UNIQUE', $caller_depth + 1);
+        self::log(basename($path), 'UNIQUE');
     }
 
     /**
-     * Shows the HTML trace.
-     *
-     * @param boolean $finish Finish the script execution.
-     * @param boolean $return_trace Returns the trace instead of printing it.
+     * Shows the text trace
      *
      * @return mixed
      */
     public function showtrace()
     {
-        $trace = xdebug_get_function_stack();
-        $trace = array_slice($trace, 0, count($trace) - 4);
+        $traceHelper = new Trace();
+        $trace = $traceHelper->getTrace();
 
-        $debug_backtrace = '';
+
+
+        $debugBacktrace = '';
         foreach ($trace as $item) {
 
-            if (isset($item['function'])) {
-                $function = isset($item['class']) ? $item['class'] . '::' . $item['function'] : $item['function'];
-            } else {
-                $function = 'inlcude: ' . $item['include_filename'];
-            }
-            $file = $item['file'];
 
-            $debug_backtrace
+            $debugBacktrace
                 .= <<<ROW
-{$item['file']}:{$item['line']} {$item['line']} $function()
+{$item['file']}:{$item['line']} {$item['line']} {$item['call']}()
 
 ROW;
         }
-        self::log($debug_backtrace, 'TRACE', 5);
+        self::log($debugBacktrace, 'TRACE', 5);
     }
 
     /**

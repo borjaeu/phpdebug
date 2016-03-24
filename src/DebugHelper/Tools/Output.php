@@ -7,12 +7,19 @@ use DebugHelper\Tools\Model\Position;
 class Output extends Abstracted
 {
     /**
+     * @var integer
+     */
+    protected $start = false;
+
+    protected $open = false;
+
+    /**
      * Exports the filter debug info.
      *
-     * @param array $pos Position information where the dump is made
+     * @param Position $position Position information where the dump is made
      * @return string
      */
-    protected function getCallerDetails(Position $position)
+    public function getCallerDetails(Position $position)
     {
         $id = uniqid();
 
@@ -40,32 +47,87 @@ POS;
     }
 
     /**
-     * Displays the data passed as information.
+     * Exports the filter debug info.
      *
-     * @param array $pos Position information where the dump is made
-     * @param mixed $data Information to be dumped to the browser.
+     * @return Position
      */
-    public function dump(Position $pos, $data = null, $maxDepth = 5)
+    protected function getCallerInfo()
     {
-        static $start = false;
+        $trace = debug_backtrace(false);
 
-        if ($start === false) {
-            $start = microtime(true);
+        $item = ['file'=> '', 'line' => 0];
+        foreach ($trace as $item) {
+            if (isset($item['class']) && preg_match('/DebugHelper/', $item['class'])) {
+                continue;
+            }
+            if (isset($item['file']) && preg_match('/DebugHelper/', $item['file'])) {
+                continue;
+            }
+            break;
+        }
+
+        $position = new Position($item['file'], $item['line']);
+        $position->setCall($item['function']);
+        return $position;
+    }
+
+    /** Displays the data passed as information.
+     *
+     * @return Output
+     */
+    public function open()
+    {
+        $position = $this->getCallerInfo();
+        $this->open = true;
+        if ($this->start === false) {
+            $this->start = microtime(true);
             $split = 0;
         } else {
-            $split = microtime(true) - $start;
+            $split = microtime(true) - $this->start;
         }
         $split = number_format($split, 6);
 
         Styles::showHeader('dump', 'objectToHtml');
 
-        if (!is_null($data) && !is_string($data)) {
-            $data = $this->objectToHtml($data, $maxDepth);
-        }
-        $pos = $this->getCallerDetails($pos);
+
+        $pos = self::getCallerDetails($position);
         $id = uniqid();
         if (\DebugHelper::isCli()) {
-            echo "[Dump] var, $pos====================================\n$data====================================\n";
+            echo "[Dump] var, $pos====================================\n";
+        } else {
+            echo <<<DEBUG
+
+<div id="$id" class="debug_dump">
+    <div class="header">
+        <span class="timer">$split</span>
+        <span class="code">$pos</span>
+     </div>
+
+DEBUG;
+        }
+        return $this;
+    }
+
+    /**
+     * Displays the data passed as information.
+     *
+     * @param mixed $data Information to be dumped to the browser.
+     * @param integer $maxDepth Maximum depth for objects
+     * @return Output
+     */
+    public function dump($data, $maxDepth = 5)
+    {
+        $mustClose = false;
+        if (!$this->open) {
+            $mustClose = true;
+            $this->open();
+        }
+        if (!is_null($data) && !is_string($data)) {
+            $data = self::objectToHtml($data, $maxDepth);
+        }
+
+        if (\DebugHelper::isCli()) {
+            echo $data;
         } else {
             if (!is_null($data)) {
                 $data = "<div class=\"data\">{$data}</div>";
@@ -74,13 +136,29 @@ POS;
             }
 
             echo <<<DEBUG
-
-<div id="$id" class="debug_dump">
-    <div class="header">
-        <span class="timer">$split</span>
-        <span class="code">$pos</span>
-     </div>
      {$data}
+
+DEBUG;
+        }
+        if ($mustClose) {
+            $this->close();
+        }
+        return $this;
+    }
+
+    /**
+     * Displays the data passed as information.
+     *
+     * @return Output
+     */
+    public function close()
+    {
+        $this->open = false;
+        if (\DebugHelper::isCli()) {
+            echo "====================================\n";
+        } else {
+            echo <<<DEBUG
+
 </div>
 
 DEBUG;
