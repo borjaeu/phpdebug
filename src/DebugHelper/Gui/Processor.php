@@ -69,8 +69,6 @@ class Processor
             $lineCount++;
         }
 
-        echo $lineCount;
-
         fseek($fileIn, 0);
         while (!feof($fileIn) && $count-- > 0) {
             $line = fgets($fileIn);

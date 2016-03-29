@@ -38,7 +38,7 @@ class Tree
             $totalTime += $line['length'];
         }
         foreach ($lines as & $line) {
-             $line['partial'] = ceil(($line['length'] / $totalTime) * 100);
+             $line['partial'] = $totalTime > 0 ? ceil(($line['length'] / $totalTime) * 100) : 0;
         }
         return $lines;
     }

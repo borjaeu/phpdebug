@@ -27,17 +27,16 @@
         $('#step_' + id + '_in' ).addClass('selected');
         $('#step_' + id + '_out' ).addClass('selected');
     }
+
+    function showFile(sFile) {
+        $('#file').html(sFile);
+    }
 </script>
     {% endblock %}
 {% endblock %}
 {% block body %}
     <h2>Sequence diagram</h2>
-    <div id="title" class="column">
-        <div class="row even">Timeline {{ steps }}</div>
-{% for name, class in classes %}
-        <div class="row {{ cycle(['odd', 'even'], loop.index0) }}">{{ name }}</div>
-{% endfor %}
-    </div>
+    <pre id="file"></pre>
     <div id="lines" class="column">
         <div class="row even">
             {% for id in 1..steps %}
@@ -45,7 +44,7 @@
             {% endfor %}
         </div>
 {% for name, class in classes %}
-        <div class="row {{ cycle(['odd', 'even'], loop.index0) }}" style="padding-left: {{ class.start*WIDTH }}px;">
+        <div class="row {{ cycle(['odd', 'even'], loop.index0) }}" style="padding-left: {{ class.start*WIDTH }}px;" onmouseover="showFile('{{ name }}');">
             <div class="timebar" style="width:{{ class.length*WIDTH }}px">
 {% for pos, step in class.steps  %}
                     <div id="step_{{ step.id }}" onmouseover="show({{ step.index }});" class="step step_{{ step.type }}" style="margin-left: {{ (step.margin)*WIDTH }}px;" title="{{ step.call }}"></div>

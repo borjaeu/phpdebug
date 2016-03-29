@@ -57,15 +57,15 @@
                 <a href="?tree={{ file.id }}&kizilare_debug=1" title="Grouped tree with stats" class="btn btn-info" role="button">
                     <span class="glyphicon glyphicon glyphicon-tree-conifer"></span>
                 </a>
-{% endif %}
-                <a href="?trace={{ file.id }}&kizilare_debug=1" title="See trace" class="btn btn-info" role="button">
-                    <span class="glyphicon glyphicon-sunglasses"></span>
-                </a>
                 <a href="?diagram={{ file.id }}&kizilare_debug=1" title="Diagram" class="btn btn-info" role="button">
                     <span class="glyphicon glyphicon-th"></span>
                 </a>
                 <a href="?sequence={{ file.id }}&kizilare_debug=1" title="Sequence Diagram 2" class="btn btn-info" role="button">
                     <span class="glyphicon glyphicon-transfer"></span>
+                </a>
+{% endif %}
+                <a href="?trace={{ file.id }}&kizilare_debug=1" title="See trace" class="btn btn-info" role="button">
+                    <span class="glyphicon glyphicon-sunglasses"></span>
                 </a>
 {%endif %}
 {% if file.coverage %}
