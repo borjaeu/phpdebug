@@ -6,30 +6,26 @@
         a { text-decoration: none; color: black; float: left; display: block; margin-right: 10px; }
         a:hover { text-decoration: underline; }
         li span { width: 100px; }
-        .even { background-color:#DEDEDE; }
-        .odd { background-color:#FFFFFF; }
-        tr:hover pre.details { display: block; }
-        pre.details {
-            position: absolute;
-            z-index: 10;
-            margin: 20px;
-            display: none;
-        }
 </style>
 {% endblock %}
 {% block javascript %}
 <script type="text/javascript">
     function deleteTrace(sTraceId) {
-        $.get('?kizilare_debug=1&delete=' + sTraceId, function(oData) {
+        $.get('?kizilare_debug=1&delete=' + sTraceId, function() {
             $('#' + sTraceId).fadeOut();
         });
     }
     function renameTrace(sTraceId) {
-        sNewName = prompt('New name', $('#' + sTraceId + ' .name').html());
-        $.get('?kizilare_debug=1&rename=' + sTraceId + '&name=' + sNewName, function(oData) {
-            $('#' + sTraceId + ' .name').html(sNewName);
+        sNewName = prompt('New name', $('#' + sTraceId + ' .name a').html());
+        $.get('?kizilare_debug=1&rename=' + sTraceId + '&name=' + sNewName, function() {
+            $('#' + sTraceId + ' .name a').html(sNewName);
         });
     }
+    $().ready(function(){
+        $(function () {
+            $('[data-toggle="popover"]').popover({'trigger': 'hover'});
+        })
+    });
 </script>
 {% endblock %}
 {% block body %}
@@ -44,40 +40,61 @@
                 <th>Post</th>
                 <th>Host</th>
                 <th>Uri</th>
+                <th>Actions</th>
             </tr>
         </thead>
 {% for file in files %}
 {% if file.name %}
         <tr id="{{ file.id }}">
             <td>
-                <pre class="details">{{ file.details }}</pre>
-                <a href="codebrowser:{{ root_dir }}{{ file.id }}.svr" title="Open info file"><span class="glyphicon glyphicon-eye-open"></span></a>
 {% if file.trace %}
 {% if file.json %}
-                <a href="?stats={{ file.id }}&kizilare_debug=1" title="Grouped code with stats"><span class="glyphicon glyphicon-stats"></span></a>
+                <a href="?stats={{ file.id }}&kizilare_debug=1" title="Grouped code with stats" class="btn btn-info" role="button">
+                    <span class="glyphicon glyphicon-stats"></span>
+                </a>
 {% endif %}
 {% if file.clean %}
-                <a href="?tree={{ file.id }}&kizilare_debug=1" title="Grouped tree with stats"><span class="glyphicon glyphicon glyphicon-tree-conifer"></span></a>
+                <a href="?tree={{ file.id }}&kizilare_debug=1" title="Grouped tree with stats" class="btn btn-info" role="button">
+                    <span class="glyphicon glyphicon glyphicon-tree-conifer"></span>
+                </a>
 {% endif %}
-                <a href="?trace={{ file.id }}&kizilare_debug=1" title="See trace"><span class="glyphicon glyphicon-sunglasses"></span></a>
-                <a href="?diagram={{ file.id }}&kizilare_debug=1" title="Diagram"><span class="glyphicon glyphicon-th"></span></a>
-                <a href="?sequence={{ file.id }}&kizilare_debug=1" title="Sequence Diagram 2"><span class="glyphicon glyphicon-transfer"></span></a>
+                <a href="?trace={{ file.id }}&kizilare_debug=1" title="See trace" class="btn btn-info" role="button">
+                    <span class="glyphicon glyphicon-sunglasses"></span>
+                </a>
+                <a href="?diagram={{ file.id }}&kizilare_debug=1" title="Diagram" class="btn btn-info" role="button">
+                    <span class="glyphicon glyphicon-th"></span>
+                </a>
+                <a href="?sequence={{ file.id }}&kizilare_debug=1" title="Sequence Diagram 2" class="btn btn-info" role="button">
+                    <span class="glyphicon glyphicon-transfer"></span>
+                </a>
 {%endif %}
 {% if file.coverage %}
-                <a href="?coverage={{ file.id }}&kizilare_debug=1" title="Coverage"><span class="glyphicon glyphicon-book"></span></a>
+                <a href="?coverage={{ file.id }}&kizilare_debug=1" title="Coverage" class="btn btn-info" role="button">
+                    <span class="glyphicon glyphicon-book"></span>
+                </a>
 {%endif %}
 {% if not readonly %}
-                <a href="?delete={{ file.id }}&kizilare_debug=1" onclick="deleteTrace('{{ file.id }}'); return false;" title="delete file"><span class="glyphicon glyphicon-remove"></span></a>
-                <a href="?rename={{ file.id }}&kizilare_debug=1" onclick="renameTrace('{{ file.id }}'); return false;" title="rename file"><span class="glyphicon glyphicon-edit"></span></a>
 {% endif %}
             </td>
-            <td class="name"><strong>{{ file.name }}</strong></td>
+            <td class="name">
+                <a href="codebrowser:{{ root_dir }}{{ file.id }}.svr" title="Open info file" role="button" data-toggle="popover" data-content="{{ file.details }}">
+                    {{ file.name }}
+                </a>
+            </td>
             <td>{{ file.time }}</td>
             <td>{{ file.size }}</td>
             <td>{{ file.info.server.REQUEST_METHOD }}</td>
             <td>{{ file.info.post | length }}</td>
             <td>{{ file.info.server.HTTP_HOST }}</td>
             <td>{{ file.info.server.REQUEST_URI }}</td>
+            <td>
+                <a href="?delete={{ file.id }}&kizilare_debug=1" onclick="deleteTrace('{{ file.id }}'); return false;" title="delete file" class="btn btn-danger" role="button">
+                    <span class="glyphicon glyphicon-remove"></span>
+                </a>
+                <a href="?rename={{ file.id }}&kizilare_debug=1" onclick="renameTrace('{{ file.id }}'); return false;" title="rename file" class="btn btn-warning" role="button">
+                    <span class="glyphicon glyphicon-edit"></span>
+                </a>
+            </td>
         </tr>
 {% endif %}
 {% endfor %}
