@@ -6,18 +6,11 @@ use DebugHelper\Styles;
 class Dump extends Abstracted
 {
     /**
-     * Depth of the method caller
-     *
-     * @var int
-     */
-    protected $depth = 2;
-
-    /**
      * Max depth for output objects
      *
      * @var int
      */
-    protected $maxDepth = 5;
+    protected $depth = 5;
 
     /**
      * @param int $depth
@@ -30,28 +23,16 @@ class Dump extends Abstracted
     }
 
     /**
-     * @param int $maxDepth
-     * @return Dump
-     */
-    public function setMaxDepth($maxDepth)
-    {
-        $this->maxDepth = $maxDepth;
-        return $this;
-    }
-
-    /**
      * Displays the data passed as information
      */
     public function dump()
     {
-        $pos = $this->getCallerInfo($this->depth);
-
         $output = new Output();
-        $output->open($pos);
+        $output->open();
         $args = func_get_args();
 
         foreach ($args as $arg) {
-            $output->dump($arg, $this->maxDepth);
+            $output->dump($arg, $this->depth);
         }
         $output->close();
     }
