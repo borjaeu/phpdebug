@@ -41,7 +41,7 @@ class ReadCommand extends Abstracted
 
         $this->loadArguments();
         if (!$this->inputFile) {
-            echo 'Invalid file';
+            echo 'Invalid file' . PHP_EOL;
         } else {
             $this->readFile($this->inputFile);
         }
