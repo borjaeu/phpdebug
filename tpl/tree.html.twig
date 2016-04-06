@@ -13,12 +13,13 @@
         font-weight: bold;
         padding: 5px;
     }
-    ul { list-style: none; padding-left 5px;}
+    ul { list-style: none; padding-left: 15px;}
     li { border-left: 1px solid black; border-bottom: 1px solid black;}
     li.leaf { background-color: #FFFFD4; }
     li.parent { background-color: #E2FEE2; }
-    li.parent > span { cursor: pointer; font-weight:bold; }
-    li.parent > span:hover { background-color: greenyellow; }
+    li.parent > span.call { cursor: pointer; font-weight:bold; }
+    li.parent > span.call:hover { background-color: greenyellow; }
+    li > a.path { float: right; }
     div.bar { border: 2px solid red;}
 
 </style>

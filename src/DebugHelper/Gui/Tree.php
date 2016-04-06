@@ -28,6 +28,7 @@ class Tree
         }
         $lines = $this->fileReader->read($start, $depth);
         $lines = $this->calcExtraInfo($lines);
+
         $this->renderPage($lines, $ajax);
     }
 
