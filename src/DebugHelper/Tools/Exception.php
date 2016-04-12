@@ -10,28 +10,26 @@ class Exception extends Abstracted
      *
      * @param \Exception $exception
      */
-    static public function exception($exception)
+    public function exception($exception)
     {
         if (!$exception instanceof \Exception) {
             k_die(); // The given exception is not a valid one...
         }
 
-        $exceptionName = get_class( $exception );
+        $exceptionName = get_class($exception);
         $exceptionFile = $exception->getFile();
         $exceptionLine = $exception->getLine();
-        $position = new Position($exceptionFile, $exceptionLine);
 
         $exceptionTrace = $exception->getTrace();
-        $exceptionTrace = \DebugHelper\Tools\Dump::getInstance()->getDebugTrace($exceptionTrace);
+        $exceptionTrace = k_dump()->getDebugTrace($exceptionTrace);
 
-        /*echo <<<EXCEPTION
-Exception thrown:
-$exceptionName
-<a href="codebrowser:$exceptionFile:$exceptionLine">$exceptionFile:$exceptionLine</a>
-$exceptionTrace
-EXCEPTION;
-*/
-        \DebugHelper\Tools\Output::dump($position, $exception->getMessage());
-        \DebugHelper\Tools\Dump::getInstance()->dump($exceptionTrace, 3);
+        $output = new Output();
+        $position = new Position($exceptionFile, $exceptionLine);
+        $pos = $output->getCallerDetails($position);
+        $output->open();
+        $output->dump($pos);
+        $output->dump($exceptionName . ': ' . $exception->getMessage());
+        $output->dump($exceptionTrace);
+        $output->close();
     }
 }

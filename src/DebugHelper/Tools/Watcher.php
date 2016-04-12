@@ -3,7 +3,7 @@ namespace DebugHelper\Tools;
 
 use DebugHelper\Tools\Model\Position;
 
-class Watcher extends Abstracted
+class Watcher
 {
     const COLLECT_PARAMS_NONE = 0;
     const COLLECT_PARAMS_SIMPLE = 1;

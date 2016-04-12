@@ -3,7 +3,7 @@ namespace DebugHelper\Tools;
 
 use DebugHelper\Tools\Helper\Trace;
 
-class Log extends Abstracted
+class Log
 {
     /**
      * Log header
@@ -11,14 +11,6 @@ class Log extends Abstracted
      * @var string
      */
     protected $header = 'LOG';
-    /**
-     * @var bool
-     */
-    protected $lastLog = false;
-    /**
-     * @var bool
-     */
-    protected $firstLog = false;
 
     /**
      * @param string $header
@@ -52,44 +44,12 @@ class Log extends Abstracted
      */
     public function log()
     {
-        $pos = $this->getCallerInfo();
-        $path = substr($pos->getFile(), -32);
-
-        $ms = microtime(true);
-        $elapsed = date('Y/m/d H:i:s');
-
-        if ($this->lastLog) {
-            $elapsed = ' +' . number_format($ms - $this->lastLog, 3);
+        $output = new Output(Output::MODE_FILE, $this->getLogPath());
+        $output->open();
+        foreach (func_get_args() as $argument) {
+            $output->dump($argument);
         }
-        if ($this->firstLog) {
-            $elapsed .= ' +' . number_format($ms - $this->firstLog, 3);
-        } else {
-            $this->firstLog = $ms;
-        }
-        $this->lastLog = $ms;
-
-        $data = '';
-        foreach(func_get_args() as $argument) {
-            if (is_array($argument) || is_object($argument)) {
-                $data .= $this->getArrayDump($this->toArray($argument));
-            } else {
-                $data .= var_export($argument, true) . PHP_EOL;
-            }
-        }
-        $data = trim($data);
-
-        $line = $pos->getLine();
-        $source = $pos->getSource();
-        $pos = "$path:$line [$elapsed]";
-        if ($this->header) {
-            $log = "\n[{$this->header}] {$pos} '$source'\n{$data}";
-        } elseif ($this->header === false) {
-            $log = "\n$data";
-        } else {
-            $log = "\n{$pos} {$data}";
-        }
-        $path = $this->getLogPath();
-        error_log($log, 3, $path);
+        $output->close();
     }
 
     /**
@@ -156,57 +116,5 @@ ROW;
                 . '_' . $extra . '.txt';
         }
         return \DebugHelper::getDebugDir() . 'log.txt';
-    }
-
-    /**
-     * Convert object to array.
-     *
-     * @param object $data Data to convert to array
-     *
-     * @return array
-     */
-    protected function toArray($data)
-    {
-        $result = array();
-        if (is_object($data)) {
-            $data = get_object_vars($data);
-
-        }
-        if (is_array($data)) {
-            foreach ($data as $key => $value) {
-                $result[$key] = $this->toArray($value);
-            }
-        } else {
-            $result = $data;
-        }
-        return $result;
-    }
-
-    /**
-     * Displays the array passed as information as a string.
-     *
-     * @param array $array Information to be dumped to the browser.
-     *
-     * @return string
-     */
-    protected function getArrayDump($array)
-    {
-        $data = print_r($array, true);
-        $data = preg_replace(
-            array(
-                "/\n\n/",
-                '/Array\s*\n\s*\(/',
-                '/\[(.*)\] =>(.*)\n/',
-                "/'array\(',/"
-            ),
-            array(
-                "\n",
-                'array(',
-                "$1:$2\n",
-                'array('
-            ),
-            $data
-        );
-        return $data;
     }
 }

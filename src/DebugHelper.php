@@ -116,7 +116,7 @@ function k_collect_errors()
  */
 function k_trace()
 {
-    \k_dump()->showtrace();
+    k_dump()->showtrace();
 }
 
 /**

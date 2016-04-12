@@ -2,8 +2,9 @@
 namespace DebugHelper\Tools;
 
 use DebugHelper\Styles;
+use DebugHelper\Tools\Model\Position;
 
-class Dump extends Abstracted
+class Dump
 {
     /**
      * Max depth for output objects
@@ -19,6 +20,12 @@ class Dump extends Abstracted
     public function setDepth($depth)
     {
         $this->depth = $depth;
+        return $this;
+    }
+
+    public function expand()
+    {
+        \DebugHelper::disable(\DebugHelper::OPTION_DUMP_COLLAPSED);
         return $this;
     }
 
@@ -47,13 +54,16 @@ class Dump extends Abstracted
         $trace = xdebug_get_function_stack();
         $trace = array_slice($trace, 0, count($trace) - 1);
         $debugTrace = self::getDebugTrace($trace);
-        echo $debugTrace;
+
+        $output = new Output();
+
+        $output->table($debugTrace);
     }
 
     /**
-     * Shows the HTML trace.
+     * Returns the trace.
      *
-     * @return string
+     * @return array
      */
     public function getDebugTrace($trace)
     {
@@ -82,13 +92,37 @@ class Dump extends Abstracted
             $step['line'] = isset($item['line']) ? $item['line'] : '-';
             $debugBacktrace[] = $step;
         }
-
-        if (\DebugHelper::isCli()) {
-            $debugBacktrace = "Showtrace in " . $this->array2Text($debugBacktrace);
-        } else {
-            $debugBacktrace = $this->array2Html($debugBacktrace, 'showtrace');
-            $debugBacktrace = "<pre>$debugBacktrace</pre>";
-        }
         return $debugBacktrace;
+    }
+
+    /**
+     * Exports the filter debug info.
+     *
+     * @return Position
+     */
+    protected function getCallerInfo()
+    {
+        $trace = debug_backtrace(false);
+
+        $item = ['file'=> '', 'line' => 0];
+        foreach ($trace as $item) {
+            if (isset($item['file'])) {
+                if (preg_match('/DebugHelper/', $item['file'])) {
+                    continue;
+                }
+            } elseif (isset($item['class']) && preg_match('/DebugHelper/', $item['class'])) {
+                continue;
+            }
+            break;
+        }
+
+        if (!isset($item['file'], $item['line'])) {
+            var_dump($trace);
+            exit;
+        }
+
+        $position = new Position($item['file'], $item['line']); // Demo
+        $position->setCall($item['function']);
+        return $position;
     }
 }
