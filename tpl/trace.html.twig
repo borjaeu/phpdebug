@@ -11,6 +11,7 @@
         .covered { background-color: #D4FFD4; }
         .follow { font-weight: bold; }
         .selected pre { background-color: #7FFF2A; }
+        .shared pre { background-color: #D4FFD4; }
         a { color: #000000; text-decoration: none; }
     </style>
 {% endblock %}
@@ -60,13 +61,13 @@
 
 <div class="column">
     <div class="inner">
-{% for line_no, line in trace_lines %}
-        <div class="line{% if line_no == selected_trace %} selected{% endif %}">
+{% for line_no, lineInfo in trace_lines %}
+        <div class="line{% if line_no == selected_trace %} selected{% elseif lineInfo.shared %} shared{% endif %}" title="{{ lineInfo.file }}">
             <a href="?trace={{ id }}&line={{ line_no }}&kizilare_debug=1" class="line_no">
                 {{ "%03d" | format(line_no) }}
             </a>
-            <a href="?trace={{ id }}&line={{ line_no }}&kizilare_debug=1" title="{{ line }}">
-                <pre class="line">{{ line }}</pre>
+            <a href="?trace={{ id }}&line={{ line_no }}&kizilare_debug=1">
+                <pre class="line">{{ lineInfo.indent }}{{ lineInfo.call }}</pre>
             </a>
         </div>
 {% endfor %}
@@ -75,7 +76,7 @@
 <div class="column">
     <div class="inner">
 {% for line_no, line in code_lines %}
-        <div class="line{% if line_no == line.selected %} selected{% endif %}{% if context[line_no] %} follow{% endif %}">
+        <div class="line{% if line.selected %} selected{% endif %}{% if context[line_no] %} follow{% endif %}">
             <a href="codebrowser:{{ line.path }}" class="line_no">{{ "%03d" | format(line_no) }} </a>
 {% if context[line_no] %}
             <a href="?trace={{ id }}&line={{ context[line_no] }}&kizilare_debug=1">
