@@ -51,6 +51,7 @@ class Dump
      */
     public function showtrace()
     {
+        ini_set('xdebug.collect_params', 3);
         $trace = xdebug_get_function_stack();
         $trace = array_slice($trace, 0, count($trace) - 1);
         $debugTrace = self::getDebugTrace($trace);

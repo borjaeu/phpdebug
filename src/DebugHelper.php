@@ -88,7 +88,6 @@ class DebugHelper
      */
     public static function init()
     {
-
     }
 }
 
