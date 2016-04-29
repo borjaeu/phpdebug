@@ -93,8 +93,6 @@ class Output
     {
         $id = uniqid();
 
-        Styles::showHeader('getCallers');
-
         $line = $position->getLine();
         $file = $position->getFile();
         $call = $position->getCall();
@@ -108,6 +106,7 @@ class Output
 POS;
                 break;
             default:
+                Styles::showHeader('getCallers');
                 $filename = basename($file);
                 return <<<POS
 <a class="debug_caller" name="$id" href="codebrowser:{$file}:{$line}" title="in {$call}">{$source}
@@ -165,8 +164,6 @@ POS;
         }
         $split = number_format($split, 6);
 
-        Styles::showHeader('dump', 'objectToHtml');
-
         $pos = self::getCallerDetails($position);
         $id = uniqid();
 
@@ -178,6 +175,7 @@ POS;
                 error_log("$pos\n", 3, $this->file);
                 break;
             default:
+                Styles::showHeader('dump', 'objectToHtml');
                 echo <<<DEBUG
 
 <div id="$id" class="debug_dump">
@@ -214,7 +212,7 @@ DEBUG;
                 echo $data;
                 break;
             case self::MODE_FILE:
-                error_log($data, 3, $this->file);
+                error_log($data . PHP_EOL, 3, $this->file);
                 break;
             default:
                 if (!is_null($data)) {
