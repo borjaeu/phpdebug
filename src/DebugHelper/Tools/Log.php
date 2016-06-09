@@ -54,6 +54,17 @@ class Log
 
     /**
      * Save the data to a log file.
+     */
+    public function logTrace()
+    {
+        $output = new Output(Output::MODE_FILE, $this->getLogPath());
+        $output->open();
+        k_dump()->showtrace($output);
+        $output->close();
+    }
+
+    /**
+     * Save the data to a log file.
      *
      * @param mixed $data Data to be written in the log.
      * @param string $header Identifier for the header of the log entry.
@@ -78,31 +89,6 @@ class Log
 
         error_log($log, 3, $path);
         self::log(basename($path), 'UNIQUE');
-    }
-
-    /**
-     * Shows the text trace
-     *
-     * @return mixed
-     */
-    public function showtrace()
-    {
-        $traceHelper = new Trace();
-        $trace = $traceHelper->getTrace();
-
-
-
-        $debugBacktrace = '';
-        foreach ($trace as $item) {
-
-
-            $debugBacktrace
-                .= <<<ROW
-{$item['file']}:{$item['line']} {$item['line']} {$item['call']}()
-
-ROW;
-        }
-        self::log($debugBacktrace, 'TRACE', 5);
     }
 
     /**
