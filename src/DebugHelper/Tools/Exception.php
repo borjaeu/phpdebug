@@ -3,7 +3,7 @@ namespace DebugHelper\Tools;
 
 use DebugHelper\Tools\Model\Position;
 
-class Exception extends Abstracted
+class Exception
 {
     /**
      * Begins the trace to watch where the code goes.
