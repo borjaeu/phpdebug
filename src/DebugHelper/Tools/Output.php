@@ -2,6 +2,7 @@
 namespace DebugHelper\Tools;
 
 use DebugHelper\Styles;
+use DebugHelper\Tools\Helper\CommandParameters;
 use DebugHelper\Tools\Model\Position;
 use ReflectionClass;
 
@@ -108,8 +109,9 @@ POS;
             default:
                 Styles::showHeader('getCallers');
                 $filename = basename($file);
+                $url = $this->buildUrl($file, $line);
                 return <<<POS
-<a class="debug_caller" name="$id" href="codebrowser:{$file}:{$line}" title="in {$call}">{$source}
+<a class="debug_caller" name="$id" href="$url" title="in {$call}">{$source}
     <span class="line">{$filename}::{$line}</span>
 </a>
 
@@ -283,6 +285,24 @@ DEBUG;
     }
 
     /**
+     * Creates a an url
+     *
+     * @param string $file
+     * @param int $line
+     * @return string
+     */
+    public function buildUrl($file, $line = null)
+    {
+        $commandParameters = new CommandParameters();
+
+        $handlerInfo = \DebugHelper::getHandler();
+        $file = str_replace($handlerInfo['source'], $handlerInfo['target'], $file);
+        $handler = $commandParameters->parse($handlerInfo['handler'], ['file' => $file, 'line' => $line]);
+
+        return $handler;
+    }
+
+    /**
      * Convert data to HTML.
      *
      * @param object $data Data to convert to array
@@ -366,7 +386,7 @@ DEBUG;
             } else {
                 echo 'Unknown type';
                 var_dump($data);
-                die(sprintf("<pre><a href=\"codebrowser:%s:%d\">DIE</a></pre>", __FILE__, __LINE__));
+                die(sprintf("<pre><a href=\"%s\">DIE</a></pre>", $this->buildUrl(__FILE__, __LINE__)));
             }
         }
         $id++;
@@ -503,11 +523,8 @@ HTML;
             foreach ($item as $field => $value) {
                 if ($field == 'file') {
                     $file = $this->getShortenedPath($value, 4);
-                    if (isset($item['line'])) {
-                        $value = "<a href=\"codebrowser:$value:{$item['line']}\" title=\"$value\">$file</a>";
-                    } else {
-                        $value = "<a href=\"codebrowser:$value\" title=\"$value\">$file</a>";
-                    }
+                    $url = $this->buildUrl($item['file'], isset($item['line']) ? $item['line'] : null);
+                    $value = "<a href=\"$url}\" title=\"$value\">$file</a>";
                 }
                 $html_table .= "\t\t<td class=\"$field\">$value</td>\n";
             }

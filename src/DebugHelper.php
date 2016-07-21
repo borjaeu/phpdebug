@@ -76,6 +76,31 @@ class DebugHelper
     }
 
     /**
+     * @return string
+     */
+    public static function getHandler()
+    {
+        $handler = isset(self::$options['url_handler'])
+            ? self::$options['url_handler']
+            : [
+                'handler' => 'codebrowser:<file>[:<line>]',
+                'source' => '',
+                'target' => ''
+            ];
+
+        return $handler;
+    }
+
+    public static function setHandler($handler, $sourcePath = '', $realPath = '')
+    {
+        self::$options['url_handler'] = [
+            'handler' => $handler,
+            'source' => $sourcePath,
+            'target' => $realPath
+        ];
+    }
+
+    /**
      * @return bool
      */
     public static function isCli()

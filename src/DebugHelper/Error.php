@@ -1,6 +1,8 @@
 <?php
 namespace DebugHelper;
 
+use DebugHelper\Tools\Output;
+
 class Error
 {
     const ALL_ERRORS = 'all_errors';
@@ -63,9 +65,11 @@ in $file:$line [$error_code]
 
 ERROR;
         } else {
+            $output = new Output();
+            $url = $output->buildUrl($file, $line);
             echo <<<ERROR
 <div class="error_handler $class" id="$id">
-    <strong>Php $type</strong> $message in <a href="codebrowser:$file:$line">$file on line $line</a></span> $error_code
+    <strong>Php $type</strong> $message in <a href="$url">$file on line $line</a></span> $error_code
 </div>
 ERROR;
         }

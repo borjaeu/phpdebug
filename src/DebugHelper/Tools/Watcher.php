@@ -196,7 +196,8 @@ class Watcher
 
         $this->traceFile = '';
         if ($finishExecution) {
-            die(sprintf("<pre><a href=\"codebrowser:%s:%d\">DIE</a></pre>", __FILE__, __LINE__));
+            $output = new Output();
+            die(sprintf("<pre><a href=\"%s\">DIE</a></pre>", $output->buildUrl(__FILE__, __LINE__)));
         }
     }
 
