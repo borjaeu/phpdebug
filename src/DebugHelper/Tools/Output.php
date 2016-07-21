@@ -105,7 +105,6 @@ class Output
                 return <<<POS
 {$file}:{$line} in {$call}
 POS;
-                break;
             default:
                 Styles::showHeader('getCallers');
                 $filename = basename($file);
@@ -194,8 +193,9 @@ DEBUG;
     /**
      * Displays the data passed as information.
      *
-     * @param mixed $data Information to be dumped to the browser.
+     * @param mixed   $data     Information to be dumped to the browser.
      * @param integer $maxDepth Maximum depth for objects
+     *
      * @return Output
      */
     public function dump($data, $maxDepth = 5)
@@ -338,23 +338,23 @@ DEBUG;
         if (is_object($data)) {
             $reflection = new ReflectionClass($data);
             $properties = $reflection->getProperties();
-            $properties_array = array();
+            $propertiesArray = array();
             $debug['value'] = get_class($data);
             $debug['type'] = 'object(' . count($properties) . ')';
             $debug['class'] = 'object';
             foreach ($properties as $property) {
                 $property->setAccessible(true);
-                $properties_array[$property->getName()] = $property->getValue($data);
+                $propertiesArray[$property->getName()] = $property->getValue($data);
             }
-            $data = $properties_array;
+            $data = $propertiesArray;
         }
         if (is_array($data)) {
             $debug['sub_items'] = array();
             $debug['type'] .= '(' . count($data) . ')';
             $debug['class'] = 'array';
             if ($level < $maxLevel) {
-                foreach ($data as $sub_key => $sub_value) {
-                    $debug['sub_items'][$sub_key] = $this->objectToArray($sub_value, $level + 1, $maxLevel);
+                foreach ($data as $subKey => $subValue) {
+                    $debug['sub_items'][$subKey] = $this->objectToArray($subValue, $level + 1, $maxLevel);
                 }
             }
         } else {
@@ -390,8 +390,9 @@ DEBUG;
             }
         }
         $id++;
-        preg_match('/^\w+/', $debug['type'], $type_class);
-        $debug['class'] = $type_class[0];
+        preg_match('/^\w+/', $debug['type'], $typeClass);
+        $debug['class'] = $typeClass[0];
+
         return $debug;
     }
 
@@ -511,32 +512,47 @@ HTML;
         return $debug;
     }
 
+    /**
+     * Creates a html table from an array of data
+     *
+     * @param array $rows
+     *
+     * @return string
+     */
     private function array2Html(array $rows)
     {
-        $html_table = "<table>\n\t<tr>\n";
+        $htmlTable = "<table>\n\t<tr>\n";
         foreach ($rows[0] as $field => $value) {
-            $html_table .= "\t\t<th>$field</th>\n";
+            $htmlTable .= "\t\t<th>$field</th>\n";
         }
-        $html_table .= "\t</tr>\n";
+        $htmlTable .= "\t</tr>\n";
         foreach ($rows as $item) {
-            $html_table .= "\t<tr>\n";
+            $htmlTable .= "\t<tr>\n";
             foreach ($item as $field => $value) {
                 if ($field == 'file') {
                     $file = $this->getShortenedPath($value, 4);
                     $url = $this->buildUrl($item['file'], isset($item['line']) ? $item['line'] : null);
                     $value = "<a href=\"$url}\" title=\"$value\">$file</a>";
                 }
-                $html_table .= "\t\t<td class=\"$field\">$value</td>\n";
+                $htmlTable .= "\t\t<td class=\"$field\">$value</td>\n";
             }
-            $html_table .= "\t</tr>\n";
+            $htmlTable .= "\t</tr>\n";
         }
-        $html_table .= "\n</table>\n";
-        return $html_table;
+        $htmlTable .= "\n</table>\n";
+
+        return $htmlTable;
     }
 
+    /**
+     * Create a ascii table from an array of data
+     *
+     * @param array $rows
+     *
+     * @return string
+     */
     private function array2Text(array $rows)
     {
-        $text_table = '';
+        $textTable = '';
         $headers = array();
 
         foreach ($rows as $item) {
@@ -550,7 +566,7 @@ HTML;
             }
         }
         foreach ($headers as $field => $length) {
-            $text_table .= "$field" . str_repeat(' ', $length - strlen($field));
+            $textTable .= "$field" . str_repeat(' ', $length - strlen($field));
         }
         $odd = true;
         foreach ($rows as $item) {
@@ -562,9 +578,10 @@ HTML;
             if ($odd) {
                 $row = $this->getColoredString($row, '', 'magenta');
             }
-            $text_table .= $row . "\n";
+            $textTable .= $row . "\n";
         }
-        return $text_table;
+
+        return $textTable;
     }
 
 
@@ -578,6 +595,9 @@ HTML;
      */
     private function getColoredString($string, $foreground = '', $background = '')
     {
+        if ($this->mode !== self::MODE_CLI) {
+            return $string;
+        }
         $coloredString = '';
 
         if (isset($this->cliForeground[$foreground])) {

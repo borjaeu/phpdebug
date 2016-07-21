@@ -49,14 +49,16 @@ class Dump
      *
      * @return mixed
      */
-    public function showtrace()
+    public function showtrace(Output $output = null)
     {
         ini_set('xdebug.collect_params', 3);
         $trace = xdebug_get_function_stack();
         $trace = array_slice($trace, 0, count($trace) - 1);
-        $debugTrace = self::getDebugTrace($trace);
+        $debugTrace = $this->getDebugTrace($trace);
 
-        $output = new Output();
+        if (empty($output)) {
+            $output = new Output();
+        }
 
         $output->table($debugTrace);
     }

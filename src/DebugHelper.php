@@ -144,6 +144,14 @@ function k_trace()
 }
 
 /**
+ * Shows the HTML trace
+ */
+function k_log_trace()
+{
+    k_log()->logTrace();
+}
+
+/**
  * Save the data to a log file.
  *
  * @return \DebugHelper\Tools\Log
