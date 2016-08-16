@@ -23,7 +23,7 @@ class ListCommand extends Abstracted
      */
     protected function getFiles()
     {
-        $path = \DebugHelper::getDebugDir();
+        $path = \DebugHelper::get('debug_dir');
 
         $files = glob($path . '*.xt');
         array_walk($files, function (&$item) use ($path) {

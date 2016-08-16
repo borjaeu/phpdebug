@@ -69,7 +69,7 @@ class Gui
     {
         $files = self::getFiles();
         $template = new Gui\Template();
-        $template->assign('root_dir', \DebugHelper::getDebugDir());
+        $template->assign('root_dir', \DebugHelper::get('debug_dir'));
         $template->assign('files', $files);
         $template->assign('readonly', self::get('readonly', false));
         echo $template->fetch('index');
@@ -82,7 +82,7 @@ class Gui
      */
     protected static function getFiles()
     {
-        $path = \DebugHelper::getDebugDir();
+        $path = \DebugHelper::get('debug_dir');
 
         $files = glob($path . '*.svr');
         array_walk($files, function (&$item) use ($path) {
@@ -184,6 +184,7 @@ class Gui
                 break;
             }
         }
+
         return $result;
     }
 
@@ -213,7 +214,7 @@ class Gui
      */
     protected static function delete($id)
     {
-        $path = \DebugHelper::getDebugDir();
+        $path = \DebugHelper::get('debug_dir');
 
         $files = glob($path . $id . '.*');
         array_walk($files, function ($item) {
@@ -229,7 +230,7 @@ class Gui
      */
     protected static function rename($id, $name)
     {
-        $path = \DebugHelper::getDebugDir();
+        $path = \DebugHelper::get('debug_dir');
 
         $files = glob($path . $id . '.*');
         array_walk($files, function ($item) use ($name) {

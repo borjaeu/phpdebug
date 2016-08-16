@@ -17,7 +17,7 @@ class Sequence
     public function setFile($fileId)
     {
         $this->id = $fileId;
-        $this->file = \DebugHelper::getDebugDir() . $fileId . '.xt.diag.json';
+        $this->file = \DebugHelper::get('debug_dir') . $fileId . '.xt.diag.json';
 
 
         if (!is_file($this->file)) {

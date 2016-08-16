@@ -53,7 +53,7 @@ class ReadCommand extends Abstracted
     protected function loadArguments()
     {
         $this->options = [];
-        $this->inputFile = isset($this->arguments[2]) ? \DebugHelper::getDebugDir() . $this->arguments[2] : false;
+        $this->inputFile = isset($this->arguments[2]) ? \DebugHelper::get('debug_dir') . $this->arguments[2] : false;
         $this->inputLine = isset($this->arguments[3]) ? $this->arguments[3] : 0;
     }
 

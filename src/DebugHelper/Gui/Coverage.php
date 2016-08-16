@@ -27,7 +27,7 @@ class Coverage
     public function setFile($file)
     {
         $this->id = $file;
-        $file = \DebugHelper::getDebugDir() . $file . '.cvg';
+        $file = \DebugHelper::get('debug_dir') . $file . '.cvg';
         if (!is_file($file)) {
             throw new \Exception("Error Processing file $file");
         }

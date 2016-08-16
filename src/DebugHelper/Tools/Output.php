@@ -6,6 +6,10 @@ use DebugHelper\Tools\Helper\CommandParameters;
 use DebugHelper\Tools\Model\Position;
 use ReflectionClass;
 
+/**
+ * Class Output
+ * @package DebugHelper\Tools
+ */
 class Output
 {
     const MODE_NORMAL = 'normal';
@@ -40,7 +44,7 @@ class Output
         'brown'         => '0;33',
         'yellow'        => '1;33',
         'light_gray'    => '0;37',
-        'white'         => '1;37'
+        'white'         => '1;37',
     ];
 
     /**
@@ -109,6 +113,7 @@ POS;
                 Styles::showHeader('getCallers');
                 $filename = basename($file);
                 $url = $this->buildUrl($file, $line);
+
                 return <<<POS
 <a class="debug_caller" name="$id" href="$url" title="in {$call}">{$source}
     <span class="line">{$filename}::{$line}</span>
@@ -116,37 +121,6 @@ POS;
 
 POS;
         }
-    }
-
-    /**
-     * Exports the filter debug info.
-     *
-     * @return Position
-     */
-    private function getCallerInfo()
-    {
-        $trace = debug_backtrace(false);
-
-        $item = ['file'=> '', 'line' => 0];
-        foreach ($trace as $item) {
-            if (isset($item['file'])) {
-                if (preg_match('/DebugHelper/', $item['file'])) {
-                    continue;
-                }
-            } elseif (isset($item['class']) && preg_match('/DebugHelper/', $item['class'])) {
-                continue;
-            }
-            break;
-        }
-
-        if (!isset($item['file'], $item['line'])) {
-            var_dump($trace);
-            exit;
-        }
-
-        $position = new Position($item['file'], $item['line']); // Demo
-        $position->setCall($item['function']);
-        return $position;
     }
 
     /** Displays the data passed as information.
@@ -170,7 +144,7 @@ POS;
 
         switch ($this->mode) {
             case self::MODE_CLI:
-                echo PHP_EOL . $this->getColoredString("$pos", 'black', 'yellow') . PHP_EOL;
+                echo PHP_EOL.$this->getColoredString("$pos", 'black', 'yellow').PHP_EOL;
                 break;
             case self::MODE_FILE:
                 error_log("$pos\n", 3, $this->file);
@@ -187,6 +161,7 @@ POS;
 
 DEBUG;
         }
+
         return $this;
     }
 
@@ -214,7 +189,7 @@ DEBUG;
                 echo $data;
                 break;
             case self::MODE_FILE:
-                error_log($data . PHP_EOL, 3, $this->file);
+                error_log($data.PHP_EOL, 3, $this->file);
                 break;
             default:
                 if (!is_null($data)) {
@@ -230,6 +205,7 @@ DEBUG;
         if ($mustClose) {
             $this->close();
         }
+
         return $this;
     }
 
@@ -288,16 +264,18 @@ DEBUG;
      * Creates a an url
      *
      * @param string $file
-     * @param int $line
+     * @param int    $line
      * @return string
      */
     public function buildUrl($file, $line = null)
     {
         $commandParameters = new CommandParameters();
+        $handlerUrl = \DebugHelper::get('handler_url');
+        $handlerSource = \DebugHelper::get('handler_source');
+        $handlerTarget = \DebugHelper::get('handler_target');
 
-        $handlerInfo = \DebugHelper::getHandler();
-        $file = str_replace($handlerInfo['source'], $handlerInfo['target'], $file);
-        $handler = $commandParameters->parse($handlerInfo['handler'], ['file' => $file, 'line' => $line]);
+        $file = str_replace($handlerSource, $handlerTarget, $file);
+        $handler = $commandParameters->parse($handlerUrl, ['file' => $file, 'line' => $line]);
 
         return $handler;
     }
@@ -340,7 +318,7 @@ DEBUG;
             $properties = $reflection->getProperties();
             $propertiesArray = array();
             $debug['value'] = get_class($data);
-            $debug['type'] = 'object(' . count($properties) . ')';
+            $debug['type'] = 'object('.count($properties).')';
             $debug['class'] = 'object';
             foreach ($properties as $property) {
                 $property->setAccessible(true);
@@ -350,7 +328,7 @@ DEBUG;
         }
         if (is_array($data)) {
             $debug['sub_items'] = array();
-            $debug['type'] .= '(' . count($data) . ')';
+            $debug['type'] .= '('.count($data).')';
             $debug['class'] = 'array';
             if ($level < $maxLevel) {
                 foreach ($data as $subKey => $subValue) {
@@ -360,12 +338,12 @@ DEBUG;
         } else {
             if (is_string($data)) {
                 $size = strlen($data);
-                $debug['type'] = 'string(' . $size . ')';
+                $debug['type'] = 'string('.$size.')';
                 $debug['class'] = 'string';
                 $debug['value'] = $data;
                 if ($size > 160) {
                     $debug['sub_items'] = $data;
-                    $debug['value'] = substr($data, 0, 160) . '[...]';
+                    $debug['value'] = substr($data, 0, 160).'[...]';
                 }
             } elseif (is_null($data)) {
                 $debug['type'] = 'null';
@@ -439,7 +417,7 @@ DEBUG;
         $script = '';
         if (!empty($extra)) {
             $status = \DebugHelper::isEnabled(\DebugHelper::OPTION_DUMP_COLLAPSED) ? 'collapsed' : 'expanded';
-            $script = 'onclick="return toggleObjectToHtmlNode(' . $id . ');"';
+            $script = 'onclick="return toggleObjectToHtmlNode('.$id.');"';
         }
         $debug .= <<<HTML
 $indent<li id="debug_node_$id" class="$status $class">
@@ -484,12 +462,12 @@ HTML;
                     $extra .= $this->tree2Text(
                         $subValue,
                         $subKey,
-                        $indent . ($isLast ? ' ' : $line) . '  ',
+                        $indent.($isLast ? ' ' : $line).'  ',
                         --$count == 0
                     );
                 }
             } elseif (is_string($data['sub_items'])) {
-                $extra = '=--' . $this->getColoredString($data['sub_items'], 'blue');
+                $extra = '=--'.$this->getColoredString($data['sub_items'], 'blue');
             }
             unset($data['sub_items']);
         }
@@ -498,17 +476,18 @@ HTML;
         }
         $content = '';
         foreach ($data as $field => $value) {
-            $content .= "$field:" . $this->getColoredString($value, 'blue') . ' ';
+            $content .= "$field:".$this->getColoredString($value, 'blue').' ';
         }
 
         if ($key !== false) {
-            $key = $this->getColoredString($key, 'green') . $this->getColoredString(': ', 'red');
+            $key = $this->getColoredString($key, 'green').$this->getColoredString(': ', 'red');
         }
         $indent .= $isLast ? $last : $cross;
         $debug .= <<<HTML
 $indent$dash$key$content
 $extra
 HTML;
+
         return $debug;
     }
 
@@ -566,19 +545,19 @@ HTML;
             }
         }
         foreach ($headers as $field => $length) {
-            $textTable .= "$field" . str_repeat(' ', $length - strlen($field));
+            $textTable .= "$field".str_repeat(' ', $length - strlen($field));
         }
         $odd = true;
         foreach ($rows as $item) {
             $odd = !$odd;
             $row = '';
             foreach ($item as $field => $value) {
-                $row .= $value . str_repeat(' ', $headers[$field] - strlen($value));
+                $row .= $value.str_repeat(' ', $headers[$field] - strlen($value));
             }
             if ($odd) {
                 $row = $this->getColoredString($row, '', 'magenta');
             }
-            $textTable .= $row . "\n";
+            $textTable .= $row."\n";
         }
 
         return $textTable;
@@ -601,12 +580,12 @@ HTML;
         $coloredString = '';
 
         if (isset($this->cliForeground[$foreground])) {
-            $coloredString .= "\033[" . $this->cliForeground[$foreground] . "m";
+            $coloredString .= "\033[".$this->cliForeground[$foreground]."m";
         }
         if (isset($this->cliBackground[$background])) {
-            $coloredString .= "\033[" . $this->cliBackground[$background] . "m";
+            $coloredString .= "\033[".$this->cliBackground[$background]."m";
         }
-        $coloredString .=  $string . "\033[0m";
+        $coloredString .=  $string."\033[0m";
 
         return $coloredString;
     }
@@ -621,6 +600,42 @@ HTML;
     {
         $steps = explode('/', $path);
         $path = array_slice($steps, -$length);
+
         return implode('/', $path);
+    }
+
+    /**
+     * Exports the filter debug info.
+     *
+     * @return Position
+     */
+    private function getCallerInfo()
+    {
+        $trace = debug_backtrace(false);
+
+        $item = [
+            'file' => '',
+            'line' => 0,
+        ];
+        foreach ($trace as $item) {
+            if (isset($item['file'])) {
+                if (preg_match('/DebugHelper/', $item['file'])) {
+                    continue;
+                }
+            } elseif (isset($item['class']) && preg_match('/DebugHelper/', $item['class'])) {
+                continue;
+            }
+            break;
+        }
+
+        if (!isset($item['file'], $item['line'])) {
+            var_dump($trace);
+            exit;
+        }
+
+        $position = new Position($item['file'], $item['line']); // Demo
+        $position->setCall($item['function']);
+
+        return $position;
     }
 }

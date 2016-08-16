@@ -150,7 +150,7 @@ class SequenceCommand extends Abstracted
      */
     public function run()
     {
-        $file = \DebugHelper::getDebugDir() . $this->arguments[2];
+        $file = \DebugHelper::get('debug_dir') . $this->arguments[2];
         preg_match('/^(.*\/)?(?P<id>.*?)(\.\w*)?$/', $file, $matches);
         $fileId = $matches['id'];
         print_r($fileId);
@@ -211,7 +211,7 @@ class SequenceCommand extends Abstracted
             fclose($fileIn);
             echo "Ignored classes\n";
             ksort($this->ignoreCount);
-            k_dump($this->ignoreCount);
+            \DebugHelper::dump($this->ignoreCount);
             $output = json_encode($this->steps, JSON_PRETTY_PRINT);
             if ($output == false) {
                 var_dump(json_last_error());

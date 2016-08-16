@@ -27,8 +27,8 @@ class Processor
      */
     public function process($fileId, $run = true)
     {
-        $fileIn     = \DebugHelper::getDebugDir() . '/' . $fileId . '.xt.clean';
-        $fileOut    = \DebugHelper::getDebugDir() . '/' . $fileId . '.xt.json';
+        $fileIn     = \DebugHelper::get('debug_dir').'/' . $fileId . '.xt.clean';
+        $fileOut    = \DebugHelper::get('debug_dir').'/' . $fileId . '.xt.json';
 
         if (!is_file($fileIn)) {
             throw new \Exception("Error Processing file {$fileIn}");

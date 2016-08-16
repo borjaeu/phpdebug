@@ -68,7 +68,7 @@ ITEM;
         $output .= '</pre>';
         if ($file) {
             $output = Styles::getHeader('profileReport') . $output;
-            $filename = \DebugHelper::getDebugDir() . uniqid() . '.html';
+            $filename = \DebugHelper::get('debug_dir').uniqid().'.html';
             file_put_contents($filename, $output);
         } else {
             Styles::showHeader('profileReport');

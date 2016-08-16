@@ -19,3 +19,9 @@ This will write several files in the temp folder (by default the directory temp/
 In order to watch the debug information:
 
     \DebugHelper\Gui::renderLoadsHtml('2015_04_29_12_26_25');
+
+
+
+Collect errors:
+
+    set_error_handler(array('DebugHelper\Error', 'handler'));

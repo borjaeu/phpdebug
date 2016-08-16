@@ -1,8 +1,10 @@
 <?php
 namespace DebugHelper\Tools;
 
-use DebugHelper\Tools\Helper\Trace;
-
+/**
+ * Class Log
+ * @package DebugHelper\Tools
+ */
 class Log
 {
     /**
@@ -19,6 +21,7 @@ class Log
     public function setHeader($header)
     {
         $this->header = $header;
+
         return $this;
     }
 
@@ -59,48 +62,24 @@ class Log
     {
         $output = new Output(Output::MODE_FILE, $this->getLogPath());
         $output->open();
-        k_dump()->showtrace($output);
+        \DebugHelper::dump()->showtrace($output);
         $output->close();
     }
 
     /**
-     * Save the data to a log file.
-     *
-     * @param mixed $data Data to be written in the log.
-     * @param string $header Identifier for the header of the log entry.
-     */
-    public function logUnique($data, $extra = '')
-    {
-        $pos = $this->getCallerInfo();
-        $path = explode('/', $pos['file']);
-        $path = array_splice($path, -2);
-        $path = implode('/', $path);
-
-        if (is_array($data) || is_object($data)) {
-            $data = $this->toArray($data);
-            $data = $this->getArrayDump($data);
-        } elseif (empty($data)) {
-            $data = '';
-        }
-
-        $log = "$path:{$pos['line']}\n\n$data";
-
-        $path = $this->getLogPath(true, $extra);
-
-        error_log($log, 3, $path);
-        self::log(basename($path), 'UNIQUE');
-    }
-
-    /**
+     * @param bool   $unique
+     * @param string $extra
      * @return string
      */
     protected function getLogPath($unique = false, $extra = '')
     {
+        $logPath = \DebugHelper::get('debug_dir');
         if ($unique) {
-            return
-                \DebugHelper::getDebugDir() . date('Y_m_d_h_i_s') . preg_replace('/\d+\./', '', microtime(true))
-                . '_' . $extra . '.txt';
+            $logPath .= date('Y_m_d_h_i_s').preg_replace('/\d+\./', '', microtime(true)).'_'.$extra.'.txt';
+        } else {
+            $logPath .= 'log.txt';
         }
-        return \DebugHelper::getDebugDir() . 'log.txt';
+
+        return $logPath;
     }
 }

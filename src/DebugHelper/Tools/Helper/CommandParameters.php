@@ -1,6 +1,14 @@
 <?php
 namespace DebugHelper\Tools\Helper;
 
+/**
+ * Class CommandParameters
+ *
+ * Replace command parameters with values.
+ * commnad <required_parameter> [<optional_parameter>] [additional=<optional_parameter>]
+ *
+ * @package DebugHelper\Tools\Helper
+ */
 class CommandParameters
 {
     /**
@@ -8,6 +16,11 @@ class CommandParameters
      */
     protected $parameters;
 
+    /**
+     * @param string $command
+     * @param array  $parameters
+     * @return string
+     */
     public function parse($command, array $parameters)
     {
         $this->parameters = $parameters;
@@ -48,7 +61,7 @@ class CommandParameters
             $parameter = $match['parameter'];
 
             if (empty($this->parameters[$parameter])) {
-                throw new \UnexpectedValueException('Missing parameter ' . $parameter);
+                throw new \UnexpectedValueException('Missing parameter '.$parameter);
             }
 
             return $this->parameters[$parameter];
@@ -56,5 +69,4 @@ class CommandParameters
 
         return $command;
     }
-
 }

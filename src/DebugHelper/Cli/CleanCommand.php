@@ -5,6 +5,10 @@ use DebugHelper\Cli\Util\Progress;
 use DebugHelper\Cli\Util\Statistics;
 use DebugHelper\Gui\Processor;
 
+/**
+ * Class CleanCommand
+ * @package DebugHelper\Cli
+ */
 class CleanCommand extends Abstracted
 {
     /**
@@ -63,7 +67,8 @@ class CleanCommand extends Abstracted
     {
         $this->progress = new Progress();
         if (!empty($this->arguments['help'])) {
-            echo "./console clean [file] [--force] [--functions] [--namespaces='namespace1, namespace2]\n";
+            echo "./console clean [file] [--force] [--skip-function] [--skip-namespace='namespace1, namespace2]\n";
+
             return;
         }
 
@@ -71,8 +76,8 @@ class CleanCommand extends Abstracted
         if ($this->options['file']) {
             $this->cleanFile($this->options['file']);
         } else {
-            $files = glob(\DebugHelper::getDebugDir() . '/*.xt');
-            foreach($files as $file) {
+            $files = glob(\DebugHelper::get('debug_dir').'/*.xt');
+            foreach ($files as $file) {
                 $this->cleanFile($file);
             }
         }
@@ -86,11 +91,10 @@ class CleanCommand extends Abstracted
         $this->options = [];
         $this->options['functions'] = !empty($this->arguments['functions']);
         $this->options['force'] = !empty($this->arguments['force']);
-        $this->options['file'] = isset($this->arguments[2]) ? \DebugHelper::getDebugDir() . $this->arguments[2] : false;
+        $this->options['file'] = isset($this->arguments[2]) ? \DebugHelper::get('debug_dir').$this->arguments[2] : false;
 
         if (!empty($this->arguments['skip-namespace'])) {
             $this->ignoreNamespaces = preg_split('/\s*,\s*/', $this->arguments['skip-namespace']);
-
         }
         if (!empty($this->arguments['skip-path'])) {
             $this->ignoreDirectories = preg_split('/\s*,\s*/', $this->arguments['skip-path']);
@@ -109,7 +113,7 @@ class CleanCommand extends Abstracted
         preg_match('/^(.*\/)?(?P<id>.*?)(\.\w*)?$/', $file, $matches);
         $fileId = $matches['id'];
 
-        if (!is_file('temp/' . $fileId . '.xt')) {
+        if (!is_file('temp/'.$fileId.'.xt')) {
             throw new \Exception("Error Processing file $fileId");
         }
 
@@ -139,8 +143,8 @@ class CleanCommand extends Abstracted
         $count = 320000000;
         $lineNo = 0;
 
-        $fileSize = filesize("temp/{$fileId}.xt");;
-        echo "Starting $fileSize" . PHP_EOL;
+        $fileSize = filesize("temp/{$fileId}.xt");
+        echo "Starting $fileSize".PHP_EOL;
 
         $totalPassed = 0;
         fseek($fileIn, 0);
@@ -150,7 +154,7 @@ class CleanCommand extends Abstracted
             $line = fgets($fileIn);
             $size += strlen($line);
             $lineNo++;
-            if ($lineNo % 1000 == 0)  {
+            if ($lineNo % 1000 == 0) {
                 $status = sprintf('ratio %0.2f%%; line %d', ($totalPassed/ $lineNo) * 100, $lineNo);
                 $this->progress->showStatus($size, $fileSize, $status);
             }
@@ -162,31 +166,32 @@ class CleanCommand extends Abstracted
         }
         $this->stats->sort();
 
-        $usedPaths= array_slice($this->stats->get('path.used', null, []), 0, 20);
-        echo PHP_EOL . PHP_EOL . "\033[32mMost used paths\033[0m" . PHP_EOL;
-        foreach($usedPaths as $path => $lines) {
+        $usedPaths = array_slice($this->stats->get('path.used', null, []), 0, 20);
+        echo PHP_EOL.PHP_EOL."\033[32mMost used paths\033[0m".PHP_EOL;
+        foreach ($usedPaths as $path => $lines) {
             printf('%6d %s%s', $lines, $path, PHP_EOL);
         }
 
         $usedNamespaces = array_slice($this->stats->get('namespaces.used', null, []), 0, 20);
-        echo PHP_EOL . PHP_EOL . "\033[32mMost used namespaces\033[0m" . PHP_EOL;
-        foreach($usedNamespaces as $namespace => $lines) {
+        echo PHP_EOL.PHP_EOL."\033[32mMost used namespaces\033[0m".PHP_EOL;
+        foreach ($usedNamespaces as $namespace => $lines) {
             printf('%6d %s%s', $lines, $namespace, PHP_EOL);
         }
 
         $skippedNamespaces = array_slice($this->stats->get('namespaces.skipped', null, []), 0, 20);
-        echo PHP_EOL . "\033[32mSkipped namespaces\033[0m" . PHP_EOL;
-        foreach($skippedNamespaces as $namespace => $lines) {
+        echo PHP_EOL."\033[32mSkipped namespaces\033[0m".PHP_EOL;
+        foreach ($skippedNamespaces as $namespace => $lines) {
             printf('%6d %s%s', $lines, $namespace, PHP_EOL);
         }
 
         $skippedPath = array_slice($this->stats->get('path.skipped', null, []), 0, 20);
-        echo PHP_EOL . "\033[32mSkipped paths\033[0m" . PHP_EOL;
-        foreach($skippedPath as $path => $lines) {
+        echo PHP_EOL."\033[32mSkipped paths\033[0m".PHP_EOL;
+        foreach ($skippedPath as $path => $lines) {
             printf('%6d %s%s', $lines, $path, PHP_EOL);
         }
 
-        printf("
+        printf(
+            "
 \033[32mStats\033[0m
 %6d valid lines
 %6d invalid lines
@@ -203,6 +208,7 @@ class CleanCommand extends Abstracted
             $this->stats->get('skipped_by.namespace', null, 0),
             $lineNo
         );
+
         return $totalPassed;
     }
 
@@ -220,6 +226,7 @@ class CleanCommand extends Abstracted
                 if ($lineInfo['depth'] > $this->ignoreDepth) {
                     $this->stats->increment('namespaces.skipped', $this->ignoring);
                     $this->stats->increment('skipped_by.namespace');
+
                     return false;
                 } else {
                     $this->ignoreDepth = false;
@@ -231,19 +238,23 @@ class CleanCommand extends Abstracted
                     $this->ignoring = $matches['namespace'];
                 } elseif ($this->isIgnoredDirectory($lineInfo['path'])) {
                     $this->stats->increment('skipped_by.path');
+
                     return false;
                 }
             } else {
                 $this->stats->increment('skipped_by.functions');
+
                 return false;
             }
             if ($matches['namespace'] !== $this->ignoring) {
                 $this->registerNamespace($matches['namespace']);
             }
             $this->registerPath($lineInfo['path']);
+
             return $line;
         } else {
             $this->stats->increment('skipped_by.invalid');
+
             return false;
         }
     }
@@ -265,6 +276,7 @@ class CleanCommand extends Abstracted
                 return true;
             }
         }
+
         return false;
     }
 
@@ -280,9 +292,11 @@ class CleanCommand extends Abstracted
         foreach ($this->ignoreDirectories as $ignoreDirectory) {
             if (strpos($path, $ignoreDirectory) !== false) {
                 $this->stats->increment('path.skipped', $ignoreDirectory);
+
                 return true;
             }
         }
+
         return false;
     }
 
@@ -294,14 +308,15 @@ class CleanCommand extends Abstracted
      */
     protected function getLineInfo($line)
     {
-        $reg_exp = '/(?P<time>\d+\.\d+)\s+(?P<memory>\d+)(?P<depth>\s+)->\s+(?P<call>.*)\s+(?P<path>[^\s+]+)$/';
-        if (preg_match($reg_exp, $line, $matches)) {
+        $regExp = '/(?P<time>\d+\.\d+)\s+(?P<memory>\d+)(?P<depth>\s+)->\s+(?P<call>.*)\s+(?P<path>[^\s+]+)$/';
+        if (preg_match($regExp, $line, $matches)) {
             $matches['depth'] = ceil(strlen($matches['depth']) / 2);
             $matches['path_length'] = count(explode('/', $matches['path']));
+
             return $matches;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     /**
@@ -312,7 +327,7 @@ class CleanCommand extends Abstracted
     protected function registerNamespace($namespace)
     {
         $levels = explode('\\', $namespace);
-        while(!empty($levels)) {
+        while (!empty($levels)) {
             $namespace = implode('\\', $levels);
             $this->stats->increment('namespaces.used', $namespace);
             array_pop($levels);
@@ -327,7 +342,7 @@ class CleanCommand extends Abstracted
     protected function registerPath($path)
     {
         $levels = explode('/', $path);
-        while(!empty($levels)) {
+        while (!empty($levels)) {
             $namespace = implode('/', $levels);
             $this->stats->increment('path.used', $namespace);
             array_pop($levels);

@@ -55,7 +55,7 @@ class Tree
     public function setFile($fileId)
     {
         $this->fileId = $fileId;
-        $file = \DebugHelper::getDebugDir() . $fileId. '.xt.clean';
+        $file = \DebugHelper::get('debug_dir') . $fileId. '.xt.clean';
 
         if (!is_file($file)) {
             throw new \Exception("Invalid file {$file}");

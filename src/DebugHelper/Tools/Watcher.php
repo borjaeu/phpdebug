@@ -1,8 +1,13 @@
 <?php
 namespace DebugHelper\Tools;
 
+use DebugHelper\Cli\CleanCommand;
 use DebugHelper\Tools\Model\Position;
 
+/**
+ * Class Watcher
+ * @package DebugHelper\Tools
+ */
 class Watcher
 {
     const COLLECT_PARAMS_NONE = 0;
@@ -70,17 +75,23 @@ class Watcher
         $this->collectParams = self::COLLECT_PARAMS_NONE;
 
         preg_match('/0\.(?P<decimal>\d+)/', microtime(), $matches);
-        $traceFile = date('Y_m_d_h_i_s_') . $matches['decimal'];
+        $traceFile = date('Y_m_d_h_i_s_').$matches['decimal'];
 
         $this->setTraceFile($traceFile);
 
-        file_put_contents($this->traceFile . '.svr', json_encode(array(
-            'time'      => time(),
-            'server'    => $_SERVER,
-            'post'      => $_POST,
-            'get'       => $_GET,
-            'files'     => $_FILES
-        ), JSON_PRETTY_PRINT));
+        file_put_contents(
+            $this->traceFile.'.svr',
+            json_encode(
+                [
+                    'time'      => time(),
+                    'server'    => $_SERVER,
+                    'post'      => $_POST,
+                    'get'       => $_GET,
+                    'files'     => $_FILES,
+                ],
+                JSON_PRETTY_PRINT
+            )
+        );
     }
 
     /**
@@ -89,7 +100,8 @@ class Watcher
      */
     public function setTraceFile($file)
     {
-        $this->traceFile = \DebugHelper::getDebugDir() . $file;
+        $this->traceFile = \DebugHelper::get('debug_dir').$file;
+
         return $this;
     }
 
@@ -102,6 +114,7 @@ class Watcher
     public function setLevel($level)
     {
         $this->level = $level;
+
         return $this;
     }
 
@@ -113,6 +126,7 @@ class Watcher
     public function disableCoverage()
     {
         $this->coverage = false;
+
         return $this;
     }
 
@@ -124,6 +138,7 @@ class Watcher
     public function disableTrace()
     {
         $this->trace = false;
+
         return $this;
     }
 
@@ -134,6 +149,7 @@ class Watcher
     public function setCollectReturn($collectReturn)
     {
         $this->collectReturn = $collectReturn;
+
         return $this;
     }
 
@@ -144,6 +160,7 @@ class Watcher
     public function setCollectParams($collectParams)
     {
         $this->collectParams = $collectParams;
+
         return $this;
     }
 
@@ -162,7 +179,7 @@ class Watcher
             return;
         }
 
-        k_log("Watch started", 'AUTO');
+        \DebugHelper::log('Watch started');
         $this->output('Watch started', 100);
 
         if ($this->trace) {
@@ -191,7 +208,7 @@ class Watcher
         }
         if ($this->coverage) {
             $coverage = $this->getCodeCoverage();
-            file_put_contents($this->traceFile . '.cvg', json_encode($coverage));
+            file_put_contents($this->traceFile.'.cvg', json_encode($coverage));
         }
 
         $this->traceFile = '';
@@ -206,13 +223,13 @@ class Watcher
      */
     public static function shutDownEndWatch()
     {
-        k_watcher()->endWatch();
+        \DebugHelper::watcher()->endWatch();
     }
 
     protected function startTrace()
     {
         ini_set('xdebug.profiler_enable', 1);
-        ini_set('xdebug.profiler_output_dir', \DebugHelper::getDebugDir());
+        ini_set('xdebug.profiler_output_dir', \DebugHelper::get('debug_dir'));
         ini_set('xdebug.collect_params', $this->collectParams); // 0 None, 1, Simple, 3 Full
         ini_set('xdebug.collect_return', $this->collectReturn); // 0 None, 1, Yes
         ini_set('xdebug.var_display_max_depth', 2);
@@ -243,11 +260,12 @@ class Watcher
      */
     protected function getCodeCoverage()
     {
-        $code_coverage = xdebug_get_code_coverage();
+        $codeCoverage = xdebug_get_code_coverage();
         $result = array();
-        foreach ($code_coverage as $file => $lines) {
+        foreach ($codeCoverage as $file => $lines) {
             $result[$file] = $lines;
         }
+
         return $result;
     }
 }

@@ -138,7 +138,7 @@ class Diagram
     public function setFile($file)
     {
         $this->id = $file;
-        $this->file = \DebugHelper::getDebugDir() . $file . '.xt';
+        $this->file = \DebugHelper::get('debug_dir') . $file . '.xt';
 
         if (!is_file($this->file)) {
             throw new \Exception("Error Processing file $file");

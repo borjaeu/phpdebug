@@ -5,6 +5,8 @@ class Styles
 {
     /**
      * Gets the styles given.
+     *
+     * @return string
      */
     public static function getHeader()
     {
@@ -16,15 +18,17 @@ class Styles
 
         $headers = self::getAllHeaders();
 
-        $result = array();
+        $result = [];
         foreach ($keys as $key) {
-            if (!empty($shown_headers[$key])) {
-                return;
+            if (!empty($shownHeaders[$key])) {
+                $result = '';
+                break;
             }
-            $shown_headers[$key] = true;
+            $shownHeaders[$key] = true;
 
             $result[] = preg_replace('/\s+/', ' ', $headers[$key]);
         }
+
         return implode("\n", $result);
     }
 
@@ -33,25 +37,24 @@ class Styles
      */
     public static function showHeader()
     {
-        static $shown_headers = array();
+        static $shownHeaders = [];
 
         if (\DebugHelper::isCli()) {
-            $keys = array();
+            $keys = [];
         } else {
             $keys = func_get_args();
         }
 
-
         $headers = self::getAllHeaders();
 
         foreach ($keys as $key) {
-            if (!empty($shown_headers[$key])) {
+            if (!empty($shownHeaders[$key])) {
                 return;
             }
-            $shown_headers[$key] = true;
+            $shownHeaders[$key] = true;
 
             $header = preg_replace('/\s+/', ' ', $headers[$key]);
-            echo $header . "\n";
+            echo $header."\n";
         }
     }
 

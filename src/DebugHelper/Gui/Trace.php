@@ -1,12 +1,30 @@
 <?php
 namespace DebugHelper\Gui;
+use DebugHelper\Tools\Output;
 
+/**
+ * Class Trace
+ * @package DebugHelper\Gui
+ */
 class Trace
 {
     protected $id;
-    protected $coverage_file;
-    protected $trace_file;
+
+    /**
+     * @var string
+     */
+    protected $coverageFile;
+
+    /**
+     * @var string
+     */
+    protected $traceFile;
+
     protected $coverage;
+
+    /**
+     * @var int
+     */
     protected $totalLines;
 
     /**
@@ -29,19 +47,20 @@ class Trace
     {
         $this->id = $file;
 
-        $this->coverage_file = \DebugHelper::getDebugDir() . $file . '.cvg';
-        if (!is_file($this->coverage_file)) {
-            throw new \Exception("Error Processing file {$this->coverage_file}");
+        $this->coverageFile = \DebugHelper::get('debug_dir').$file.'.cvg';
+        if (!is_file($this->coverageFile)) {
+            throw new \Exception("Error Processing file {$this->coverageFile}");
         }
 
-        $this->trace_file = \DebugHelper::getDebugDir() . $file . '.xt.clean';
-        if (!is_file($this->trace_file)) {
-            $this->trace_file = \DebugHelper::getDebugDir() . $file . '.xt';
-            if (!is_file($this->trace_file)) {
-                throw new \Exception("Error Processing file {$this->trace_file}");
+        $this->traceFile = \DebugHelper::get('debug_dir').$file.'.xt.clean';
+
+        if (!is_file($this->traceFile)) {
+            $this->traceFile = \DebugHelper::get('debug_dir').$file.'.xt';
+            if (!is_file($this->traceFile)) {
+                throw new \Exception("Error Processing file {$this->traceFile}");
             }
-
         }
+
         return $this;
     }
 
@@ -52,7 +71,7 @@ class Trace
      */
     protected function loadCoverage()
     {
-        return json_decode(file_get_contents($this->coverage_file), true);
+        return json_decode(file_get_contents($this->coverageFile), true);
     }
 
     /**
@@ -64,27 +83,27 @@ class Trace
     {
         $this->totalLines = 0;
         if (!empty($_GET['search'])) {
-            list($targetLineNo, $trace_lines) = $this->getSearchLines($_GET['search']);
+            list($targetLineNo, $traceLines) = $this->getSearchLines($_GET['search']);
         } else {
             if ($targetLineNo < 1) {
                 $targetLineNo = 1;
             }
-            $trace_lines = $this->getLines($this->trace_file, $targetLineNo, 30);
+            $traceLines = $this->getLines($this->traceFile, $targetLineNo, 30);
         }
 
-        $trace_lines = $this->getLinesDetails($trace_lines, $targetLineNo);
+        $traceLines = $this->getLinesDetails($traceLines, $targetLineNo);
 
-        $currentStepInfo = $trace_lines[$targetLineNo];
+        $currentStepInfo = $traceLines[$targetLineNo];
         $context = [];
         if (isset($currentStepInfo['file'])) {
-            $context = $this->getSource($this->trace_file, $targetLineNo, $currentStepInfo['file']);
+            $context = $this->getSource($this->traceFile, $targetLineNo, $currentStepInfo['file']);
         }
-        $navigation = $this->getTraceBreadCrumbs($this->trace_file, $targetLineNo);
+        $navigation = $this->getTraceBreadCrumbs($this->traceFile, $targetLineNo);
 
         $template = new Template();
         $template->assign('id', $this->id);
         $template->assign('selected_trace', $targetLineNo);
-        $template->assign('trace_lines', $trace_lines);
+        $template->assign('trace_lines', $traceLines);
         $template->assign('total_lines', $this->totalLines);
         if ($this->totalLines) {
             $template->assign('progress', floor(100 * $targetLineNo / $this->totalLines));
@@ -102,14 +121,20 @@ class Trace
         echo $template->fetch('trace');
     }
 
+    /**
+     * @param $traceLines
+     * @param $targetLineNumber
+     * @return mixed
+     */
     private function getLinesDetails($traceLines, $targetLineNumber)
     {
         $targetLineInfo = $this->getLineDetails($traceLines[$targetLineNumber]);
 
-        foreach($traceLines as $lineNumber => $line) {
+        foreach ($traceLines as $lineNumber => $line) {
             $traceLines[$lineNumber] = $this->getLineDetails($line);
             $traceLines[$lineNumber]['shared'] = $traceLines[$lineNumber]['file'] == $targetLineInfo['file'];
         }
+
         return $traceLines;
     }
 
@@ -120,35 +145,42 @@ class Trace
     private function getSearchLines($search)
     {
         $targetLineNo = 1;
-        $searchResults = $this->getLinesForKeyword($this->trace_file, $search);
+        $searchResults = $this->getLinesForKeyword($this->traceFile, $search);
         $traceLines = [];
-        foreach($searchResults as $targetLineNo => $searchResult) {
-            $traceLines = array_replace($traceLines, $this->getLines($this->trace_file, $targetLineNo, 5));
+        foreach ($searchResults as $targetLineNo => $searchResult) {
+            $traceLines = array_replace($traceLines, $this->getLines($this->traceFile, $targetLineNo, 5));
         }
+
         return [$targetLineNo, $traceLines];
     }
 
     /**
-     * @param $line
-     * @return array|bool
+     * @param string $file
+     * @param int    $targetLineNumber
+     * @return array
      */
-    protected function getCodeLines($file, $targetLineNumber)
+    private function getCodeLines($file, $targetLineNumber)
     {
+        $output = new Output();
         $coverage = isset($this->coverage[$file]) ? $this->coverage[$file] : array();
         $lines = $this->getLines($file, $targetLineNumber, 30);
         foreach ($lines as $lineNumber => $line) {
-            $lines[$lineNumber] = array(
-                'path' => $file . ':' . $lineNumber,
+            $lines[$lineNumber] = [
+                'path' => $file.':'.$lineNumber,
                 'code' => $line,
+                'link' => $output->buildUrl($file, $lineNumber),
                 'selected' => $lineNumber == $targetLineNumber,
-                'covered' => isset($coverage[$lineNumber])
-            );
+                'covered' => isset($coverage[$lineNumber]),
+            ];
         }
 
         return $lines;
     }
 
-    protected function getLine()
+    /**
+     * @return int
+     */
+    private function getLine()
     {
         return isset($_GET['line']) ? $_GET['line'] : 1;
     }
@@ -160,23 +192,24 @@ class Trace
      * @param string $search String to search in the code
      * @return array
      */
-    protected function getLinesForKeyword($file, $search)
+    private function getLinesForKeyword($file, $search)
     {
         if (!is_file($file)) {
             return array();
         }
         $fp = fopen($file, 'r');
-        $line_no = 0;
+        $lineNo = 0;
         $lines = array();
 
         while (!feof($fp)) {
-            $line_no++;
+            $lineNo++;
             $line = fgets($fp);
             if (strpos($line, $search) !== false) {
-                $lines[$line_no] = rtrim($line);
+                $lines[$lineNo] = rtrim($line);
             }
         }
         fclose($fp);
+
         return $lines;
     }
 
@@ -184,31 +217,32 @@ class Trace
      * Returns an array with the lines in the specified file.
      *
      * @param string $file The file to return the lines from.
-     * @param integer $target_line_no Number of the line to retrieve.
+     * @param integer $targetLineNo Number of the line to retrieve.
      * @param integer $margin Number of lines to retrieve after and before the current line.
      * @return array
      */
-    protected function getLines($file, $target_line_no, $margin)
+    private function getLines($file, $targetLineNo, $margin)
     {
         if (!is_file($file)) {
             return array();
         }
         $fp = fopen($file, 'r');
-        $line_no = 0;
+        $lineNo = 0;
         $lines = array();
-        $start = $target_line_no - $margin;
+        $start = $targetLineNo - $margin;
         if ($start < 0) {
             $start = 0;
         }
-        while ($line_no < $start) {
-            $line_no++;
+        while ($lineNo < $start) {
+            $lineNo++;
             fgets($fp);
         }
         for ($i = 0; $i < $margin * 2 + 1; $i++) {
-            $line_no++;
-            $lines[$line_no] = rtrim(fgets($fp));
+            $lineNo++;
+            $lines[$lineNo] = rtrim(fgets($fp));
         }
         fclose($fp);
+
         return $lines;
     }
 
@@ -216,31 +250,31 @@ class Trace
      * Returns an the breadcrumbs to reach the line we are requesting.
      *
      * @param string $file The file to return the lines from.
-     * @param integer $target_line_no Number of the line to retrieve.
+     * @param integer $targetLineNo Number of the line to retrieve.
      * @return array
      */
-    protected function getTraceBreadCrumbs($file, $target_line_no)
+    protected function getTraceBreadCrumbs($file, $targetLineNo)
     {
 
         if (!is_file($file)) {
             return array();
         }
         $fp = fopen($file, 'r');
-        $line_no = 1;
+        $lineNo = 1;
         $history = array();
 
         $pos = array('depth' => 1234);
 
-        while ($line_no <= $target_line_no) {
+        while ($lineNo <= $targetLineNo) {
             $line = fgets($fp);
             $lineInfo = $this->getLineInfo($line);
             if ($lineInfo) {
-                $pos = array(
+                $pos = [
                     'depth' => strlen($lineInfo[1]),
-                    'line'  => $line_no,
+                    'line'  => $lineNo,
                     'call'  => $lineInfo[2],
-                    'name'  => $lineInfo[3]
-                );
+                    'name'  => $lineInfo[3],
+                ];
                 for ($i = count($history) - 1; $i >= 0; $i--) {
                     if ($history[$i]['depth'] >= $pos['depth']) {
                         unset($history[$i]);
@@ -249,7 +283,7 @@ class Trace
                 $history = array_values($history);
                 $history[] = $pos;
             }
-            $line_no++;
+            $lineNo++;
         }
 
         array_pop($history);
@@ -263,83 +297,92 @@ class Trace
             if ($lineInfo) {
                 $depth = strlen($lineInfo[1]);
                 if ($depth <= $actualDepth) {
-                    $next = array(
+                    $next = [
                         'depth' => $depth,
-                        'line' => $line_no,
+                        'line' => $lineNo,
                         'call' => $lineInfo[2],
-                        'name'  => $lineInfo[3]
-                    );
+                        'name'  => $lineInfo[3],
+                    ];
                     break;
                 }
             }
-            $line_no++;
+            $lineNo++;
         }
         fclose($fp);
-        return array(
+
+        return [
             'breadcrumbs'   => $history,
-            'next'          => $next
-        );
+            'next'          => $next,
+        ];
     }
 
     /**
      * Get the trace context for the lines in the source.
      *
      * @param string $file The file to return the lines from.
-     * @param integer $target_line_no Number of the line to retrieve.
-     * @param string $source_file The file to return the lines from.
+     * @param integer $targetLineNo Number of the line to retrieve.
+     * @param string $sourceFile The file to return the lines from.
      * @return array
      */
-    protected function getSource($file, $target_line_no, $source_file)
+    protected function getSource($file, $targetLineNo, $sourceFile)
     {
         if (!is_file($file)) {
             return array();
         }
         $fp = fopen($file, 'r');
-        $line_no = 1;
+        $lineNo = 1;
 
         $context = array();
-        while ($line_no <= $target_line_no) {
+        while ($lineNo <= $targetLineNo) {
             $line = fgets($fp);
-            if (strpos($line, $source_file)) {
+            if (strpos($line, $sourceFile)) {
                 preg_match('/(?P<file>\/.*?:)(?P<line>\d+)/', $line, $matches);
-                $context[$matches['line']] = $line_no;
+                $context[$matches['line']] = $lineNo;
             }
-            $line_no++;
+            $lineNo++;
         }
         while (!feof($fp)) {
             $line = fgets($fp);
-            if (strpos($line, $source_file)) {
+            if (strpos($line, $sourceFile)) {
                 preg_match('/(?P<file>\/.*?:)(?P<line>\d+)/', $line, $matches);
-                $context[$matches['line']] = $line_no;
+                $context[$matches['line']] = $lineNo;
             }
-            $line_no++;
+            $lineNo++;
         }
-        $this->totalLines = $line_no - 1;
+        $this->totalLines = $lineNo - 1;
         fclose($fp);
+
         return $context;
     }
 
+    /**
+     * @param $line
+     * @return bool
+     */
     private function getLineInfo($line)
     {
         $lineRegExp = '/(\s+)->\s*([^\(]*?(\w+))\(/i';
 
+        $lineInfo = false;
         if (preg_match($lineRegExp, $line, $matches)) {
-            return $matches;
+            $lineInfo = $matches;
         }
-        return false;
+
+        return $lineInfo;
     }
 
     /**
      * Extract information from a trace line
      *
      * @param string $line Line to process
-     * @return bool
+     * @return array|bool
      */
-    protected function getLineDetails($line)
+    private function getLineDetails($line)
     {
-        $reg_exp = '/(?P<time>\d+\.\d+)\s+(?P<memory>\d+)(?P<depth>\s+)->\s+(?P<call>.*)\s+(?P<path>[^\s]+?)(:(?P<line>\d+))?$/';
-        if (preg_match($reg_exp, $line, $matches)) {
-            return [
+        $regExp = '/(?P<time>\d+\.\d+)\s+(?P<memory>\d+)(?P<depth>\s+)->\s+(?P<call>.*)\s+(?P<path>[^\s]+?)(:(?P<line>\d+))?$/';
+        $lineDetails = false;
+        if (preg_match($regExp, $line, $matches)) {
+            $lineDetails = [
                 'depth'         => ceil(strlen($matches['depth']) / 2),
                 'indent'        => $matches['depth'],
                 'path_length'   => count(explode('/', $matches['path'])),
@@ -347,10 +390,10 @@ class Trace
                 'memory'        => $matches['memory'],
                 'call'          => $matches['call'],
                 'file'          => $matches['path'],
-                'line'          => $matches['line']
+                'line'          => $matches['line'],
             ];
-        } else {
-            return false;
         }
+
+        return $lineDetails;
     }
 }

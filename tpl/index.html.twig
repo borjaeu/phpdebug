@@ -39,7 +39,6 @@
                 <th>Method</th>
                 <th>Post</th>
                 <th>Host</th>
-                <th>Uri</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -85,8 +84,7 @@
             <td>{{ file.size }}</td>
             <td>{{ file.info.server.REQUEST_METHOD }}</td>
             <td>{{ file.info.post | length }}</td>
-            <td>{{ file.info.server.HTTP_HOST }}</td>
-            <td>{{ file.info.server.REQUEST_URI }}</td>
+            <td title="{{ file.info.server.REQUEST_URI }}">{{ file.info.server.HTTP_HOST }}</td>
             <td>
                 <a href="?delete={{ file.id }}&kizilare_debug=1" onclick="deleteTrace('{{ file.id }}'); return false;" title="delete file" class="btn btn-danger" role="button">
                     <span class="glyphicon glyphicon-remove"></span>

@@ -1,8 +1,17 @@
 <?php
 namespace DebugHelper;
 
+use DebugHelper\Cli\Abstracted;
+
+/**
+ * Class Cli
+ * @package DebugHelper
+ */
 class Cli
 {
+    /**
+     * @var array
+     */
     protected $options = ['list', 'sequence', 'clean', 'tail', 'read'];
 
     /**
@@ -14,14 +23,14 @@ class Cli
     public function execute(array $arguments)
     {
         if (empty($arguments[1])) {
-            throw new \Exception('Invalid request:' . PHP_EOL . $this->getMessage());
+            throw new \Exception('Invalid request:'.PHP_EOL.$this->getMessage());
         }
         $option = $arguments[1];
         if (!in_array($option, $this->options)) {
             throw new \Exception("Unknown options $option");
-
         }
-        $className = '\DebugHelper\Cli\\' . ucfirst($option) . 'Command';
+        $className = '\DebugHelper\Cli\\'.ucfirst($option).'Command';
+        /** @var Abstracted $executor */
         $executor = new $className($arguments);
         $executor->run();
     }
@@ -36,6 +45,9 @@ class Cli
         return $this->options;
     }
 
+    /**
+     * @return string
+     */
     protected function getMessage()
     {
         return <<<INFO
@@ -47,4 +59,3 @@ class Cli
 INFO;
     }
 }
-
