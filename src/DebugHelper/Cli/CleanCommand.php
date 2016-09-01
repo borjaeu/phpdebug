@@ -122,7 +122,7 @@ class CleanCommand extends Abstracted
         } else {
             echo "Generating file {$fileId}.xt.clean\n";
             $lines = $this->generateFiles($fileId);
-            if ($lines < 10000) {
+            if ($lines < 30000) {
                 $processor = new Processor();
                 $processor->setProgress($this->progress);
                 echo "Generating structure for {$fileId}\n";
