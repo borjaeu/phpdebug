@@ -12,7 +12,7 @@ class Cli
     /**
      * @var array
      */
-    protected $options = ['list', 'sequence', 'clean', 'tail', 'read'];
+    protected $options = ['list', 'sequence', 'clean', 'tail', 'read', 'profile'];
 
     /**
      * Execute the command line
@@ -56,6 +56,7 @@ class Cli
  - clean [file] [--force] [--functions] [--skip-namespace='namespace1, namespace2] [--skip-path='directory1, directory2]
  - tail
  - read
+ - profile
 INFO;
     }
 }
