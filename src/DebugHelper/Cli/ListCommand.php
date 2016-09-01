@@ -2,8 +2,6 @@
 namespace DebugHelper\Cli;
 
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Helper\TableCell;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -14,8 +12,8 @@ class ListCommand extends Abstracted
      */
     protected function configure()
     {
-        $this->setName('list')
-            ->setDescription('Read file configuration');
+        $this->setName('files')
+            ->setDescription('Gets list of debug files');
     }
 
     /**
