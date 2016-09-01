@@ -30,7 +30,7 @@ class DebugHelper
      *
      * @param array $options
      */
-    public static function init(array $options)
+    public static function init(array $options = [])
     {
         $defaultOptions = [
             'debug_output'   => true,
