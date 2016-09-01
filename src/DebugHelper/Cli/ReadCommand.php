@@ -2,69 +2,60 @@
 namespace DebugHelper\Cli;
 
 use DebugHelper\Helper\Read;
+use Symfony\Component\Console\Helper\QuestionHelper;
+use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\Question;
 
 class ReadCommand extends Abstracted
 {
     /**
-     * Command line options
-     *
-     * @var array
-     */
-    protected $inputFile;
-
-    /**
-     * Command line options
-     *
-     * @var integer
-     */
-    protected $inputLine;
-
-    /**
      * @var resource
      */
-    protected $fileIn;
+    private $fileIn;
 
     /**
      * @var integer
      */
-    protected $fileSize;
+    private $fileSize;
 
     /**
-     * Execute the command line
+     * @var Read
      */
-    public function run()
-    {
-        if (!empty($this->arguments['help'])) {
-            echo "./console read file\n";
-            return;
-        }
+    private $reader;
 
-        $this->loadArguments();
-        if (!$this->inputFile) {
-            echo 'Invalid file' . PHP_EOL;
-        } else {
-            $this->readFile($this->inputFile);
-        }
+    /**
+     * @var OutputInterface
+     */
+    private $output;
+
+    /**
+     * @var InputInterface
+     */
+    private $input;
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function configure()
+    {
+        $this->setName('read')
+            ->setDescription('Read file configuration')
+            ->addArgument('file', InputArgument::REQUIRED);
     }
 
     /**
-     * Load the command line argument
+     * {@inheritdoc}
      */
-    protected function loadArguments()
+    protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->options = [];
-        $this->inputFile = isset($this->arguments[2]) ? \DebugHelper::get('debug_dir') . $this->arguments[2] : false;
-        $this->inputLine = isset($this->arguments[3]) ? $this->arguments[3] : 0;
-    }
+        $file = $input->getArgument('file');
+        $this->output = $output;
+        $this->input = $input;
 
-    /**
-     * @param string $file File to clean
-     * @throws \Exception
-     */
-    protected function readFile($file)
-    {
-        preg_match('/^(.*\/)?(?P<id>.*?)(\.\w*)?$/', $file, $matches);
-        $fileId = $matches['id'];
+        $fileId = $this->getIdFromFile($file);
 
         if (!is_file('temp/' . $fileId . '.xt')) {
             throw new \Exception("Error Processing file $fileId");
@@ -73,41 +64,64 @@ class ReadCommand extends Abstracted
         if (!is_file("temp/{$fileId}.xt.clean")) {
             throw new \Exception("Invalid file {$fileId}.xt.clean");
         }
-        $reader = new Read("temp/{$fileId}.xt.clean");
+        $this->reader = new Read("temp/{$fileId}.xt.clean");
 
         $this->fileSize = filesize("temp/{$fileId}.xt.clean");
         $this->fileIn = fopen("temp/{$fileId}.xt.clean", 'r');
 
-        echo "Reading file {$fileId}.xt.clean\n";
-        if ($this->inputLine) {
-            $start = $this->inputLine + 1;
-            $depth = $reader->getDepth($this->inputLine) + 1;
-            echo "Depth $depth from $start\n";
+        $output->write("Reading file {$fileId}.xt.clean. ");
+
+        $this->showLine(0);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    private function showLine($startLine)
+    {
+        if ($startLine) {
+            $start = $startLine + 1;
+            $depth = $this->reader->getDepth($startLine) + 1;
+            $this->output->writeln("Depth $depth from $start");
         } else {
-            $depth = $reader->getOuterDepth();
+            $depth = $this->reader->getOuterDepth();
             $start = 0;
-            echo "Outer depth $depth\n";
+            $this->output->writeln("Outer depth $depth");
         }
 
-        $lines = $reader->read($start, $depth);
+        $lines = $this->reader->read($start, $depth);
 
         $maxWidth = 0;
-        foreach($lines as $line) {
+        foreach ($lines as $line) {
             $maxWidth = max($maxWidth, strlen($line['call']) + 1);
         }
 
+        $table = new Table($this->output);
+        $table->setHeaders(['Line', 'Call', 'Child', 'Desc', 'Time', 'Spent', 'Path']);
+
+        $choices = [];
         foreach ($lines as $lineInfo) {
-            printf(
-                '%6d %s %s [%03d/%-06d] [%08d/%-08d] %s' . PHP_EOL,
+            $choices[] = $lineInfo['call'];
+            $table->addRow([
                 $lineInfo['line'],
                 $lineInfo['call'],
-                str_repeat(' ', $maxWidth - strlen($lineInfo['call'])),
                 $lineInfo['children'],
                 $lineInfo['descendant'],
-                $lineInfo['time'],
-                $lineInfo['length'],
-                $lineInfo['path']
-            );
+                (int) $lineInfo['time_acum'],
+                (int) $lineInfo['time_spent'],
+                basename($lineInfo['path']),
+            ]);
+        }
+        $table->render();
+
+        /** @var QuestionHelper $helper */
+        $helper = $this->getHelper('question');
+        $question = new Question('Select line: ');
+
+        $line = $helper->ask($this->input, $this->output, $question);
+
+        if ($line) {
+            $this->showLine($line);
         }
     }
 }

@@ -2,10 +2,12 @@
 <?php
 require __DIR__ . '/../../autoload.php';
 
+use DebugHelper\Cli\ReadCommand;
+use Symfony\Component\Console\Application;
+
 \DebugHelper::init();
-$commandLine = new \DebugHelper\Cli();
-try {
-    $commandLine->execute($argv);
-} catch (\Exception $exception) {
-    echo $exception->getMessage() . "\n";
-}
+$application = new Application();
+
+$application->add(new ReadCommand());
+
+$application->run();

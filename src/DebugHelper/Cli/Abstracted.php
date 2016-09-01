@@ -1,36 +1,18 @@
 <?php
 namespace DebugHelper\Cli;
 
-abstract class Abstracted
+use Symfony\Component\Console\Command\Command;
+
+abstract class Abstracted extends Command
 {
     /**
-     * Arguments used in the command
-     *
-     * @var array
+     * @param string $file
+     * @return string
      */
-    protected $arguments;
-
-    /**
-     * Init class
-     *
-     * @param array $arguments Arguments sent to the command line
-     */
-    public function __construct(array $arguments)
+    protected function getIdFromFile($file)
     {
-        $this->arguments = [];
-        foreach ($arguments as $index => $argument) {
-            if (preg_match('/--(?P<parameter>[^\s]+?)(=(?P<value>.*))?$/', $argument, $matches)) {
-                $parameter = $matches['parameter'];
-                $value = isset($matches['value']) ? $matches['value'] : true;
-                $this->arguments[$parameter] = $value;
-            } else {
-                $this->arguments[$index] = $argument;
-            }
-        }
-    }
+        preg_match('/^(.*\/)?(?P<id>.*?)(\.\w*)?$/', $file, $matches);
 
-    /**
-     * Execute the command
-     */
-    abstract public function run();
+        return $matches['id'];
+    }
 }

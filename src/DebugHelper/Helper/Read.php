@@ -14,6 +14,11 @@ class Read
     protected $fileSize;
 
     /**
+     * @var array
+     */
+    private $lines;
+
+    /**
      * @param string $file File to clean
      * @throws \Exception
      */
@@ -28,7 +33,7 @@ class Read
     }
 
     /**
-     * Sets the value of file.
+     * Gets the depth for the given trace line number
      *
      * @param integer $lineNumber Line number
      * @return integer
@@ -43,15 +48,17 @@ class Read
             $line = fgets($this->fileIn);
             if ($currentLineNumber == $lineNumber) {
                 $outLine = $this->processInputLine($line);
+
                 return $outLine['depth'];
 
             }
         }
+
         return $this->getOuterDepth();
     }
 
     /**
-     * Sets the value of file.
+     * Gets the minimum depth for the whole trace.
      *
      * @return integer
      */
@@ -72,52 +79,68 @@ class Read
         return $depth;
     }
 
-    public function read($start, $depth)
+    /**
+     * Reads the information a fetches stats for the given depth
+     *
+     * @param int $startLine
+     * @param int $depth
+     * @return array
+     */
+    public function read($startLine, $depth)
     {
         $currentLineNumber = 0;
 
         fseek($this->fileIn, 0);
 
-        $lines = [];
+        $this->lines = [];
         $index = 0;
-        $time = 0;
+
+        $lastLineInfo = false;
         while (!feof($this->fileIn)) {
             $line = fgets($this->fileIn);
             $currentLineNumber++;
-            if ($start && $currentLineNumber < $start) {
+            if ($startLine && $currentLineNumber < $startLine) {
                 continue;
             }
             $lineInfo = $this->processInputLine($line);
             if ($lineInfo !== false) {
-                $time = $lineInfo['time'];
+                $lastLineInfo = [
+                    'line'       => $currentLineNumber,
+                    'call'       => $lineInfo['call'],
+                    'path'       => $lineInfo['path'],
+                    'mem_acum'   => $lineInfo['memory'],
+                    'mem_spent'  => 0,
+                    'time_acum'  => ($lineInfo['time'] * 1000),
+                    'time_spent' => 0,
+                    'length'     => 0,
+                    'children'   => 0,
+                    'descendant' => 0,
+                ];
                 if ($lineInfo['depth'] == $depth) {
-                    if ($index) {
-                        $lines[$index]['length'] = ($lineInfo['time'] * 1000000) - $lines[$index]['time'];
-                    }
                     $index++;
-                    $lines[$index] = [
-                        'line'       => $currentLineNumber,
-                        'call'       => $lineInfo['call'],
-                        'path'       => $lineInfo['path'],
-                        'memory'     => $lineInfo['memory'],
-                        'time'       => $lineInfo['time'] * 1000000,
-                        'length'    => 0,
-                        'children'   => 0,
-                        'descendant' => 0
-                    ];
-                } elseif ($start && $lineInfo['depth'] < $depth) {
+                    $this->lines[$index] = $lastLineInfo;
+                    $this->calculateSpent($index-1, $lastLineInfo);
+                } elseif ($startLine && $lineInfo['depth'] < $depth) {
                     break;
                 } elseif ($index && $lineInfo['depth'] == $depth + 1) {
-                    $lines[$index]['children']++;
+                    $this->lines[$index]['children']++;
                 } elseif ($index) {
-                    $lines[$index]['descendant']++;
+                    $this->lines[$index]['descendant']++;
                 }
             }
         }
 
-        $lines[$index]['length'] = ($time * 1000000) - $lines[$index]['time'];
+        $this->calculateSpent($index, $lastLineInfo);
 
-        return $lines;
+        return $this->lines;
+    }
+
+    private function calculateSpent($index, array $latestInfo)
+    {
+        if (isset($this->lines[$index])) {
+            $this->lines[$index]['mem_spent'] = $latestInfo['mem_acum'] - $this->lines[$index]['mem_acum'];
+            $this->lines[$index]['time_spent'] = $latestInfo['time_acum'] - $this->lines[$index]['time_acum'];
+        }
     }
 
     /**
@@ -131,9 +154,10 @@ class Read
         $reg_exp = '/(?P<time>\d+\.\d+)\s+(?P<memory>\d+)(?P<depth>\s+)->\s+(?P<call>.*)\s+(?P<path>[^\s+]+)$/';
         if (preg_match($reg_exp, $line, $matches)) {
             $matches['depth'] = ceil(strlen($matches['depth']) / 2);
+
             return $matches;
-        } else {
-            return false;
         }
+
+        return false;
     }
 }
