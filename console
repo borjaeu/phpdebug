@@ -2,6 +2,7 @@
 <?php
 require __DIR__ . '/../../autoload.php';
 
+use DebugHelper\Cli\ListCommand;
 use DebugHelper\Cli\ReadCommand;
 use Symfony\Component\Console\Application;
 
@@ -9,5 +10,6 @@ use Symfony\Component\Console\Application;
 $application = new Application();
 
 $application->add(new ReadCommand());
+$application->add(new ListCommand());
 
 $application->run();

@@ -1,19 +1,38 @@
 <?php
 namespace DebugHelper\Cli;
 
+use Symfony\Component\Console\Helper\Table;
+use Symfony\Component\Console\Helper\TableCell;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+
 class ListCommand extends Abstracted
 {
     /**
-     * Execute the command line
+     * {@inheritdoc}
      */
-    public function run()
+    protected function configure()
+    {
+        $this->setName('list')
+            ->setDescription('Read file configuration');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function execute(InputInterface $input, OutputInterface $output)
     {
         $files = $this->getFiles();
-        printf('%30s %30s %21s %10s %s', 'id', 'name', 'time', 'size', PHP_EOL);
+
+        $table = new Table($output);
+        $table->setHeaders(['id', 'name', 'time', 'size']);
 
         foreach ($files as $info) {
-            printf('%30s %30s %21s %10s %s', $info['id'], $info['name'], $info['time'], $info['size'], PHP_EOL);
+            $table->addRow([$info['id'], $info['name'], $info['time'], $info['size']]);
         }
+
+        $table->render();
     }
 
     /**
