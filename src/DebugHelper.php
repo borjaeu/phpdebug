@@ -26,6 +26,13 @@ class DebugHelper
     protected static $options = array();
 
     /**
+     * Has been intialized?
+     *
+     * @var boolean
+     */
+    protected static $initialized = false;
+
+    /**
      * Initializes the debug
      *
      * @param array $options
@@ -41,6 +48,7 @@ class DebugHelper
             'handler_target' => '',
 
         ];
+        self::$initialized = true;
 
         self::$options = array_merge($defaultOptions, $options);
         self::checkOptions();
@@ -52,6 +60,10 @@ class DebugHelper
      */
     public static function get($option)
     {
+        if (!self::$initialized) {
+            self::init();
+        }
+
         return isset(self::$options[$option]) ? self::$options[$option] : null;
     }
 
@@ -63,6 +75,10 @@ class DebugHelper
      */
     public static function set($option, $value)
     {
+        if (!self::$initialized) {
+            self::init();
+        }
+
         self::$options[$option] = $value;
         self::checkOptions();
     }
