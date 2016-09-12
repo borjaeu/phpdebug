@@ -1,9 +1,13 @@
 <?php
 namespace DebugHelper\Cli;
 
-use DebugHelper\Cli\Util\Progress;
 use DebugHelper\Cli\Util\Statistics;
 use DebugHelper\Gui\Processor;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 /**
  * Class CleanCommand
@@ -61,18 +65,35 @@ class CleanCommand extends Abstracted
     protected $progress;
 
     /**
-     * Execute the command line
+     * @var OutputInterface
      */
-    public function run()
+    private $output;
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function configure()
     {
-        $this->progress = new Progress();
-        if (!empty($this->arguments['help'])) {
-            echo "./console clean [file] [--force] [--skip-function] [--skip-namespace='namespace1, namespace2]\n";
+        $this->setName('clean')
+            ->setDescription('Read file configuration')
+            ->addArgument('file', InputArgument::OPTIONAL)
+            ->addOption('functions', null, InputOption::VALUE_REQUIRED)
+            ->addOption('force', null, InputOption::VALUE_NONE)
+            ->addOption('skip-namespace', null, InputOption::VALUE_REQUIRED)
+            ->addOption('skip-path', null, InputOption::VALUE_REQUIRED)
+        ;
+    }
 
-            return;
-        }
+    /**
+     * {@inheritdoc}
+     */
+    protected function execute(InputInterface $input, OutputInterface $output)
+    {
+        $this->output = $output;
 
-        $this->loadArguments();
+
+
+        $this->loadArguments($input);
         if ($this->options['file']) {
             $this->cleanFile($this->options['file']);
         } else {
@@ -86,18 +107,18 @@ class CleanCommand extends Abstracted
     /**
      * Load the command line argument
      */
-    protected function loadArguments()
+    protected function loadArguments(InputInterface $input)
     {
         $this->options = [];
-        $this->options['functions'] = !empty($this->arguments['functions']);
-        $this->options['force'] = !empty($this->arguments['force']);
-        $this->options['file'] = isset($this->arguments[2]) ? \DebugHelper::get('debug_dir').$this->arguments[2] : false;
+        $this->options['functions'] = $input->getOption('functions');
+        $this->options['force'] = $input->getOption('force');
+        $this->options['file'] = $input->getArgument('file');
 
-        if (!empty($this->arguments['skip-namespace'])) {
-            $this->ignoreNamespaces = preg_split('/\s*,\s*/', $this->arguments['skip-namespace']);
+        if (!empty($input->getOption('skip-namespace'))) {
+            $this->ignoreNamespaces = preg_split('/\s*,\s*/', $input->getOption('skip-namespace'));
         }
-        if (!empty($this->arguments['skip-path'])) {
-            $this->ignoreDirectories = preg_split('/\s*,\s*/', $this->arguments['skip-path']);
+        if (!empty($input->getOption('skip-path'))) {
+            $this->ignoreDirectories = preg_split('/\s*,\s*/', $input->getOption('skip-path'));
         }
     }
 
@@ -118,14 +139,14 @@ class CleanCommand extends Abstracted
         }
 
         if (is_file("temp/{$fileId}.xt.clean") && empty($this->options['force'])) {
-            echo "Already exists {$fileId}.xt.clean\n";
+            $this->output->writeln("Already exists {$fileId}.xt.clean");
         } else {
-            echo "Generating file {$fileId}.xt.clean\n";
+            $this->output->writeln("Generating file {$fileId}.xt.clean");
             $lines = $this->generateFiles($fileId);
             if ($lines < 30000) {
                 $processor = new Processor();
                 $processor->setProgress($this->progress);
-                echo "Generating structure for {$fileId}\n";
+                $this->output->writeln("Generating structure for {$fileId}");
                 $processor->process($fileId);
             }
         }
@@ -144,8 +165,9 @@ class CleanCommand extends Abstracted
         $lineNo = 0;
 
         $fileSize = filesize("temp/{$fileId}.xt");
-        echo "Starting $fileSize".PHP_EOL;
+        $this->output->writeln("Starting $fileSize");
 
+        $this->progress = new ProgressBar($this->output, $fileSize);
         $totalPassed = 0;
         fseek($fileIn, 0);
         $fileOut = fopen("temp/{$fileId}.xt.clean", 'w');
@@ -155,8 +177,7 @@ class CleanCommand extends Abstracted
             $size += strlen($line);
             $lineNo++;
             if ($lineNo % 1000 == 0) {
-                $status = sprintf('ratio %0.2f%%; line %d', ($totalPassed/ $lineNo) * 100, $lineNo);
-                $this->progress->showStatus($size, $fileSize, $status);
+                $this->progress->setProgress($size);
             }
             $outLine = $this->processInputLine($line);
             if ($outLine !== false) {
@@ -167,30 +188,31 @@ class CleanCommand extends Abstracted
         $this->stats->sort();
 
         $usedPaths = array_slice($this->stats->get('path.used', null, []), 0, 20);
-        echo PHP_EOL.PHP_EOL."\033[32mMost used paths\033[0m".PHP_EOL;
+        $this->output->writeln('<info>Most used paths</info>');
         foreach ($usedPaths as $path => $lines) {
-            printf('%6d %s%s', $lines, $path, PHP_EOL);
+            $this->output->writeln(sprintf('%6d %s', $lines, $path));
         }
 
         $usedNamespaces = array_slice($this->stats->get('namespaces.used', null, []), 0, 20);
-        echo PHP_EOL.PHP_EOL."\033[32mMost used namespaces\033[0m".PHP_EOL;
+        $this->output->writeln('<info>Most used namespaces</info>');
+
         foreach ($usedNamespaces as $namespace => $lines) {
-            printf('%6d %s%s', $lines, $namespace, PHP_EOL);
+            $this->output->writeln(sprintf('%6d %s', $lines, $namespace));
         }
 
         $skippedNamespaces = array_slice($this->stats->get('namespaces.skipped', null, []), 0, 20);
-        echo PHP_EOL."\033[32mSkipped namespaces\033[0m".PHP_EOL;
+        $this->output->writeln('<info>Skipped namespaces</info>');
         foreach ($skippedNamespaces as $namespace => $lines) {
-            printf('%6d %s%s', $lines, $namespace, PHP_EOL);
+            $this->output->writeln(sprintf('%6d %s', $lines, $namespace));
         }
 
         $skippedPath = array_slice($this->stats->get('path.skipped', null, []), 0, 20);
-        echo PHP_EOL."\033[32mSkipped paths\033[0m".PHP_EOL;
+        $this->output->writeln('<info>Skipped paths</info>');
         foreach ($skippedPath as $path => $lines) {
-            printf('%6d %s%s', $lines, $path, PHP_EOL);
+            $this->output->writeln(sprintf('%6d %s', $lines, $path));
         }
 
-        printf(
+        $this->output->writeln(sprintf(
             "
 \033[32mStats\033[0m
 %6d valid lines
@@ -207,7 +229,7 @@ class CleanCommand extends Abstracted
             $this->stats->get('skipped_by.path', null, 0),
             $this->stats->get('skipped_by.namespace', null, 0),
             $lineNo
-        );
+        ));
 
         return $totalPassed;
     }
