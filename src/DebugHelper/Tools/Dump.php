@@ -20,12 +20,7 @@ class Dump
     public function setDepth($depth)
     {
         $this->depth = $depth;
-        return $this;
-    }
 
-    public function expand()
-    {
-        \DebugHelper::disable(\DebugHelper::OPTION_DUMP_COLLAPSED);
         return $this;
     }
 
@@ -95,6 +90,7 @@ class Dump
             $step['line'] = isset($item['line']) ? $item['line'] : '-';
             $debugBacktrace[] = $step;
         }
+
         return $debugBacktrace;
     }
 
@@ -107,7 +103,10 @@ class Dump
     {
         $trace = debug_backtrace(false);
 
-        $item = ['file'=> '', 'line' => 0];
+        $item = [
+            'file' => '',
+            'line' => 0,
+        ];
         foreach ($trace as $item) {
             if (isset($item['file'])) {
                 if (preg_match('/DebugHelper/', $item['file'])) {
@@ -124,8 +123,9 @@ class Dump
             exit;
         }
 
-        $position = new Position($item['file'], $item['line']); // Demo
+        $position = new Position($item['file'], $item['line']);
         $position->setCall($item['function']);
+
         return $position;
     }
 }

@@ -1,29 +1,74 @@
 <?php
 namespace DebugHelper\Tools;
 
-class Arrays extends Abstracted
+use ReflectionClass;
+
+class Arrays
 {
-    protected static $instance;
     /**
-     * Singleton
+     * Begins the trace to watch where the code goes.
      *
-     * @return Log
+     * @param mixed $data
+     * @param array $keys
+     * @return array
      */
-    public static function getInstance()
+    public function simplify($data, array $keys)
     {
-        if (!isset(self::$instance)) {
-            self::$instance = new self();
+        return $this->objectToArray($data, $keys);
+    }
+
+    /**
+     * Convert data to HTML.
+     *
+     * @param object $data Data to convert to array
+     * @param array $keys
+     * @return mixed
+     */
+    private function objectToArray($data, array $keys)
+    {
+        $debug = [];
+
+        if (is_object($data)) {
+            $dataObject = $data;
+            $reflection = new ReflectionClass($dataObject);
+            $properties = $reflection->getProperties();
+            $data = [];
+            foreach ($properties as $property) {
+                $property->setAccessible(true);
+                $data[$property->name] = $property->getValue($dataObject);
+            }
         }
-        return self::$instance;
+
+        if (is_array($data)) {
+            foreach ($data as $subKey => $subValue) {
+                if (in_array($subKey, $keys)) {
+                    $debug = $subValue;
+                    break;
+                } else {
+                    $subValue = $this->objectToArray($subValue, $keys);
+                    if (!is_null($subValue)) {
+                        $debug[$subKey] = $subValue;
+                    }
+                }
+            }
+        }
+
+        if (empty($debug)) {
+            $debug = null;
+        }
+
+        return $debug;
     }
 
     /**
      * Look for information inside an array.
-     *;
+     *
      * @param array $data First array to compare.
      * @param string $needle Data to search in the array.
+     * @param array $path
+     * @return mixed
      */
-    public function search($data, $needle, $path = array())
+    public function search($data, $needle, $path = [])
     {
         if (is_array($data)) {
             foreach ($data as $key => $sub_data) {
@@ -36,6 +81,7 @@ class Arrays extends Abstracted
                 return implode('.', $path);
             }
         }
+
         return false;
     }
 
@@ -51,14 +97,13 @@ class Arrays extends Abstracted
         if (!(is_array($before) && is_array($after))) {
             return;
         }
-        $labels = $this->getLabels();
 
-        $styles = array(
+        $styles = [
             'equal' => 'CCFFCC',
             'changed' => 'FFCCCC',
             'missing' => '00FFFF',
-            'new' => 'FFFFBF'
-        );
+            'new' => 'FFFFBF',
+        ];
         $td_style = ' style="padding:3px; border:1px solid #CCCCCC;"';
         $diffs = $this->arrayDiff($before, $after);
         if ($just_changes) {
@@ -69,19 +114,13 @@ class Arrays extends Abstracted
             }
         }
 
-        echo $this->getCallerDetails(2);
         echo "<pre><table style=\"border: 1px solid black; margin:5px;\">";
-        echo <<<HTML
-<tr>
-	<th>&nbsp;</th><th>{$labels['first_param']}</th><th>{$labels['second_param']}</th>
-</tr>
-HTML;
         foreach ($diffs as $key => $options) {
             $value_a = print_r($options['source'], true);
             $value_b = print_r($options['target'], true);
             $status = $options['status'];
             echo <<<HTML
-				<tr style="background:#{$styles[$status]};" title="$status"><td$td_style>$key</td><td$td_style>$value_a</td><td$td_style>$value_b</td></tr>
+<tr style="background:#{$styles[$status]};" title="$status"><td$td_style>$key</td><td$td_style>$value_a</td><td$td_style>$value_b</td></tr>
 HTML;
         }
         echo '</table></pre>';
@@ -97,7 +136,7 @@ HTML;
      */
     protected function arrayDiff($before, $after)
     {
-        $comparison_result = array();
+        $comparisonResult = [];
         foreach ($before as $key => $value_before) {
             if (array_key_exists($key, $after)) {
                 if (is_array($after[$key]) && is_array($value_before)) {
@@ -106,49 +145,35 @@ HTML;
                         $comparison_result["$key.$subkey"] = $result;
                     }
                 } elseif ($after[$key] == $value_before) {
-                    $comparison_result[$key] = array(
+                    $comparisonResult[$key] = [
                         'source' => $value_before,
                         'target' => $value_before,
-                        'status' => 'equal'
-                    );
+                        'status' => 'equal',
+                    ];
                 } else {
-                    $comparison_result[$key] = array(
+                    $comparisonResult[$key] = array(
                         'source' => $value_before,
                         'target' => is_null($after[$key]) ? null : $after[$key],
-                        'status' => 'changed'
+                        'status' => 'changed',
                     );
                 }
-                unset ($after[$key]);
+                unset($after[$key]);
             } else {
-                $comparison_result[$key] = array(
+                $comparisonResult[$key] = [
                     'source' => $value_before,
                     'target' => null,
-                    'status' => 'missing'
-                );
+                    'status' => 'missing',
+                ];
             }
         }
         foreach ($after as $key => $value_after) {
             $comparison_result[$key] = array(
                 'source' => null,
                 'target' => print_r($value_after, true),
-                'status' => 'new'
+                'status' => 'new',
             );
         }
-        return $comparison_result;
-    }
 
-    /**
-     * Get comparison headers from source code.
-     *
-     * @return array
-     */
-    protected function getLabels()
-    {
-        $source = $this->getCallerSource(5);
-        preg_match('/compare\(\s*(?P<first_param>[^,]+)\s*,\s*(?P<second_param>[^,]+)\s*\)/', $source, $params);
-        return array(
-            'first_param' => isset($params['first_param']) ? $params['first_param'] : 'First array',
-            'second_param' => isset($params['second_param']) ? $params['second_param'] : 'Second array'
-        );
+        return $comparisonResult;
     }
 }

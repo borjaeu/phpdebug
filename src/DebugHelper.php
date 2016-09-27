@@ -179,6 +179,24 @@ class DebugHelper
     }
 
     /**
+     * Begins the trace to watch where the code goes.
+     *
+     * @param mixed $data
+     * @param array $keys
+     * @return array
+     */
+    public static function simplify($data, $keys)
+    {
+        static $arrayHelper;
+
+        if (empty($arrayHelper)) {
+            $arrayHelper = new \DebugHelper\Tools\Arrays();
+        }
+
+        return $arrayHelper->simplify($data, $keys);
+    }
+
+    /**
      * Checks for the valid options
      */
     private static function checkOptions()
