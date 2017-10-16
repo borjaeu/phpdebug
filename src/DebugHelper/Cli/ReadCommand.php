@@ -37,6 +37,11 @@ class ReadCommand extends Abstracted
     private $input;
 
     /**
+     * @var array
+     */
+    private $history;
+
+    /**
      * {@inheritdoc}
      */
     protected function configure()
@@ -52,6 +57,7 @@ class ReadCommand extends Abstracted
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $file = $input->getArgument('file');
+        $this->history = [];
         $this->output = $output;
         $this->input = $input;
 
@@ -79,6 +85,8 @@ class ReadCommand extends Abstracted
      */
     private function showLine($startLine)
     {
+        $this->history[] = $startLine;
+        $domain = '_qwertyuiopasdfghjklzxcvbnm';
         if ($startLine) {
             $start = $startLine + 1;
             $depth = $this->reader->getDepth($startLine) + 1;
@@ -99,9 +107,7 @@ class ReadCommand extends Abstracted
         $table = new Table($this->output);
         $table->setHeaders(['Line', 'Call', 'Child', 'Desc', 'Time', 'Spent', 'Path']);
 
-        $choices = [];
-        foreach ($lines as $lineInfo) {
-            $choices[] = $lineInfo['call'];
+        foreach ($lines as $index => $lineInfo) {
             $table->addRow([
                 $lineInfo['line'],
                 $lineInfo['call'],
@@ -112,6 +118,7 @@ class ReadCommand extends Abstracted
                 basename($lineInfo['path']),
             ]);
         }
+        $this->output->writeln(sprintf('%s', implode(' -> ', $this->history)));
         $table->render();
 
         /** @var QuestionHelper $helper */
@@ -121,6 +128,10 @@ class ReadCommand extends Abstracted
         $line = $helper->ask($this->input, $this->output, $question);
 
         if ($line) {
+            $this->showLine($line);
+        } else if (count($this->history) > 1) {
+            $line = array_pop($this->history);
+            $line = array_pop($this->history);
             $this->showLine($line);
         }
     }
