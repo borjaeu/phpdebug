@@ -134,6 +134,19 @@ class DebugHelper
     }
 
     /**
+     * Save the data to a log file.
+     */
+    public static function timer($group, $message = '')
+    {
+        static $timer;
+
+        if (empty($timer)) {
+            $timer = new \DebugHelper\Tools\Timer();
+        }
+        $timer->delta($group, $message);
+    }
+
+    /**
      * Displays the data passed as information.
      *
      * @return \DebugHelper\Tools\Dump

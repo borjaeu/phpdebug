@@ -8,6 +8,9 @@
         "twig/twig": "1.*",
         "symfony/console": "^3.1"
     },
+    "bin": [
+        "console"
+    ],
     "autoload": {
         "psr-0": {
             "DebugHelper": "/src/"
