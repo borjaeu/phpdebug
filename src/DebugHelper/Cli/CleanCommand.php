@@ -74,8 +74,8 @@ class CleanCommand extends Abstracted
      */
     protected function configure()
     {
-        $this->setName('clean')
-            ->setDescription('Read file configuration')
+        $this->setName('trace:clean')
+            ->setDescription('Clean and simplify trace files')
             ->addArgument('file', InputArgument::OPTIONAL)
             ->addOption('functions', null, InputOption::VALUE_REQUIRED)
             ->addOption('force', null, InputOption::VALUE_NONE)
@@ -91,15 +91,13 @@ class CleanCommand extends Abstracted
     {
         $this->output = $output;
 
-
-
         $this->loadArguments($input);
         if ($this->options['file']) {
             $this->cleanFile($this->options['file']);
         } else {
-            $files = glob(\DebugHelper::get('debug_dir').'/*.xt');
+            $files = glob($this->getPathFromId('*', 'xt'));
             foreach ($files as $file) {
-                $this->cleanFile($file);
+                $this->cleanFile(realpath($file));
             }
         }
     }
@@ -128,17 +126,19 @@ class CleanCommand extends Abstracted
      */
     protected function cleanFile($file)
     {
+        var_dump($file);
+
         $this->stats = new Statistics();
         $this->ignoreDepth = false;
         $this->ignoring = false;
         preg_match('/^(.*\/)?(?P<id>.*?)(\.\w*)?$/', $file, $matches);
         $fileId = $matches['id'];
 
-        if (!is_file('temp/'.$fileId.'.xt')) {
+        if (!is_file($this->getPathFromId($fileId, 'xt'))) {
             throw new \Exception("Error Processing file $fileId");
         }
 
-        if (is_file("temp/{$fileId}.xt.clean") && empty($this->options['force'])) {
+        if (is_file($this->getPathFromId($fileId, 'xt.clean')) && empty($this->options['force'])) {
             $this->output->writeln("Already exists {$fileId}.xt.clean");
         } else {
             $this->output->writeln("Generating file {$fileId}.xt.clean");
@@ -160,17 +160,17 @@ class CleanCommand extends Abstracted
      */
     protected function generateFiles($fileId)
     {
-        $fileIn = fopen("temp/{$fileId}.xt", 'r');
+        $fileIn = fopen($this->getPathFromId($fileId, 'xt'), 'r');
         $count = 320000000;
         $lineNo = 0;
 
-        $fileSize = filesize("temp/{$fileId}.xt");
+        $fileSize = filesize($this->getPathFromId($fileId, 'xt'));
         $this->output->writeln("Starting $fileSize");
 
         $this->progress = new ProgressBar($this->output, $fileSize);
         $totalPassed = 0;
         fseek($fileIn, 0);
-        $fileOut = fopen("temp/{$fileId}.xt.clean", 'w');
+        $fileOut = fopen($this->getPathFromId($fileId, 'xt.clean'), 'w');
         $size = 0;
         while (!feof($fileIn) && $count-- > 0) {
             $line = fgets($fileIn);

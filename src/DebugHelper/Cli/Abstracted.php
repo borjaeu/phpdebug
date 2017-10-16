@@ -15,4 +15,14 @@ abstract class Abstracted extends Command
 
         return $matches['id'];
     }
+
+    /**
+     * @param string $fileId
+     * @param string $extension
+     * @return string
+     */
+    protected function getPathFromId($fileId, $extension)
+    {
+        return \DebugHelper::get('debug_dir')  . $fileId . '.' . $extension;
+    }
 }

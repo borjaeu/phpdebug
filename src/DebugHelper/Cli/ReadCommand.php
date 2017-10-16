@@ -41,7 +41,7 @@ class ReadCommand extends Abstracted
      */
     protected function configure()
     {
-        $this->setName('read')
+        $this->setName('trace:read')
             ->setDescription('Read file configuration')
             ->addArgument('file', InputArgument::REQUIRED);
     }
@@ -57,17 +57,17 @@ class ReadCommand extends Abstracted
 
         $fileId = $this->getIdFromFile($file);
 
-        if (!is_file('temp/' . $fileId . '.xt')) {
+        if (!is_file($this->getPathFromId($fileId, 'xt'))) {
             throw new \Exception("Error Processing file $fileId");
         }
 
-        if (!is_file("temp/{$fileId}.xt.clean")) {
+        if (!is_file($this->getPathFromId($fileId, 'xt.clean'))) {
             throw new \Exception("Invalid file {$fileId}.xt.clean");
         }
-        $this->reader = new Read("temp/{$fileId}.xt.clean");
+        $this->reader = new Read($this->getPathFromId($fileId, 'xt.clean'));
 
-        $this->fileSize = filesize("temp/{$fileId}.xt.clean");
-        $this->fileIn = fopen("temp/{$fileId}.xt.clean", 'r');
+        $this->fileSize = filesize($this->getPathFromId($fileId, 'xt.clean'));
+        $this->fileIn = fopen($this->getPathFromId($fileId, 'xt.clean'), 'r');
 
         $output->write("Reading file {$fileId}.xt.clean. ");
 

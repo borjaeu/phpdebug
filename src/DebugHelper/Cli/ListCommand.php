@@ -12,7 +12,7 @@ class ListCommand extends Abstracted
      */
     protected function configure()
     {
-        $this->setName('files')
+        $this->setName('trace:list')
             ->setDescription('Gets list of debug files');
     }
 

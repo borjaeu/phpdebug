@@ -60,7 +60,6 @@ class TimerCommand extends Abstracted
         }
         $stats = $this->getStats($timerFile);
         $this->runBasicReport($stats);
-        $this->runTimeLineReport($stats);
     }
 
     /**
@@ -119,33 +118,19 @@ class TimerCommand extends Abstracted
         $table->render();
         $this->output->writeln(sprintf('Total <info>%s</info> time taken', $total));
         $headers = array_keys($grouped);
-        $handler = fopen('report_basic.csv', 'w');
+        $handler = fopen('timer_report.csv', 'w');
         fputcsv($handler, $headers, ';');
         $stillData = true;
         while($stillData) {
             $row = [];
             $stillData = false;
             foreach($headers as $header) {
-                $row[] = array_shift($grouped[$header]);
+                $row[] = number_format(array_shift($grouped[$header]), 6, ',', '');
                 if (!empty($grouped[$header])) {
                     $stillData = true;
                 }
             }
             fputcsv($handler, $row, ';');
-        }
-        fclose($handler);
-    }
-
-    /**
-     * @param array $stats
-     */
-    private function runTimeLineReport(array $stats)
-    {
-        $headers = array_keys($stats[0]);
-        $handler = fopen('report_time_line.csv', 'w');
-        fputcsv($handler, $headers, ';');
-        foreach ($stats as $command) {
-            fputcsv($handler, $command, ';');
         }
         fclose($handler);
     }
