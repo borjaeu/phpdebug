@@ -1,7 +1,7 @@
 <?php
 namespace DebugHelper\Gui;
 
-use DebugHelper\Cli\Util\Progress;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 class Processor
 {
@@ -16,7 +16,7 @@ class Processor
     /**
      * Progress display for CLI
      *
-     * @var Progress
+     * @var ProgressBar
      */
     protected $progress;
 
@@ -74,7 +74,7 @@ class Processor
             $line = fgets($fileIn);
             $line_no++;
             if (!empty($this->progress) && $line_no % 100 === 0) {
-                $this->progress->showStatus($line_no, $lineCount);
+                $this->progress->setProgress($line_no);
             }
             $this->preProcessInputLine($line, $line_no);
         }

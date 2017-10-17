@@ -60,7 +60,7 @@ class CleanCommand extends Abstracted
     /**
      * Progress display for CLI
      *
-     * @var Progress
+     * @var ProgressBar
      */
     protected $progress;
 
