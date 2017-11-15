@@ -9,7 +9,7 @@
         "symfony/console": "^3.1"
     },
     "bin": [
-        "console"
+        "bin/phpdebug"
     ],
     "autoload": {
         "psr-0": {
