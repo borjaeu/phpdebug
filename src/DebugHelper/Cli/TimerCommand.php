@@ -70,11 +70,10 @@ class TimerCommand extends Abstracted
     {
         $stats = [];
         $handler = fopen($inputFile, 'r');
-        $index = -1;
         while(!feof($handler)) {
             $line = trim(fgets($handler));
-            if (!preg_match('/(?<elapsed>\d+\.\d+)\s+(?<total>\d+\.\d+)\s+\[(?P<group>\w+)\]\s*(?P<message>.*)/', $line, $matches)) {
-                $this->output->writeln('Invalid line ' . $line);
+            if (!preg_match('/^(?<elapsed>\d+\.\d+)\s+(?<total>\d+\.\d+)\s+\[(?P<group>[^\]]+)\]\s*(?P<message>.*)/', trim($line), $matches)) {
+                $this->output->writeln(sprintf('Invalid line "%s"', $line));
                 continue;
             }
             $stats[] = [
