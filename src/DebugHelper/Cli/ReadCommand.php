@@ -62,20 +62,22 @@ class ReadCommand extends Abstracted
         $this->input = $input;
 
         $fileId = $this->getIdFromFile($file);
+        $extension = 'xt';
 
-        if (!is_file($this->getPathFromId($fileId, 'xt'))) {
+
+        if (!is_file($this->getPathFromId($fileId, $extension))) {
             throw new \Exception("Error Processing file $fileId");
         }
 
-        if (!is_file($this->getPathFromId($fileId, 'xt.clean'))) {
-            throw new \Exception("Invalid file {$fileId}.xt.clean");
+        if (is_file($this->getPathFromId($fileId, 'xt.clean'))) {
+            $extension = 'xt.clean';
         }
-        $this->reader = new Read($this->getPathFromId($fileId, 'xt.clean'));
+        $this->reader = new Read($this->getPathFromId($fileId, 'xt'));
 
-        $this->fileSize = filesize($this->getPathFromId($fileId, 'xt.clean'));
-        $this->fileIn = fopen($this->getPathFromId($fileId, 'xt.clean'), 'r');
+        $this->fileSize = filesize($this->getPathFromId($fileId, $extension));
+        $this->fileIn = fopen($this->getPathFromId($fileId, $extension), 'r');
 
-        $output->write("Reading file {$fileId}.xt.clean. ");
+        $output->write("Reading file {$fileId}.{$extension}.");
 
         $this->showLine(0);
     }

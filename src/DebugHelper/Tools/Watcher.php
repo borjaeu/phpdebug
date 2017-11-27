@@ -167,7 +167,7 @@ class Watcher
     /**
      * Begins the trace to watch where the code goes.
      */
-    public function watch()
+    public function watch($trace = '')
     {
         if ($this->watching) {
             $this->output('Watch already started. Could not start watching', 200);
@@ -175,12 +175,15 @@ class Watcher
         }
 
         $this->watching = true;
+        if ($trace) {
+            $this->setTraceFile($trace);
+        }
         if (is_file($this->traceFile)) {
             return;
         }
 
-        \DebugHelper::log('Watch started');
-        $this->output('Watch started', 100);
+        \DebugHelper::log('Watch started ' . $this->traceFile);
+        $this->output('Watch started ' . $this->traceFile, 100);
 
         if ($this->trace) {
             $this->startTrace();
@@ -212,6 +215,7 @@ class Watcher
         }
 
         $this->traceFile = '';
+        $this->watching = false;
         if ($finishExecution) {
             $output = new Output();
             die(sprintf("<pre><a href=\"%s\">DIE</a></pre>", $output->buildUrl(__FILE__, __LINE__)));

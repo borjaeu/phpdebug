@@ -24,10 +24,10 @@ class ListCommand extends Abstracted
         $files = $this->getFiles();
 
         $table = new Table($output);
-        $table->setHeaders(['id', 'name', 'time', 'size']);
+        $table->setHeaders(['id', 'name', 'time', 'start', 'end', 'elapsed', 'size']);
 
         foreach ($files as $info) {
-            $table->addRow([$info['id'], $info['name'], $info['time'], $info['size']]);
+            $table->addRow([$info['id'], $info['name'], $info['time'], $info['start'], $info['end'], $info['elapsed'], $info['size']]);
         }
 
         $table->render();
@@ -44,15 +44,20 @@ class ListCommand extends Abstracted
 
         $files = glob($path . '*.xt');
         array_walk($files, function (&$item) use ($path) {
-            $time = self::getTraceTime($item);
+            $times = self::getTraceTime($item);
+
+
 
             if (preg_match('/(?P<id>.*)\.xt$/', basename($item), $match)) {
-                $item = array(
+                $item = [
                     'id' => $match['id'],
                     'name' => $match['id'],
-                    'time' => $time,
+                    'time' => $times['time'],
+                    'start' => $times['start'],
+                    'end' => $times['end'],
+                    'elapsed' => $times['elapsed'],
                     'size' => floor(filesize($item) / 1024),
-                );
+                ];
             }
         });
         usort($files, function ($itemA, $itemB) {
@@ -73,9 +78,24 @@ class ListCommand extends Abstracted
     protected function getTraceTime($file)
     {
         $fp = fopen($file, 'r');
-        $line = fgets($fp);
+        $startLine = fgets($fp);
+        $firstLine = fgets($fp);
+        while (!feof($fp)) {
+            $line = fgets($fp);
+            if (substr($line, 0, 9) == 'TRACE END') {
+                break;
+            }
+            $lastLine = $line;
+        }
+        $startTime = preg_replace('/\s*TRACE START\s*\[(.*)\]/', '$1', $startLine);
+        $start = (float) preg_replace('/\s*(\d+\.\d+).*/', '$1', $firstLine);
+        $end = (float) preg_replace('/\s*(\d+\.\d+).*/', '$1', $lastLine);
         fclose($fp);
-        $line = preg_replace('/\s*TRACE START\s*\[(.*)\]/', '$1', $line);
-        return trim($line);
+        return [
+            'time'  => trim($startTime),
+            'start' => $start,
+            'end'   => $end,
+            'elapsed' => $end - $start,
+        ];
     }
 }

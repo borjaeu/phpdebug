@@ -42,6 +42,7 @@ class TimerCommand extends Abstracted
     protected function configure()
     {
         $this->setName('timer')
+            ->addArgument('file', InputArgument::OPTIONAL)
             ->setDescription('Get profile information from the timer');
     }
 
