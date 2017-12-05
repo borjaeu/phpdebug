@@ -81,6 +81,7 @@ class CleanCommand extends Abstracted
             ->addOption('force', null, InputOption::VALUE_NONE)
             ->addOption('skip-namespace', null, InputOption::VALUE_REQUIRED)
             ->addOption('skip-path', null, InputOption::VALUE_REQUIRED)
+            ->addOption('process', null, InputOption::VALUE_REQUIRED, 'Number of lines for which the file should be processed', 500)
         ;
     }
 
@@ -111,6 +112,7 @@ class CleanCommand extends Abstracted
         $this->options['functions'] = $input->getOption('functions');
         $this->options['force'] = $input->getOption('force');
         $this->options['file'] = $input->getArgument('file');
+        $this->options['process'] = $input->getOption('process');
 
         if (!empty($input->getOption('skip-namespace'))) {
             $this->ignoreNamespaces = preg_split('/\s*,\s*/', $input->getOption('skip-namespace'));
@@ -143,7 +145,8 @@ class CleanCommand extends Abstracted
         } else {
             $this->output->writeln("Generating file {$fileId}.xt.clean");
             $lines = $this->generateFiles($fileId);
-            if ($lines < 30000) {
+            $this->output->writeln($lines);
+            if ($lines < $this->options['process']) {
                 $processor = new Processor();
                 $processor->setProgress($this->progress);
                 $this->output->writeln("Generating structure for {$fileId}");
