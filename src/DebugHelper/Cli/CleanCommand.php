@@ -119,24 +119,23 @@ class CleanCommand extends Abstracted
         $this->options['file'] = $input->getArgument('file');
         $this->options['process'] = $input->getOption('process');
         $this->ignoreNamespaces = [];
-        if (!empty($input->getOption('ignore-namespace'))) {
-            $ignoreNamespaces = preg_split('/\s*,\s*/', $input->getOption('ignore-namespace'));
-            foreach ($ignoreNamespaces as $namespace) {
-                $this->skipNamespaces[] = [
-                    'namespace' => $namespace,
-                    'type' => self::NAMESPACE_IGNORE,
-                ];
-            }
-            $collapseeNamespaces = preg_split('/\s*,\s*/', $input->getOption('collapse-namespace'));
-            foreach ($collapseeNamespaces as $namespace) {
-                $this->skipNamespaces[] = [
-                    'namespace' => $namespace,
-                    'type' => self::NAMESPACE_COLLAPSE,
-                ];
-            }
-        }
+        $this->addSkipNamespaceOptions($input->getOption('ignore-namespace'), self::NAMESPACE_IGNORE);
+        $this->addSkipNamespaceOptions($input->getOption('collapse-namespace'), self::NAMESPACE_COLLAPSE);
         if (!empty($input->getOption('skip-path'))) {
             $this->ignoreDirectories = preg_split('/\s*,\s*/', $input->getOption('skip-path'));
+        }
+    }
+
+    private function addSkipNamespaceOptions($option, $type)
+    {
+        if (!empty($option)) {
+            $skipNamespaces = preg_split('/\s*,\s*/', $option);
+            foreach ($skipNamespaces as $namespace) {
+                $this->skipNamespaces[] = [
+                    'namespace' => $namespace,
+                    'type'      => $type,
+                ];
+            }
         }
     }
 
