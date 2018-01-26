@@ -2,13 +2,17 @@
 {%  for line in lines %}
         <li id="line_{{ line.xt_line }}" class="{% if line.children %}parent{% else %}leaf{% endif %}">
             {{ "%08d"|format(line.time_spent) }}&micro;s
-            <a href="?trace={{ id }}&line={{ line.line }}&kizilare_debug=1" target="_blank" title="View trace line {{ line.line }}"><span class="glyphicon glyphicon-sunglasses"></span></a>
+            <a href="?trace={{ id }}&line={{ line.xt_line }}&kizilare_debug=1" target="_blank" title="View trace line {{ line.xt_line }}"><span class="glyphicon glyphicon-sunglasses"></span></a>
 {%      if line.children %}
-            <a href="#" class="expand"><span class="glyphicon glyphicon-plus"></span></a>
-            [{{ line.children }}/{{ line.descendant }} ]
+            <a href="#" class="expand">
+                <span class="glyphicon glyphicon-plus"></span>
+                [{{ line.children }}/{{ line.descendant }}]
+                <span class="call">{{ line.call }}</span>
+            </a>
+{%      else %}
+            <span class="call">{{ line.call }}</span>
 {%      endif %}
-            <span class="call">{{ line.call }} {{ line.line }}</span>
-
+            {{ line.xt_line }}
             <a href="{{ line.link }}" title="{{ line.path }}" class="path">{{ line.file }}:{{ line.line }}</a>
             <div class="bar" style="width:{{ line.partial }}%"></div>
             <div class="children"></div>

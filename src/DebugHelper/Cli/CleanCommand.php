@@ -15,6 +15,10 @@ use Symfony\Component\Console\Helper\ProgressBar;
  */
 class CleanCommand extends Abstracted
 {
+    const NAMESPACE_KEEP = 0;
+    const NAMESPACE_COLLAPSE = 1;
+    const NAMESPACE_IGNORE = 2;
+
     /**
      * Minimum depth for the current ignore namespace
      *
@@ -30,11 +34,11 @@ class CleanCommand extends Abstracted
     protected $ignoring;
 
     /**
-     * Namespaces to be excluded from the trace
+     * Namespaces to be excluded from the trace either fully (IGNORE) of just the children (COLLPASE)
      *
      * @var array
      */
-    protected $ignoreNamespaces = [];
+    protected $skipNamespaces = [];
 
     /**
      * Namespaces to be excluded from the trace
@@ -79,7 +83,8 @@ class CleanCommand extends Abstracted
             ->addArgument('file', InputArgument::OPTIONAL)
             ->addOption('functions', null, InputOption::VALUE_REQUIRED)
             ->addOption('force', null, InputOption::VALUE_NONE)
-            ->addOption('skip-namespace', null, InputOption::VALUE_REQUIRED)
+            ->addOption('ignore-namespace', null, InputOption::VALUE_REQUIRED)
+            ->addOption('collapse-namespace', null, InputOption::VALUE_REQUIRED)
             ->addOption('skip-path', null, InputOption::VALUE_REQUIRED)
             ->addOption('process', null, InputOption::VALUE_REQUIRED, 'Number of lines for which the file should be processed', 500)
         ;
@@ -113,9 +118,22 @@ class CleanCommand extends Abstracted
         $this->options['force'] = $input->getOption('force');
         $this->options['file'] = $input->getArgument('file');
         $this->options['process'] = $input->getOption('process');
-
-        if (!empty($input->getOption('skip-namespace'))) {
-            $this->ignoreNamespaces = preg_split('/\s*,\s*/', $input->getOption('skip-namespace'));
+        $this->ignoreNamespaces = [];
+        if (!empty($input->getOption('ignore-namespace'))) {
+            $ignoreNamespaces = preg_split('/\s*,\s*/', $input->getOption('ignore-namespace'));
+            foreach ($ignoreNamespaces as $namespace) {
+                $this->skipNamespaces[] = [
+                    'namespace' => $namespace,
+                    'type' => self::NAMESPACE_IGNORE,
+                ];
+            }
+            $collapseeNamespaces = preg_split('/\s*,\s*/', $input->getOption('collapse-namespace'));
+            foreach ($collapseeNamespaces as $namespace) {
+                $this->skipNamespaces[] = [
+                    'namespace' => $namespace,
+                    'type' => self::NAMESPACE_COLLAPSE,
+                ];
+            }
         }
         if (!empty($input->getOption('skip-path'))) {
             $this->ignoreDirectories = preg_split('/\s*,\s*/', $input->getOption('skip-path'));
@@ -128,8 +146,6 @@ class CleanCommand extends Abstracted
      */
     protected function cleanFile($file)
     {
-        var_dump($file);
-
         $this->stats = new Statistics();
         $this->ignoreDepth = false;
         $this->ignoring = false;
@@ -258,9 +274,13 @@ class CleanCommand extends Abstracted
                 }
             }
             if (preg_match('/^(?P<namespace>[^\(]+)(::|->)(?P<method>[^\(]+).*$/', $lineInfo['call'], $matches)) {
-                if ($this->isIgnoredNamespace($matches['namespace'])) {
+                $skipNamespace = $this->getSkipNamespace($matches['namespace']);
+                if ($skipNamespace !== self::NAMESPACE_KEEP) {
                     $this->ignoreDepth = $lineInfo['depth'];
                     $this->ignoring = $matches['namespace'];
+                    if ($skipNamespace == self::NAMESPACE_IGNORE) {
+                        return false;
+                    }
                 } elseif ($this->isIgnoredDirectory($lineInfo['path'])) {
                     $this->stats->increment('skipped_by.path');
 
@@ -290,19 +310,19 @@ class CleanCommand extends Abstracted
      * @param string $namespace
      * @return bool
      */
-    protected function isIgnoredNamespace($namespace)
+    protected function getSkipNamespace($namespace)
     {
         if ($this->options['functions']) {
-            return false;
+            return self::NAMESPACE_KEEP;
         }
 
-        foreach ($this->ignoreNamespaces as $ignoreNamespaces) {
-            if (substr($namespace, 0, strlen($ignoreNamespaces)) == $ignoreNamespaces) {
-                return true;
+        foreach ($this->skipNamespaces as $skipNamespace) {
+            if (substr($namespace, 0, strlen($skipNamespace['namespace'])) == $skipNamespace['namespace']) {
+                return $skipNamespace['type'];
             }
         }
 
-        return false;
+        return self::NAMESPACE_KEEP;
     }
 
     /**
