@@ -1,6 +1,8 @@
 <?php
 namespace DebugHelper\Helper;
 
+use DebugHelper\Tools\Output;
+
 class Read
 {
     /**
@@ -88,6 +90,7 @@ class Read
      */
     public function read($startLine, $depth)
     {
+        $output = new Output();
         $currentLineNumber = 0;
 
         fseek($this->fileIn, 0);
@@ -105,14 +108,16 @@ class Read
             $lineInfo = $this->processInputLine($line);
             if ($lineInfo !== false) {
                 $lastLineInfo = [
-                    'line'       => $currentLineNumber,
+                    'xt_line'    => $currentLineNumber,
                     'call'       => $lineInfo['call'],
                     'path'       => $lineInfo['path'],
+                    'line'       => $lineInfo['line'],
+                    'file'       => basename($lineInfo['path']),
+                    'link'       => $output->buildUrl($lineInfo['path'], $lineInfo['line']),
                     'mem_acum'   => $lineInfo['memory'],
                     'mem_spent'  => 0,
                     'time_acum'  => ($lineInfo['time'] * 1000),
                     'time_spent' => 0,
-                    'length'     => 0,
                     'children'   => 0,
                     'descendant' => 0,
                 ];
@@ -135,6 +140,10 @@ class Read
         return $this->lines;
     }
 
+    /**
+     * @param integer $index
+     * @param array   $latestInfo
+     */
     private function calculateSpent($index, array $latestInfo)
     {
         if (isset($this->lines[$index])) {
@@ -151,7 +160,7 @@ class Read
      */
     private function processInputLine($line)
     {
-        $reg_exp = '/(?P<time>\d+\.\d+)\s+(?P<memory>\d+)(?P<depth>\s+)->\s+(?P<call>.*)\s+(?P<path>[^\s+]+)$/';
+        $reg_exp = '/(?P<time>\d+\.\d+)\s+(?P<memory>\d+)(?P<depth>\s+)->\s+(?P<call>.*)\s+(?P<path>[^\s+]+)(:(?P<line>[\d+]+))$/';
         if (preg_match($reg_exp, $line, $matches)) {
             $matches['depth'] = ceil(strlen($matches['depth']) / 2);
 

@@ -19,7 +19,7 @@ class Tree
     {
         if (empty($_GET['line'])) {
             $depth = $this->fileReader->getOuterDepth();
-            $start = 0;
+            $start = 1;
             $ajax = false;
         } else {
             $start = $_GET['line'] + 1;
@@ -32,14 +32,17 @@ class Tree
         $this->renderPage($lines, $ajax);
     }
 
+    /**
+     * @param array $lines
+     * @return array
+     */
     protected function calcExtraInfo($lines)
     {
-        $totalTime = 0;
-        foreach ($lines as $line) {
-            $totalTime += $line['length'];
-        }
+        $startTime = reset($lines)['time_acum'];
+        $endTime = end($lines)['time_acum'];
+        $totalTime = $endTime - $startTime;
         foreach ($lines as & $line) {
-             $line['partial'] = $totalTime > 0 ? ceil(($line['length'] / $totalTime) * 100) : 0;
+             $line['partial'] = $totalTime > 0 ? ceil(($line['time_spent'] / $totalTime) * 100) : 0;
         }
         return $lines;
     }
@@ -58,7 +61,10 @@ class Tree
         $file = \DebugHelper::get('debug_dir') . $fileId. '.xt.clean';
 
         if (!is_file($file)) {
-            throw new \Exception("Invalid file {$file}");
+            $file = \DebugHelper::get('debug_dir') . $fileId. '.xt';
+            if (!is_file($file)) {
+                throw new \Exception("Invalid file {$file}");
+            }
         }
 
         $this->fileReader = new Read($file);

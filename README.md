@@ -18,7 +18,7 @@ This will write several files in the temp folder (by default the directory temp/
 
 In order to watch the debug information:
 
-    \DebugHelper\Gui::renderLoadsHtml('2015_04_29_12_26_25');
+    \DebugHelper\Gui::renderLoadsHtml([]);
 
 
 
@@ -48,3 +48,13 @@ That show a report in seconds for each of the groups.
     | Group 2   | 142   | 0.0001 | 0.0037 | 0.00015633802816901 | 0.0222  |
     +-----------+-------+--------+--------+---------------------+---------+
     Total 138.3751 time taken
+
+
+Url replacements
+----------------
+
+
+    \DebugHelper::init([
+        'handler_url' => 'phpstorm://open?file=<file>&line=<line>',
+    ]);
+    \DebugHelper\Gui::renderLoadsHtml([]);
