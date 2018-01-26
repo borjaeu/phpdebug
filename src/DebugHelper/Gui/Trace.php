@@ -224,7 +224,12 @@ class Trace
     private function getLines($file, $targetLineNo, $margin)
     {
         if (!is_file($file)) {
-            return array();
+            $handlerSource = \DebugHelper::get('handler_source');
+            $handlerTarget = \DebugHelper::get('handler_target');
+            $file = str_replace($handlerTarget, $handlerSource, $file);
+            if (!is_file($file)) {
+                return array();
+            }
         }
         $fp = fopen($file, 'r');
         $lineNo = 0;
