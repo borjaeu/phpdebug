@@ -100,7 +100,9 @@ class Watcher
      */
     public function setTraceFile($file)
     {
-        copy($this->traceFile'.svr', \DebugHelper::get('debug_dir').$file.'.svr');
+        if (is_file($this->traceFile . '.svr')) {
+            copy($this->traceFile . '.svr', \DebugHelper::get('debug_dir') . $file . '.svr');
+        }
         $this->traceFile = \DebugHelper::get('debug_dir').$file;
 
         return $this;

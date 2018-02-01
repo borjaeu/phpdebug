@@ -26,20 +26,27 @@
 
 {% block javascript %}
 <script type="text/javascript">
+    var bSending = false;
+
     $().ready(function(){
         loadEvents();
     });
 
     function loadEvents() {
-        $('a.expand').bind('click', function(oEvent){
+        $('a.expand').bind('click', function(oEvent) {
             var sId = $(this).parent().attr('id');
             var sUrl = '?kizilare_debug=1&tree={{ id }}&line=' + sId.replace('line_', '');
 
+            if (bSending) {
+                return;
+            }
+            bSending = true;
             oEvent.preventDefault();
             $('#loading').show();
             $('#' + sId + ' > div.children').load(sUrl, function(oResponse){
                 $('#loading').hide();
                 loadEvents();
+                bSending = false;
             })
         });
     }
