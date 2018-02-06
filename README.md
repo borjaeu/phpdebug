@@ -58,3 +58,14 @@ Url replacements
         'handler_url' => 'phpstorm://open?file=<file>&line=<line>',
     ]);
     \DebugHelper\Gui::renderLoadsHtml([]);
+
+
+Matching
+--------
+
+    \DebugHelper::init([
+        'handler_source' => '/var/www',                  # Path in host or VM
+        'handler_target' => '/Users/User/local/project', # Path in current computer
+    
+    ]);
+    \DebugHelper\Gui::renderLoadsHtml([]);

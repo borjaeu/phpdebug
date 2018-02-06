@@ -3,6 +3,18 @@
 {% block title %}Debug - Tree{% endblock %}
 {% block style %}
 <style>
+    div#tree * {
+        font-family: Courier;
+        font-size: 12px;
+    }
+    div.tree_row {
+        clear: both;
+        overflow: hidden;
+    }
+    div.spent {
+        width: 80px;
+        float: left;
+    }
     #loading {
         display: none;
         position: absolute;
@@ -14,12 +26,12 @@
         padding: 5px;
     }
     ul { list-style: none; padding-left: 15px;}
-    li { border-left: 1px solid black; border-bottom: 1px solid black;}
+    li { border-left: 1px solid black; }
     li.leaf { background-color: #FFFFD4; }
     li.parent { background-color: #E2FEE2; }
     li.parent span.call { cursor: pointer; font-weight:bold; }
-    li > a.path { float: right; }
-    div.bar { border: 2px solid red;}
+    div.tree_row > a.path { float: right; }
+    div.bar { border: 1px solid red;}
 
 </style>
 {% endblock %}
@@ -34,7 +46,7 @@
 
     function loadEvents() {
         $('a.expand').bind('click', function(oEvent) {
-            var sId = $(this).parent().attr('id');
+            var sId = $(this).parent().parent().attr('id');
             var sUrl = '?kizilare_debug=1&tree={{ id }}&line=' + sId.replace('line_', '');
 
             if (bSending) {
@@ -55,5 +67,7 @@
 
 {% block body %}
 <div id="loading">Loading...</div>
+<div id="tree">
     {% include 'tree_nodes.html.twig' %}
+</div>
 {% endblock %}
