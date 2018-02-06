@@ -67,13 +67,6 @@ class CleanCommand extends Abstracted
     protected $options;
 
     /**
-     * Progress display for CLI
-     *
-     * @var ProgressBar
-     */
-    protected $progress;
-
-    /**
      * @var OutputInterface
      */
     private $output;
@@ -177,7 +170,7 @@ class CleanCommand extends Abstracted
             $this->output->writeln($lines);
             if ($lines < $this->options['process']) {
                 $processor = new Processor();
-                $processor->setProgress($this->progress);
+                $processor->setProgress($this->buildProgressBar($fileId));
                 $this->output->writeln("Generating structure for {$fileId}");
                 $processor->process($fileId);
             }
@@ -195,11 +188,7 @@ class CleanCommand extends Abstracted
         $fileIn = fopen($this->getPathFromId($fileId, 'xt'), 'r');
         $count = 320000000;
         $lineNo = 0;
-
-        $fileSize = filesize($this->getPathFromId($fileId, 'xt'));
-        $this->output->writeln("Starting $fileSize");
-
-        $this->progress = new ProgressBar($this->output, $fileSize);
+        $progress = $this->buildProgressBar($fileId);
         fseek($fileIn, 0);
         $fileOut = fopen($this->getPathFromId($fileId, 'xt.clean'), 'w');
         $size = 0;
@@ -208,7 +197,7 @@ class CleanCommand extends Abstracted
             $size += strlen($line);
             $lineNo++;
             if ($lineNo % 1000 == 0) {
-                $this->progress->setProgress($size);
+                $progress->setProgress($size);
             }
             $outLine = $this->processInputLine($line);
             if ($outLine !== false) {
@@ -413,5 +402,17 @@ class CleanCommand extends Abstracted
             $this->stats->increment('path.used', $namespace);
             array_pop($levels);
         }
+    }
+
+    /**
+     * @param string $fileId
+     * @return ProgressBar
+     */
+    private function buildProgressBar($fileId)
+    {
+        $fileSize = filesize($this->getPathFromId($fileId, 'xt'));
+        $progress = new ProgressBar($this->output, $fileSize);
+
+        return $progress;
     }
 }
