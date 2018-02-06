@@ -6,18 +6,15 @@
                     {{ "%08d"|format(line.time_spent) }}&micro;s
                     <div class="bar" style="width:{{ line.partial }}%"></div>
                 </div>
-                <a href="?trace={{ id }}&line={{ line.xt_line }}&kizilare_debug=1" target="_blank" title="View trace line {{ line.xt_line }}">
-                    {{ '%06d' | format(line.xt_line) }}
-                </a>
+                <a href="?trace={{ id }}&line={{ line.xt_line }}&kizilare_debug=1" target="_blank" title="View trace line {{ line.xt_line }}">{{ '%06d' | format(line.xt_line) }}</a>
 {%      if line.children %}
-                <a href="#" class="expand">
-                    [{{ '%06d' | format(line.children) }}/{{ '%06d' | format(line.descendant) }}]
-                    <span class="call">{{ line.call }}</span>
-                </a>
+                [{{ '%06d' | format(line.children) }}/{{ '%06d' | format(line.descendant) }}]
+                <a href="#" class="node_collapse">[-]</a>
+                <a href="#" class="node_expand">[+]</a>
 {%      else %}
                 [------/------]
-                <span class="call">{{ line.call }}</span>
 {%      endif %}
+                <span class="call">{{ line.call }}</span>
                 <a href="{{ line.link }}" title="{{ line.path }}" class="path">{{ line.file }}:{{ line.line }}</a>
             </div>
             <div class="children"></div>

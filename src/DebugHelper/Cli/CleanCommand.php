@@ -72,6 +72,16 @@ class CleanCommand extends Abstracted
     private $output;
 
     /**
+     * @var array
+     */
+    private $buffer = [];
+
+    /**
+     * @var resource
+     */
+    private $fileOut;
+
+    /**
      * {@inheritdoc}
      */
     protected function configure()
@@ -190,7 +200,7 @@ class CleanCommand extends Abstracted
         $lineNo = 0;
         $progress = $this->buildProgressBar($fileId);
         fseek($fileIn, 0);
-        $fileOut = fopen($this->getPathFromId($fileId, 'xt.clean'), 'w');
+        $this->fileOut = fopen($this->getPathFromId($fileId, 'xt.clean'), 'w');
         $size = 0;
         while (!feof($fileIn) && $count-- > 0) {
             $line = fgets($fileIn);
@@ -200,11 +210,8 @@ class CleanCommand extends Abstracted
                 $progress->setProgress($size);
             }
             $outLine = $this->processInputLine($line);
-            if ($outLine !== false) {
-                fwrite($fileOut, $outLine);
-                $this->stats->increment('passed');
-            }
         }
+        $this->dumpBuffer();
         $this->stats->sort();
 
         $usedPaths = array_slice($this->stats->get('path.used', null, []), 0, 20);
@@ -239,6 +246,7 @@ class CleanCommand extends Abstracted
 %6d valid lines
 %6d invalid lines
 %6d functions skipped
+%6d leafs skipped
 %6d files excluded
 %6d namespaces skipped
 ------
@@ -247,6 +255,7 @@ class CleanCommand extends Abstracted
             $this->stats->get('passed', null, 0),
             $this->stats->get('skipped_by.invalid', null, 0),
             $this->stats->get('skipped_by.functions', null, 0),
+            $this->stats->get('skipped_by.leaf', null, 0),
             $this->stats->get('skipped_by.path', null, 0),
             $this->stats->get('skipped_by.namespace', null, 0),
             $lineNo
@@ -259,7 +268,6 @@ class CleanCommand extends Abstracted
      * Process a single trace line
      *
      * @param string $line Contents of the line being processed
-     * @return bool
      */
     protected function processInputLine($line)
     {
@@ -267,7 +275,7 @@ class CleanCommand extends Abstracted
         if (!$lineInfo) {
             $this->stats->increment('skipped_by.invalid');
 
-            return false;
+            return;
         }
 
         if ($this->ignoreDepth) {
@@ -275,37 +283,76 @@ class CleanCommand extends Abstracted
                 $this->stats->increment('namespaces.skipped', $this->ignoring);
                 $this->stats->increment('skipped_by.namespace');
 
-                return false;
+                return;
             } else {
                 $this->ignoreDepth = false;
             }
         }
-        if (!preg_match('/^(?P<namespace>[^\(]+)(::|->)(?P<method>[^\(]+).*$/', $lineInfo['call'], $matches)) {
+        if (!$lineInfo['namespace']) {
             $this->stats->increment('skipped_by.functions');
 
-            return false;
+            return;
         }
 
-        $skipNamespace = $this->getSkipNamespace($matches['namespace']);
+        $skipNamespace = $this->getSkipNamespace($lineInfo['namespace']);
         if ($skipNamespace !== self::NAMESPACE_KEEP) {
             $this->ignoreDepth = $lineInfo['depth'];
-            $this->ignoring = $matches['namespace'];
+            $this->ignoring = $lineInfo['namespace'];
             if ($skipNamespace == self::NAMESPACE_IGNORE) {
-                return false;
+                return;
             }
         } elseif ($this->isIgnoredDirectory($lineInfo['path'])) {
             $this->stats->increment('skipped_by.path');
 
-            return false;
+            return;
         }
 
-        if ($matches['namespace'] !== $this->ignoring) {
-            $this->registerNamespace($matches['namespace']);
+        if ($lineInfo['namespace'] !== $this->ignoring) {
+            $this->registerNamespace($lineInfo['namespace']);
         }
         $this->registerPath($lineInfo['path']);
+        $this->updateBuffer($lineInfo);
+    }
 
-        return $line;
+    /**
+     * @param array   $info
+     * @throws \Exception
+     */
+    private function updateBuffer(array $info)
+    {
+        static $lastDepth = 0;
 
+        if ($info['depth'] < $lastDepth) {
+            $this->dumpBuffer();
+        }
+
+        $this->buffer[] = [
+            'depth' => $info['depth'],
+            'line' => $info['line'],
+            'namespace' => $info['namespace'],
+        ];
+        $lastDepth = $info['depth'];
+    }
+
+    /**
+     * Writes the buffer to the file
+     * @throws \Exception
+     */
+    private function dumpBuffer()
+    {
+        for ($i = count($this->buffer) - 2; $i >= 0; $i--) {
+            if ($this->buffer[$i]['namespace'] == $this->buffer[$i + 1]['namespace']) {
+                unset($this->buffer[$i + 1]);
+                $this->stats->increment('skipped_by.leaf');
+            } else {
+                break;
+            }
+        }
+        foreach($this->buffer as $bufferInfo) {
+            fwrite($this->fileOut, $bufferInfo['line']);
+            $this->stats->increment('passed');
+        }
+        $this->buffer = [];
     }
 
     /**
@@ -365,10 +412,24 @@ class CleanCommand extends Abstracted
     {
         $regExp = '/(?P<time>\d+\.\d+)\s+(?P<memory>\d+)(?P<depth>\s+)->\s+(?P<call>.*)\s+(?P<path>[^\s+]+)$/';
         if (preg_match($regExp, $line, $matches)) {
-            $matches['depth'] = ceil(strlen($matches['depth']) / 2);
-            $matches['path_length'] = count(explode('/', $matches['path']));
+            $info = [
+                'time'        => $matches['time'],
+                'memory'      => $matches['memory'],
+                'depth'       => ceil(strlen($matches['depth']) / 2),
+                'path'        => $matches['path'],
+                'path_length' => count(explode('/', $matches['path'])),
+                'call'        => $matches['call'],
+                'namespace'   => false,
+                'method'      => false,
+                'line'        => $line,
+            ];
 
-            return $matches;
+            if (preg_match('/^(?P<namespace>[^\(]+)(::|->)(?P<method>[^\(]+).*$/', $info['call'], $matches)) {
+                $info['namespace'] = $matches['namespace'];
+                $info['method'] = $matches['method'];
+            }
+
+            return $info;
         }
 
         return false;

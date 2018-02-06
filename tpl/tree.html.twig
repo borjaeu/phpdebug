@@ -25,13 +25,15 @@
         font-weight: bold;
         padding: 5px;
     }
-    ul { list-style: none; padding-left: 15px;}
+    ul { list-style: none; padding-left: 25px;}
     li { border-left: 1px solid black; }
     li.leaf { background-color: #FFFFD4; }
     li.parent { background-color: #E2FEE2; }
     li.parent span.call { cursor: pointer; font-weight:bold; }
     div.tree_row > a.path { float: right; }
     div.bar { border: 1px solid red;}
+
+    a.node_collapse { display: none; }
 
 </style>
 {% endblock %}
@@ -45,7 +47,7 @@
     });
 
     function loadEvents() {
-        $('a.expand').bind('click', function(oEvent) {
+        $('a.node_expand').bind('click', function(oEvent) {
             var sId = $(this).parent().parent().attr('id');
             var sUrl = '?kizilare_debug=1&tree={{ id }}&line=' + sId.replace('line_', '');
 
@@ -55,11 +57,21 @@
             bSending = true;
             oEvent.preventDefault();
             $('#loading').show();
+            $('#' + sId + ' > div.tree_row > a.node_expand').hide();
+            $('#' + sId + ' > div.tree_row > a.node_collapse').show();
             $('#' + sId + ' > div.children').load(sUrl, function(oResponse){
                 $('#loading').hide();
                 loadEvents();
                 bSending = false;
             })
+        });
+        $('a.node_collapse').bind('click', function(oEvent) {
+            var sId = $(this).parent().parent().attr('id');
+
+            oEvent.preventDefault();
+            $('#' + sId + ' > div.tree_row > a.node_collapse').hide();
+            $('#' + sId + ' > div.tree_row > a.node_expand').show();
+            $('#' + sId + ' > div.children').html('');
         });
     }
 </script>
