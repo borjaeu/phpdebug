@@ -45,8 +45,8 @@ class Tree
             $totalDescendants += $line['descendant'];
         }
         foreach ($lines as & $line) {
-            $line['time_partial'] = ceil(($line['time_spent'] / $totalTime) * 100);
-            $line['descendant_partial'] = ceil(($line['descendant'] / $totalDescendants) * 100);
+            $line['time_partial'] = $totalTime ? ceil(($line['time_spent'] / $totalTime) * 100): 0;
+            $line['descendant_partial'] = $totalDescendants ? ceil(($line['descendant'] / $totalDescendants) * 100) : 0;
         }
 
         return $lines;
