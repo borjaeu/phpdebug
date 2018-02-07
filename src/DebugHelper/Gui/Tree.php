@@ -17,7 +17,11 @@ class Tree
 
     public function renderLoadsHtml()
     {
-        if (empty($_GET['line'])) {
+        if (!empty($_GET['start'])) {
+            $start = $_GET['start'];
+            $depth = $this->fileReader->getDepth($start);
+            $ajax = false;
+        } else if (empty($_GET['line'])) {
             $depth = $this->fileReader->getOuterDepth();
             $start = 1;
             $ajax = false;

@@ -26,6 +26,8 @@
 {%      if line.children %}
                 <a href="#" onclick="collapseNode({{ line.xt_line }})" class="node_collapse">[-]</a>
                 <a href="#" onclick="expandNode({{ line.xt_line }})" class="node_expand">[+]</a>
+{%      else %}
+                [ ]
 {%      endif %}
                 <span class="call">{{ line.call }}</span>
                 <a href="{{ line.link }}" title="{{ line.path }}" class="path">{{ line.file }}:{{ line.line }}</a>
