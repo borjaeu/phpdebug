@@ -109,6 +109,7 @@ class Read
             if ($lineInfo !== false) {
                 $lastLineInfo = [
                     'xt_line'    => $currentLineNumber,
+                    'xt_r_line'  => $lineInfo['xt_line'],
                     'call'       => $lineInfo['call'],
                     'path'       => $lineInfo['path'],
                     'line'       => $lineInfo['line'],
@@ -160,13 +161,21 @@ class Read
      */
     private function processInputLine($line)
     {
-        $reg_exp = '/(?P<time>\d+\.\d+)\s+(?P<memory>\d+)(?P<depth>\s+)->\s+(?P<call>.*)\s+(?P<path>[^\s+]+)(:(?P<line>[\d+]+))$/';
-        if (preg_match($reg_exp, $line, $matches)) {
-            $matches['depth'] = ceil(strlen($matches['depth']) / 2);
+        $reg_exp = '/(?P<line_no>\d+)\s+(?P<time>\d+\.\d+)\s+(?P<memory>\d+)(?P<depth>\s+)->\s+(?P<call>.*)\s+(?P<path>[^\s+]+)(:(?P<line>[\d+]+))$/';
 
-            return $matches;
+        $lineInfo = false;
+        if (preg_match($reg_exp, $line, $matches)) {
+            $lineInfo = [
+                'xt_line' => isset($matches['line_no']) ? (int) $matches['line_no'] : 0,
+                'time'    => $matches['time'],
+                'memory'  => $matches['memory'],
+                'depth'   => ceil(strlen($matches['depth']) / 2),
+                'call'    => $matches['call'],
+                'path'    => $matches['path'],
+                'line'    => $matches['line'],
+            ];
         }
 
-        return false;
+        return $lineInfo;
     }
 }

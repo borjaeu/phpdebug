@@ -209,7 +209,7 @@ class CleanCommand extends Abstracted
             if ($lineNo % 1000 == 0) {
                 $progress->setProgress($size);
             }
-            $outLine = $this->processInputLine($line);
+            $outLine = $this->processInputLine($line, $lineNo);
         }
         $this->dumpBuffer();
         $this->stats->sort();
@@ -267,17 +267,18 @@ class CleanCommand extends Abstracted
     /**
      * Process a single trace line
      *
-     * @param string $line Contents of the line being processed
+     * @param strin   $line Contents of the line being processed
+     * @param integer $lineNo Number of line being processed
      */
-    protected function processInputLine($line)
+    protected function processInputLine($line, $lineNo)
     {
-        $lineInfo =  $this->getLineInfo($line);
+        $lineInfo = $this->getLineInfo($line);
         if (!$lineInfo) {
             $this->stats->increment('skipped_by.invalid');
 
             return;
         }
-
+        $lineInfo['trace_line'] = $lineNo;
         if ($this->ignoreDepth) {
             if ($lineInfo['depth'] > $this->ignoreDepth) {
                 $this->stats->increment('namespaces.skipped', $this->ignoring);
@@ -293,7 +294,6 @@ class CleanCommand extends Abstracted
 
             return;
         }
-
         $skipNamespace = $this->getSkipNamespace($lineInfo['namespace']);
         if ($skipNamespace !== self::NAMESPACE_KEEP) {
             $this->ignoreDepth = $lineInfo['depth'];
@@ -306,7 +306,6 @@ class CleanCommand extends Abstracted
 
             return;
         }
-
         if ($lineInfo['namespace'] !== $this->ignoring) {
             $this->registerNamespace($lineInfo['namespace']);
         }
@@ -329,6 +328,7 @@ class CleanCommand extends Abstracted
         $this->buffer[] = [
             'depth' => $info['depth'],
             'line' => $info['line'],
+            'trace_line' => $info['trace_line'],
             'namespace' => $info['namespace'],
         ];
         $lastDepth = $info['depth'];
@@ -349,7 +349,7 @@ class CleanCommand extends Abstracted
             }
         }
         foreach($this->buffer as $bufferInfo) {
-            fwrite($this->fileOut, $bufferInfo['line']);
+            fwrite($this->fileOut, sprintf('%08d %s', $bufferInfo['trace_line'], $bufferInfo['line']));
             $this->stats->increment('passed');
         }
         $this->buffer = [];

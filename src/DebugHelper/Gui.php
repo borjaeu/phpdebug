@@ -24,6 +24,9 @@ class Gui
         } elseif (isset($_GET['tree'])) {
             $tree = new \DebugHelper\Gui\Tree();
             $tree->setFile($_GET['tree'])->renderLoadsHtml();
+        } elseif (isset($_GET['delete'])) {
+            $tree = new \DebugHelper\Gui\Delete();
+            $tree->setFile($_GET['delete'])->renderLoadsHtml();
         } elseif (isset($_GET['trace'])) {
             $trace = new \DebugHelper\Gui\Trace();
             $trace->setFile($_GET['trace'])->renderLoadsHtml();

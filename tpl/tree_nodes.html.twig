@@ -2,20 +2,34 @@
 {%  for line in lines %}
         <li id="line_{{ line.xt_line }}" class="{% if line.children %}parent{% else %}leaf{% endif %}">
             <div class="tree_row">
-                <div class="spent">
+                <div class="time_spent" title="{{ line.time_partial }}%">
                     {{ "%08d"|format(line.time_spent) }}&micro;s
-                    <div class="bar" style="width:{{ line.partial }}%"></div>
+                    <div class="bar_holder">
+{%      if line.time_partial > 0 %}
+                        <div class="bar" style="width:{{ line.time_partial }}%" title="{{ line.time_partial }}%"></div>
+{%      endif %}
+                    </div>
                 </div>
-                <a href="?trace={{ id }}&line={{ line.xt_line }}&kizilare_debug=1" target="_blank" title="View trace line {{ line.xt_line }}">{{ '%06d' | format(line.xt_line) }}</a>
+                <div class="descendants" title="{{ line.descendant_partial }}%">
 {%      if line.children %}
                 [{{ '%06d' | format(line.children) }}/{{ '%06d' | format(line.descendant) }}]
-                <a href="#" class="node_collapse">[-]</a>
-                <a href="#" class="node_expand">[+]</a>
 {%      else %}
                 [------/------]
 {%      endif %}
+                    <div class="bar_holder">
+{%      if line.descendant_partial > 0 %}
+                        <div class="bar" style="width:{{ line.descendant_partial }}%"></div>
+{%      endif %}
+                    </div>
+                </div>
+                <a href="?trace={{ id }}&line={{ line.xt_line }}&kizilare_debug=1" target="_blank" title="View trace line {{ line.xt_line }}">{{ '%06d' | format(line.xt_line) }}</a>
+{%      if line.children %}
+                <a href="#" onclick="collapseNode({{ line.xt_line }})" class="node_collapse">[-]</a>
+                <a href="#" onclick="expandNode({{ line.xt_line }})" class="node_expand">[+]</a>
+{%      endif %}
                 <span class="call">{{ line.call }}</span>
                 <a href="{{ line.link }}" title="{{ line.path }}" class="path">{{ line.file }}:{{ line.line }}</a>
+                <a href="#" onclick="deleteEntry({{ line.xt_r_line }}, {{ line.xt_line }})" class="path">[X]</a>
             </div>
             <div class="children"></div>
         </li>

@@ -11,9 +11,18 @@
         clear: both;
         overflow: hidden;
     }
-    div.spent {
-        width: 80px;
+    div.bar_holder {
+         background-color: #5cb85c;
+        height: 2px;
+    }
+    div.time_spent {
+        width: 70px;
         float: left;
+    }
+    div.descendants {
+        width: 110px;
+        float: left;
+        margin-left: 5px;
     }
     #loading {
         display: none;
@@ -29,10 +38,10 @@
     li { border-left: 1px solid black; }
     li.leaf { background-color: #FFFFD4; }
     li.parent { background-color: #E2FEE2; }
-    li.parent span.call { cursor: pointer; font-weight:bold; }
     div.tree_row > a.path { float: right; }
     div.bar { border: 1px solid red;}
 
+    div.children { display: none; padding-left: 30px; }
     a.node_collapse { display: none; }
 
 </style>
@@ -42,9 +51,27 @@
 <script type="text/javascript">
     var bSending = false;
 
-    $().ready(function(){
-        loadEvents();
-    });
+    function expandNode(sId) {
+        var sUrl = '?kizilare_debug=1&tree={{ id }}&line=' + sId;
+
+        if (bSending) {
+            return;
+        }
+        bSending = true;
+        $('#loading').show();
+        $('#line_' + sId + ' > div.tree_row > a.node_expand').hide();
+        $('#line_' + sId + ' > div.tree_row > a.node_collapse').show();
+        $('#line_' + sId + ' > div.children').load(sUrl, function(oResponse){
+            $('#loading').hide();
+            bSending = false;
+        }).show();
+    };
+
+    function collapseNode(sId) {
+        $('#line_' + sId + ' > div.tree_row > a.node_collapse').hide();
+        $('#line_' + sId + ' > div.tree_row > a.node_expand').show();
+        $('#line_' + sId + ' > div.children').html('').hide();
+    };
 
     function loadEvents() {
         $('a.node_expand').bind('click', function(oEvent) {
@@ -63,7 +90,7 @@
                 $('#loading').hide();
                 loadEvents();
                 bSending = false;
-            })
+            }).show();
         });
         $('a.node_collapse').bind('click', function(oEvent) {
             var sId = $(this).parent().parent().attr('id');
@@ -71,7 +98,22 @@
             oEvent.preventDefault();
             $('#' + sId + ' > div.tree_row > a.node_collapse').hide();
             $('#' + sId + ' > div.tree_row > a.node_expand').show();
-            $('#' + sId + ' > div.children').html('');
+            $('#' + sId + ' > div.children').html('').hide();
+        });
+    }
+
+    function deleteEntry(sourceId, currentId) {
+        var sUrl = '?kizilare_debug=1&delete={{ id }}&line=' + sourceId;
+
+        if (bSending) {
+            return;
+        }
+        bSending = true;
+        $('#loading').show();
+        $.get(sUrl, function(oResponse){
+            $('#loading').hide();
+            bSending = false;
+            $('#line_' + currentId).remove();
         });
     }
 </script>

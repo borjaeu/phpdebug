@@ -60,7 +60,7 @@ class CommandParameters
         $command = preg_replace_callback('/<(?P<parameter>\w+)>/', function ($match) {
             $parameter = $match['parameter'];
 
-            if (empty($this->parameters[$parameter])) {
+            if (!isset($this->parameters[$parameter])) {
                 throw new \UnexpectedValueException('Missing parameter '.$parameter);
             }
 

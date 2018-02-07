@@ -269,6 +269,9 @@ DEBUG;
      */
     public function buildUrl($file, $line = null)
     {
+        if (empty($line)) {
+            var_export($line);
+        }
         $commandParameters = new CommandParameters();
         $handlerUrl = \DebugHelper::get('handler_url');
         $handlerSource = \DebugHelper::get('handler_source');

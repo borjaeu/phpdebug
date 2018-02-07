@@ -38,12 +38,17 @@ class Tree
      */
     protected function calcExtraInfo($lines)
     {
-        $startTime = reset($lines)['time_acum'];
-        $endTime = end($lines)['time_acum'];
-        $totalTime = $endTime - $startTime;
+        $totalTime = 0;
+        $totalDescendants = 0;
         foreach ($lines as & $line) {
-             $line['partial'] = $totalTime > 0 ? ceil(($line['time_spent'] / $totalTime) * 100) : 0;
+            $totalTime += $line['time_spent'];
+            $totalDescendants += $line['descendant'];
         }
+        foreach ($lines as & $line) {
+            $line['time_partial'] = ceil(($line['time_spent'] / $totalTime) * 100);
+            $line['descendant_partial'] = ceil(($line['descendant'] / $totalDescendants) * 100);
+        }
+
         return $lines;
     }
 
