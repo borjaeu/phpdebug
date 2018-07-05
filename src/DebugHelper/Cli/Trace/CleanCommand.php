@@ -1,12 +1,8 @@
 <?php
-namespace DebugHelper\Cli;
+namespace DebugHelper\Cli\Trace;
 
 use DebugHelper\Cli\Util\Statistics;
 use DebugHelper\Gui\Processor;
-use Symfony\Component\Console\Exception\InvalidArgumentException;
-use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Yaml\Yaml;
@@ -15,7 +11,7 @@ use Symfony\Component\Yaml\Yaml;
  * Class CleanCommand
  * @package DebugHelper\Cli
  */
-class CleanCommand extends Abstracted
+class CleanCommand
 {
     const NAMESPACE_KEEP = 'keep';
     const NAMESPACE_COLLAPSE = 'collapse';
@@ -81,55 +77,39 @@ class CleanCommand extends Abstracted
      */
     private $fileOut;
 
-    /**
-     * {@inheritdoc}
-     */
-    protected function configure()
-    {
-        $this->setName('trace:clean')
-            ->setDescription('Clean and simplify trace files')
-            ->addArgument('file', InputArgument::OPTIONAL)
-            ->addOption('config', 'c', InputOption::VALUE_REQUIRED)
-            ->addOption('force', null, InputOption::VALUE_NONE)
-        ;
-    }
 
     /**
-     * {@inheritdoc}
+     * @param OutputInterface $output
+     * @param string          $configFile
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    public function __construct(OutputInterface $output, $configFile)
     {
         $this->output = $output;
-        $this->loadArguments($input);
-        $output->writeln(Yaml::dump($this->options, 4));
-        if ($this->options['file']) {
-            $this->cleanFile($this->options['file']);
-        } else {
-            $files = glob($this->getPathFromId('*', 'xt'));
-            foreach ($files as $file) {
-                $this->cleanFile(realpath($file));
-            }
+        $this->loadOptions($configFile);
+    }
+
+    /**
+     * @param array $files
+     */
+    public function execute(array $files)
+    {
+        $this->output->writeln(Yaml::dump($this->options, 4));
+        foreach ($files as $file) {
+            $this->cleanFile(realpath($file));
         }
     }
 
     /**
-     * Load the command line argument
+     * @param string $config
      */
-    protected function loadArguments(InputInterface $input)
+    private function loadOptions($config)
     {
         $this->options = [];
-        $config = $input->getOption('config');
-        if (!is_file($config)) {
-            throw new InvalidArgumentException('There is not file ' . $config);
-        }
         $options = Yaml::parse(file_get_contents($config));
-        $this->options['force'] = $input->getOption('force');
-        $this->options['file'] = $input->getArgument('file');
         $this->options['functions'] = isset($options['functions']) ? $options['functions'] : [];
-        $this->options['process'] = isset($options['process']) ? $options['functions'] : 500;
+        $this->options['process'] = isset($options['process']) ? $options['process'] : 500;
         $this->options['ignore-namespace'] = isset($options['ignore-namespace']) ? $options['ignore-namespace'] : [];
         $this->options['collapse-namespace'] = isset($options['collapse-namespace']) ? $options['collapse-namespace'] : [];
-        $this->ignoreNamespaces = [];
         $this->addSkipNamespaceOptions($this->options['ignore-namespace'], self::NAMESPACE_IGNORE);
         $this->addSkipNamespaceOptions($this->options['collapse-namespace'], self::NAMESPACE_COLLAPSE);
         $this->options['skip-path'] = isset($options['skip-path']) ? $options['skip-path'] : [];
@@ -158,7 +138,6 @@ class CleanCommand extends Abstracted
 
     /**
      * @param string $file File to clean
-     * @throws \Exception
      */
     protected function cleanFile($file)
     {
@@ -166,23 +145,16 @@ class CleanCommand extends Abstracted
         $this->ignoreDepth = false;
         $this->ignoring = false;
         preg_match('/^(.*\/)?(?P<id>.*?)(\.\w*)?$/', $file, $matches);
-        $fileId = $matches['id'];
-
-        if (!is_file($this->getPathFromId($fileId, 'xt'))) {
-            throw new \Exception("Error Processing file $fileId");
-        }
-
-        if (is_file($this->getPathFromId($fileId, 'xt.clean')) && empty($this->options['force'])) {
-            $this->output->writeln("Already exists {$fileId}.xt.clean");
+        if (is_file($file . '.clean') && empty($this->options['force'])) {
+            $this->output->writeln("Already exists {$file}.clean");
         } else {
-            $this->output->writeln("Generating file {$fileId}.xt.clean");
-            $lines = $this->generateFiles($fileId);
+            $this->output->writeln("Generating file {$file}.clean");
+            $lines = $this->generateFiles($file);
             $this->output->writeln($lines);
             if ($lines < $this->options['process']) {
                 $processor = new Processor();
-                $processor->setProgress($this->buildProgressBar($fileId));
-                $this->output->writeln("Generating structure for {$fileId}");
-                $processor->process($fileId);
+                $processor->setProgress($this->buildProgressBar($file));
+                $processor->process($file);
             }
         }
     }
@@ -190,17 +162,17 @@ class CleanCommand extends Abstracted
     /**
      * Sets the value of file.
      *
-     * @param string $fileId Identifier for the file
+     * @param string $file Identifier for the file
      * @return integer
      */
-    protected function generateFiles($fileId)
+    protected function generateFiles($file)
     {
-        $fileIn = fopen($this->getPathFromId($fileId, 'xt'), 'r');
+        $fileIn = fopen($file, 'r');
         $count = 320000000;
         $lineNo = 0;
-        $progress = $this->buildProgressBar($fileId);
+        $progress = $this->buildProgressBar($file);
         fseek($fileIn, 0);
-        $this->fileOut = fopen($this->getPathFromId($fileId, 'xt.clean'), 'w');
+        $this->fileOut = fopen($file . '.clean', 'w');
         $size = 0;
         while (!feof($fileIn) && $count-- > 0) {
             $line = fgets($fileIn);
@@ -209,7 +181,7 @@ class CleanCommand extends Abstracted
             if ($lineNo % 1000 == 0) {
                 $progress->setProgress($size);
             }
-            $outLine = $this->processInputLine($line, $lineNo);
+            $this->processInputLine($line, $lineNo);
         }
         $this->dumpBuffer();
         $this->stats->sort();
@@ -267,13 +239,13 @@ class CleanCommand extends Abstracted
     /**
      * Process a single trace line
      *
-     * @param strin   $line Contents of the line being processed
+     * @param string  $line Contents of the line being processed
      * @param integer $lineNo Number of line being processed
      */
     protected function processInputLine($line, $lineNo)
     {
         $lineInfo = $this->getLineInfo($line);
-        if (!$lineInfo) {
+        if (empty($lineInfo)) {
             $this->stats->increment('skipped_by.invalid');
 
             return;
@@ -315,7 +287,6 @@ class CleanCommand extends Abstracted
 
     /**
      * @param array   $info
-     * @throws \Exception
      */
     private function updateBuffer(array $info)
     {
@@ -336,7 +307,6 @@ class CleanCommand extends Abstracted
 
     /**
      * Writes the buffer to the file
-     * @throws \Exception
      */
     private function dumpBuffer()
     {
@@ -406,9 +376,9 @@ class CleanCommand extends Abstracted
      * Extract information from a trace line
      *
      * @param string $line Line to process
-     * @return bool
+     * @return array
      */
-    protected function getLineInfo($line)
+    private function getLineInfo($line)
     {
         $regExp = '/(?P<time>\d+\.\d+)\s+(?P<memory>\d+)(?P<depth>\s+)->\s+(?P<call>.*)\s+(?P<path>[^\s+]+)$/';
         if (preg_match($regExp, $line, $matches)) {
@@ -432,7 +402,7 @@ class CleanCommand extends Abstracted
             return $info;
         }
 
-        return false;
+        return [];
     }
 
     /**
@@ -466,12 +436,12 @@ class CleanCommand extends Abstracted
     }
 
     /**
-     * @param string $fileId
+     * @param string $file
      * @return ProgressBar
      */
-    private function buildProgressBar($fileId)
+    private function buildProgressBar($file)
     {
-        $fileSize = filesize($this->getPathFromId($fileId, 'xt'));
+        $fileSize = filesize($file);
         $progress = new ProgressBar($this->output, $fileSize);
 
         return $progress;

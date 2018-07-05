@@ -25,25 +25,20 @@ class Processor
      *
      * @param string $file the file
      */
-    public function process($fileId, $run = true)
+    public function process($file, $run = true)
     {
-        $fileIn     = \DebugHelper::get('debug_dir').'/' . $fileId . '.xt.clean';
-        $fileOut    = \DebugHelper::get('debug_dir').'/' . $fileId . '.xt.json';
+        $fileIn     = \DebugHelper::get('debug_dir').'/' . $file . '.clean';
+        $fileOut    = \DebugHelper::get('debug_dir').'/' . $file . '.json';
 
-        if (!is_file($fileIn)) {
-            throw new \Exception("Error Processing file {$fileIn}");
-        }
         if ($run) {
             $this->generateFiles($fileIn, $fileOut);
         } elseif (is_file($fileOut)) {
             $this->lines = json_decode(file_get_contents($fileOut), true);
-        } else {
-            throw new \Exception("No processed file {$fileOut}");
         }
     }
 
     /**
-     * @param Progress $progress
+     * @param ProgressBar $progress
      */
     public function setProgress($progress)
     {
@@ -181,7 +176,7 @@ class Processor
                 'method'            => $matches['method'],
                 'call'              => $line_info['call']
             );
-            $this->updateTimes($count-1, $this->lines[$count]['time']);
+            //$this->updateTimes($count-1, $this->lines[$count]['time']);
             $this->min_depth = min($this->min_depth, $line_info['depth']);
             $this->shorter_path = min($this->shorter_path, $line_info['path_length']);
         }

@@ -52,9 +52,9 @@ class Statistics
     }
 
     /**
-     * @param      $key
-     * @param  $value
-     * @throws \Exception
+     * @param string $key
+     * @param string $name
+     * @param mixed  $value
      */
     public function set($key, $name, $value)
     {
@@ -84,8 +84,8 @@ class Statistics
 
     /**
      * @param      $key
-     * @param null $value
-     * @throws \Exception
+     * @param null $name
+     * @param int $step
      */
     public function increment($key, $name = null, $step = 1)
     {
@@ -95,13 +95,10 @@ class Statistics
             $this->registerEntry($key);
         }
         $currentValue = $this->getElement($steps);
-
-        if (is_null($currentValue)) {
-            $this->setElement($steps, $step);
-        } elseif (is_numeric($currentValue)) {
+        if (is_numeric($currentValue)) {
             $this->setElement($steps, $currentValue + $step);
         } else {
-            throw new \Exception('Invalid value for entry for ' . $key . ' ' . print_r($currentValue, true));
+            $this->setElement($steps, $step);
         }
     }
 
@@ -109,7 +106,6 @@ class Statistics
      * Register an entry for statistics
      *
      * @param string $key Id of the entry to register
-     * @param string $type Type of entry
      */
     protected function registerEntry($key)
     {
@@ -122,6 +118,7 @@ class Statistics
      * Gets an element by its key
      *
      * @param array $steps Levels to reach to the element
+     * @param null $default
      * @return null|mixed
      */
     protected function getElement(array $steps, $default = null)
@@ -158,8 +155,8 @@ class Statistics
     }
 
     /**
-     * @param array $levels Levels to reach to the element
-     * @param array $data Data to set
+     * @param array $steps
+     * @param array $data
      * @param $value
      */
     protected function setSubElement(array $steps, & $data, $value)

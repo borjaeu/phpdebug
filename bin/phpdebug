@@ -2,18 +2,13 @@
 <?php
 require __DIR__ . '/../../../autoload.php';
 
-use DebugHelper\Cli\CleanCommand;
 use DebugHelper\Cli\ListCommand;
 use DebugHelper\Cli\TimerCommand;
-use DebugHelper\Cli\ReadCommand;
 use Symfony\Component\Console\Application;
 
 \DebugHelper::init();
 $application = new Application();
-
-$application->add(new ReadCommand());
 $application->add(new TimerCommand());
 $application->add(new ListCommand());
-$application->add(new CleanCommand());
 
 $application->run();

@@ -53,7 +53,6 @@ class Cli
         return <<<INFO
  - list
  - sequence
- - clean [file] [--force] [--functions] [--skip-namespace='namespace1, namespace2] [--skip-path='directory1, directory2]
  - tail
  - read
 INFO;

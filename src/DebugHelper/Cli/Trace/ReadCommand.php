@@ -1,15 +1,14 @@
 <?php
-namespace DebugHelper\Cli;
+namespace DebugHelper\Cli\Trace;
 
 use DebugHelper\Helper\Read;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
 
-class ReadCommand extends Abstracted
+class ReadCommand
 {
     /**
      * @var resource
@@ -37,47 +36,41 @@ class ReadCommand extends Abstracted
     private $input;
 
     /**
+     * @var QuestionHelper
+     */
+    private $questionHelper;
+
+    /**
      * @var array
      */
     private $history;
 
     /**
-     * {@inheritdoc}
+     * @param OutputInterface $output
+     * @param InputInterface  $input
+     * @param QuestionHelper  $questionHelper
      */
-    protected function configure()
+    public function __construct(OutputInterface $output, InputInterface $input, QuestionHelper $questionHelper)
     {
-        $this->setName('trace:read')
-            ->setDescription('Read file configuration')
-            ->addArgument('file', InputArgument::REQUIRED);
+        $this->output = $output;
+        $this->input = $input;
+        /** @var QuestionHelper $helper */
+        $this->questionHelper = $questionHelper;
     }
 
     /**
-     * {@inheritdoc}
+     * @param string $file
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    public function execute($file)
     {
-        $file = $input->getArgument('file');
         $this->history = [];
-        $this->output = $output;
-        $this->input = $input;
-
-        $fileId = $this->getIdFromFile($file);
-        $extension = 'xt';
-
-
-        if (!is_file($this->getPathFromId($fileId, $extension))) {
-            throw new \Exception("Error Processing file $fileId");
-        }
-
-        if (is_file($this->getPathFromId($fileId, 'xt.clean'))) {
-            $extension = 'xt.clean';
-        }
-        $this->reader = new Read($this->getPathFromId($fileId, 'xt'));
-
-        $this->fileSize = filesize($this->getPathFromId($fileId, $extension));
-        $this->fileIn = fopen($this->getPathFromId($fileId, $extension), 'r');
-
-        $output->write("Reading file {$fileId}.{$extension}.");
+        try {
+            $this->reader = new Read($file);
+        } catch (\Exception $e) {
+            return;
+        };
+        $this->fileSize = filesize($file);
+        $this->fileIn = fopen($file, 'r');
 
         $this->showLine(0);
     }
@@ -123,16 +116,14 @@ class ReadCommand extends Abstracted
         $this->output->writeln(sprintf('%s', implode(' -> ', $this->history)));
         $table->render();
 
-        /** @var QuestionHelper $helper */
-        $helper = $this->getHelper('question');
         $question = new Question('Select line: ');
 
-        $line = $helper->ask($this->input, $this->output, $question);
+        $line = $this->questionHelper->ask($this->input, $this->output, $question);
 
         if ($line) {
             $this->showLine($line);
         } else if (count($this->history) > 1) {
-            $line = array_pop($this->history);
+            array_pop($this->history);
             $line = array_pop($this->history);
             $this->showLine($line);
         }
