@@ -81,7 +81,6 @@ class ReadCommand
     private function showLine($startLine)
     {
         $this->history[] = $startLine;
-        $domain = '_qwertyuiopasdfghjklzxcvbnm';
         if ($startLine) {
             $start = $startLine + 1;
             $depth = $this->reader->getDepth($startLine) + 1;
@@ -98,10 +97,8 @@ class ReadCommand
         foreach ($lines as $line) {
             $maxWidth = max($maxWidth, strlen($line['call']) + 1);
         }
-
         $table = new Table($this->output);
-        $table->setHeaders(['Line', 'Call', 'Child', 'Desc', 'Time', 'Spent', 'Path']);
-
+        $table->setHeaders(['Line', 'Call', 'Child', 'Desc', 'Time', 'Passed', 'Spent', 'Path']);
         foreach ($lines as $index => $lineInfo) {
             $table->addRow([
                 $lineInfo['line'],
@@ -110,12 +107,12 @@ class ReadCommand
                 $lineInfo['descendant'],
                 (int) $lineInfo['time_acum'],
                 (int) $lineInfo['time_spent'],
+                (int) $lineInfo['mem_spent'],
                 basename($lineInfo['path']),
             ]);
         }
         $this->output->writeln(sprintf('%s', implode(' -> ', $this->history)));
         $table->render();
-
         $question = new Question('Select line: ');
 
         $line = $this->questionHelper->ask($this->input, $this->output, $question);
