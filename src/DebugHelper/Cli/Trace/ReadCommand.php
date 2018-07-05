@@ -11,16 +11,6 @@ use Symfony\Component\Console\Question\Question;
 class ReadCommand
 {
     /**
-     * @var resource
-     */
-    private $fileIn;
-
-    /**
-     * @var integer
-     */
-    private $fileSize;
-
-    /**
      * @var Read
      */
     private $reader;
@@ -69,9 +59,6 @@ class ReadCommand
         } catch (\Exception $e) {
             return;
         };
-        $this->fileSize = filesize($file);
-        $this->fileIn = fopen($file, 'r');
-
         $this->showLine(0);
     }
 
@@ -101,14 +88,14 @@ class ReadCommand
         $table->setHeaders(['Line', 'Call', 'Child', 'Desc', 'Time', 'Passed', 'Spent', 'Path']);
         foreach ($lines as $index => $lineInfo) {
             $table->addRow([
-                $lineInfo['line'],
+                $lineInfo['xt_line'],
                 $lineInfo['call'],
                 $lineInfo['children'],
                 $lineInfo['descendant'],
                 (int) $lineInfo['time_acum'],
                 (int) $lineInfo['time_spent'],
                 (int) $lineInfo['mem_spent'],
-                basename($lineInfo['path']),
+                basename($lineInfo['path']) . ':' . $lineInfo['line'],
             ]);
         }
         $this->output->writeln(sprintf('%s', implode(' -> ', $this->history)));
