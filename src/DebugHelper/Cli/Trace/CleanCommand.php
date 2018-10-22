@@ -5,7 +5,6 @@ use DebugHelper\Cli\Util\Statistics;
 use DebugHelper\Gui\Processor;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Helper\ProgressBar;
-use Symfony\Component\Yaml\Yaml;
 
 /**
  * Class CleanCommand
@@ -93,7 +92,7 @@ class CleanCommand
      */
     public function execute(array $files)
     {
-        $this->output->writeln(Yaml::dump($this->options, 4));
+        $this->output->writeln(json_encode($this->options, JSON_PRETTY_PRINT));
         foreach ($files as $file) {
             $this->cleanFile(realpath($file));
         }
@@ -105,7 +104,7 @@ class CleanCommand
     private function loadOptions($config)
     {
         $this->options = [];
-        $options = Yaml::parse(file_get_contents($config));
+        $options = json_decode(file_get_contents($config), true);
         $this->options['functions'] = isset($options['functions']) ? $options['functions'] : [];
         $this->options['process'] = isset($options['process']) ? $options['process'] : 500;
         $this->options['ignore-namespace'] = isset($options['ignore-namespace']) ? $options['ignore-namespace'] : [];

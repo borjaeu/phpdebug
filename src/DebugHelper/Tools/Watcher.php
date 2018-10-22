@@ -66,11 +66,11 @@ class Watcher
      */
     public function __construct()
     {
-        $this->level = 100;
-        $this->watching = false;
-        $this->trace = true;
-        $this->coverage = true;
-        $this->watching = false;
+        $this->level         = 100;
+        $this->watching      = false;
+        $this->trace         = true;
+        $this->coverage      = true;
+        $this->watching      = false;
         $this->collectReturn = false;
         $this->collectParams = self::COLLECT_PARAMS_NONE;
 
@@ -186,7 +186,6 @@ class Watcher
         }
 
         \DebugHelper::log('Watch started ' . $this->traceFile);
-        $this->output('Watch started ' . $this->traceFile, 100);
 
         if ($this->trace) {
             $this->startTrace();
@@ -214,7 +213,7 @@ class Watcher
         }
         if ($this->coverage) {
             $coverage = $this->getCodeCoverage();
-            file_put_contents($this->traceFile.'.cvg', json_encode($coverage));
+            file_put_contents($this->traceFile.'.cvg', json_encode($coverage, JSON_PRETTY_PRINT));
         }
 
         $this->traceFile = '';

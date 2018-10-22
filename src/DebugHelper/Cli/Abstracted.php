@@ -23,6 +23,6 @@ abstract class Abstracted extends Command
      */
     protected function getPathFromId($fileId, $extension)
     {
-        return \DebugHelper::get('debug_dir')  . $fileId . '.' . $extension;
+        return \DebugHelper::get('debug_dir') . $fileId . '.' . $extension;
     }
 }

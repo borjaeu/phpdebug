@@ -12,3 +12,4 @@ $application->add(new TimerCommand());
 $application->add(new ListCommand());
 
 $application->run();
+
