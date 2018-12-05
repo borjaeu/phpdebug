@@ -1,0 +1,8 @@
+# Functions to ignore
+functions: []
+# Namespace to ignore
+ignore-namespace: ['Monolog', 'Symfony\Bridge\Monolog']
+# Namespace to process but not sub calls
+collapse-namespace: []
+# Path to ignore
+skip-path: []

@@ -98,7 +98,7 @@ class Read
         $this->lines = [];
         $index = 0;
 
-        $lastLineInfo = false;
+        $lastLineInfo = [];
         while (!feof($this->fileIn)) {
             $line = fgets($this->fileIn);
             $currentLineNumber++;

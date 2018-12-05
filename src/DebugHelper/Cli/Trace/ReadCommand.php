@@ -54,11 +54,24 @@ class ReadCommand
     public function execute($file)
     {
         $this->history = [];
-        try {
-            $this->reader = new Read($file);
-        } catch (\Exception $e) {
-            return;
-        };
+
+        $this->output = $output;
+        $this->input = $input;
+        $fileId = $this->getIdFromFile($file);
+        $extension = 'xt';
+        if (!is_file($this->getPathFromId($fileId, $extension))) {
+            throw new \Exception("Error Processing file $fileId");
+        }
+
+        if (is_file($this->getPathFromId($fileId, 'xt.clean'))) {
+            $extension = 'xt.clean';
+        }
+        $this->reader = new Read($this->getPathFromId($fileId, $extension));
+
+        $this->fileSize = filesize($this->getPathFromId($fileId, $extension));
+        $this->fileIn = fopen($this->getPathFromId($fileId, $extension), 'r');
+
+        $output->write("Reading file {$fileId}.{$extension}.");
         $this->showLine(0);
     }
 
